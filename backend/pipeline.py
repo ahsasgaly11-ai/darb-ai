@@ -372,9 +372,9 @@ def refresh_risk(max_age: timedelta = timedelta(hours=20)) -> int:
     now = datetime.now(timezone.utc)
     n = 0
     for cam in cameras():
-        last = db.one("SELECT ts FROM risk WHERE camera_id=? ORDER BY ts DESC LIMIT 1", (cam["id"],))
-        if last and now - datetime.fromisoformat(last["ts"]) < max_age:
-            continue
+        last = db.one("SELECT ts, forecast FROM risk WHERE camera_id=? ORDER BY ts DESC LIMIT 1", (cam["id"],))
+        if last and now - datetime.fromisoformat(last["ts"]) < max_age and '"gulf"' in (last["forecast"] or ""):
+            continue  # حديث ويتضمن فيزياء الرصف
         a = assess_camera(cam, now)
         if a:
             store_risk(cam["id"], now.isoformat(timespec="seconds"), a)
