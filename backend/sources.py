@@ -7,6 +7,7 @@
   rtsp      كاميرا IP عبر RTSP (يتطلب OpenCV مع FFmpeg).
   hls       بث مباشر m3u8 (يتطلب OpenCV مع FFmpeg).
   az511     كاميرات وزارة النقل في أريزونا (ADOT) عبر AZ511 — صور 1920×1080 تتجدد كل دقيقة تقريبًا.
+  caltrans  بث فيديو HLS متصل من وزارة النقل في كاليفورنيا (Caltrans) — 1280×720 إلى 1920×1080، تُلتقط منه إطارات للتحليل.
   fl511     كاميرات وزارة النقل في فلوريدا (FDOT) عبر FL511 — المنصة نفسها (اختيرت كاميرات 1920×1080 فقط).
   datagovsg كاميرات هيئة النقل البري في سنغافورة (LTA) عبر data.gov.sg — مفتوحة المصدر
             برخصة Singapore Open Data Licence، وتحتفظ بالصور السابقة فيمكن بناء سجل تاريخي فعلي.
@@ -88,6 +89,8 @@ def _video(src: dict, n: int, interval: float) -> list[np.ndarray]:
             if not ok:
                 break
             if time.time() >= next_at:
+                if f.shape[1] > 1280:  # مثل بقية المصادر: 1280 عرضًا تكفي للتحليل
+                    f = cv2.resize(f, (1280, int(f.shape[0] * 1280 / f.shape[1])), interpolation=cv2.INTER_AREA)
                 frames.append(f)
                 next_at = time.time() + interval
     finally:
@@ -210,7 +213,7 @@ def capture(camera: dict, at: datetime, n: int | None = None, interval: float | 
         return _snapshot(src, n, interval)
     if kind == "mjpeg":
         return _mjpeg(src, n, interval)
-    if kind in ("rtsp", "hls", "video"):
+    if kind in ("rtsp", "hls", "video", "caltrans"):
         return _video(src, n, interval)
     raise CaptureError(f"نوع مصدر غير معروف: {kind}")
 

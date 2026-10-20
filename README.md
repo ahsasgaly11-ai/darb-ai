@@ -41,7 +41,7 @@ uvicorn backend.app:app --host 0.0.0.0 --port 8000
 # افتح http://localhost:8000
 ```
 
-- **المناطق:** الافتراضي `DARB_REGIONS=singapore,phoenix,tucson,yuma,tampa`.
+- **المناطق:** الافتراضي `DARB_REGIONS=singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego`.
 - **بدون الذكاء الاصطناعي:** `pip install -r requirements.txt` فقط. يعمل النظام بالرؤية الكلاسيكية تلقائيًا، وهي أقل دقة.
 - **أول تشغيل:** يُبنى سجل سنغافورة (26 أسبوعًا من صور حقيقية) في الخلفية خلال 30–40 دقيقة مع الذكاء الاصطناعي. أما أريزونا فلا أرشيف لها، فيبدأ سجلها من أول التقاط نهاري ويتراكم أسبوعيًا.
 
@@ -67,6 +67,7 @@ pip install -r requirements-dev.txt && python -m pytest -q tests
 | **يوما، أريزونا** | من أشد المدن حرارة وجفافًا (صيف 42°م) — الأقرب لحرارة الرياض والكويت | ADOT عبر [AZ511](https://az511.gov) | 1920×1080 | لا (يتراكم) | بيانات حكومية عامة — يُذكر المصدر |
 | **سنغافورة** | حار رطب طوال العام — يشبه الساحل الخليجي | LTA عبر [data.gov.sg](https://data.gov.sg/datasets/d_6cdb6b405b25aaaacbaf7689bcc6fae0/view) | 1920×1080 | نعم | Singapore Open Data Licence |
 | **تامبا، فلوريدا** | ساحل خليج المكسيك: حار رطب وأمطار صيفية — يشبه رطوبة الدمام والدوحة ودبي | FDOT عبر [FL511](https://fl511.com) | 1920×1080 (كاميرات مختارة) | لا (يتراكم) | بيانات حكومية عامة — يُذكر المصدر |
+| **لوس أنجلوس وسان دييغو، كاليفورنيا** | شبه جاف مشمس معظم العام | Caltrans ([بيانات CCTV المفتوحة](https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm)) | **فيديو HLS متصل** 1280×720 إلى 1920×1080 | لا (يتراكم) | بيانات حكومية عامة — يُذكر المصدر |
 
 مصادر فُحصت واستُبعدت لأن جودتها أقل:
 - **كاليفورنيا (Caltrans):** صحاري إمبيريال وموهافي. الصور الثابتة 320×260، وبث الفيديو حتى 800×450 فقط.
@@ -104,6 +105,11 @@ pip install -r requirements-dev.txt && python -m pytest -q tests
   - ست على طرق سريعة رئيسية: I-10 (ومنها نفق Deck Park)، وUS-60، وLoop 101، وSR-303.
 - الصور تتجدد كل دقيقة تقريبًا، فتُجمع الدفعة على مدى بضع دقائق (`burst_interval`). صورة «No live camera feed» البديلة تُعامل كتعطّل للكاميرا.
 - منطقة الطريق `roi` ضُبطت مبدئيًا من صور ليلية، وتحتاج مراجعة على صور النهار.
+
+### لوس أنجلوس وسان دييغو (Caltrans) — فيديو متصل
+- 12 كاميرا في لوس أنجلوس ومقاطعة أورانج (`config/cameras.losangeles.json`) و8 في سان دييغو (`config/cameras.sandiego.json`)، اختيرت من 217 بثًا عالي الدقة من بين نحو 1250 كاميرا.
+- تبث فيديو HLS متصلًا يعرضه الموقع مباشرة (hls.js، أو مشغّل سفاري المدمج)، ويشتغل البث فقط حين تكون الكاميرا ظاهرة على الشاشة لتوفير الإنترنت.
+- للتحليل تُلتقط 7 إطارات من البث نفسه ثم يُحسب الوسيط الزمني فتختفي المركبات.
 
 ### توسان ويوما (AZ511) وتامبا (FL511)
 - توسان: ثماني كاميرات على I-10 وI-19 (`config/cameras.tucson.json`). يوما: كاميرتان على I-8 (`config/cameras.yuma.json`).
@@ -177,7 +183,7 @@ curl -X POST localhost:8000/api/cameras -H 'Content-Type: application/json' -H "
 
 | المتغير | الافتراضي | الوصف |
 |---|---|---|
-| `DARB_REGIONS` | `singapore,phoenix,tucson,yuma,tampa` | المناطق المفعّلة معًا: `singapore` و`phoenix` و`tucson` و`yuma` و`tampa` |
+| `DARB_REGIONS` | `singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego` | المناطق المفعّلة معًا: `singapore` و`phoenix` و`tucson` و`yuma` و`tampa` |
 | `DARB_YOLO_MODELS` | ملفات `models/*.pt` | نماذج الذكاء الاصطناعي (أكثر من نموذج = تجميع) |
 | `DARB_DAYLIGHT_HOURS` | `7,18` | ساعات الالتقاط الحي المحلية (لا التقاط ليلًا) |
 | `DARB_POST_REPAIR_WEEKS` | `8` | مدة مراقبة ما بعد الإصلاح |

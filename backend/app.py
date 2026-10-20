@@ -63,7 +63,11 @@ def _live(src: dict) -> dict | None:
         return {"kind": "datagovsg", "camera_id": str(src["camera_id"]), "refresh": 60}
     if t in sources.BASE_511:
         return {"kind": "image", "url": sources.cctv_url(src), "refresh": 30}
+    if t == "caltrans":
+        return {"kind": "hls", "url": src["url"], "refresh": 0}
     # الروابط المضافة يدويًا قد تحمل رموز دخول: لا تُكشف إلا إذا صرّح بها الإعداد ("live": true)
+    if t == "hls" and src.get("live") and str(src.get("url", "")).startswith("https://"):
+        return {"kind": "hls", "url": src["url"], "refresh": 0}
     if t in ("snapshot", "mjpeg") and src.get("live") and str(src.get("url", "")).startswith("https://"):
         return {"kind": "mjpeg" if t == "mjpeg" else "image", "url": src["url"], "refresh": 30}
     return None
@@ -250,7 +254,7 @@ class CameraIn(BaseModel):
 @app.post("/api/cameras", dependencies=[Depends(admin)])
 def add_camera(cam: CameraIn):
     typ = cam.source.get("type")
-    if typ not in ("snapshot", "mjpeg", "rtsp", "hls", "demo", "datagovsg", "az511", "fl511"):
+    if typ not in ("snapshot", "mjpeg", "rtsp", "hls", "demo", "datagovsg", "az511", "fl511", "caltrans"):
         raise HTTPException(400, "نوع مصدر غير مدعوم")
     if typ not in ("demo", "datagovsg", "az511", "fl511") and not re.match(r"^(https?|rtsp)://", str(cam.source.get("url", ""))):
         raise HTTPException(400, "رابط المصدر غير صالح")

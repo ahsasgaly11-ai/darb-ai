@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-24.04  # مثبّت: ubuntu-latest ينتقل إلى Ubuntu 26
     timeout-minutes: 90
     env:
-      DARB_REGIONS: singapore,phoenix,tucson,yuma,tampa
+      DARB_REGIONS: singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego
       DARB_DATA_DIR: ${{ github.workspace }}/darb-state
       DARB_SEED_FRAMES: "3"
       DARB_SITE_MODE: auto

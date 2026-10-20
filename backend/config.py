@@ -41,6 +41,22 @@ REGIONS = {
                     11: (26.1, 11.2), 12: (20.8, 7.0)},
         "attribution": "Camera images: Arizona Department of Transportation (ADOT) via AZ511",
     },
+    "losangeles": {
+        # مناخ شبه جاف مشمس معظم العام وصيف حار جاف في الأودية الداخلية. كاميرات Caltrans تبث فيديو متصلًا بدقة عالية
+        "name_ar": "لوس أنجلوس (كاليفورنيا)", "cameras": "cameras.losangeles.json", "tz": "America/Los_Angeles", "lat": 33.95, "lng": -118.2,
+        "climate": {1: (20.0, 9.0), 2: (20.5, 10.0), 3: (21.5, 11.0), 4: (23.0, 12.5), 5: (24.5, 14.5),
+                    6: (27.0, 16.5), 7: (29.5, 18.5), 8: (30.0, 19.0), 9: (29.5, 18.0), 10: (26.5, 15.0),
+                    11: (23.0, 11.5), 12: (19.5, 8.5)},
+        "attribution": "Live video: California Department of Transportation (Caltrans)",
+    },
+    "sandiego": {
+        # ساحل شبه جاف معتدل الحرارة مع جفاف معظم العام. كاميرات Caltrans تبث فيديو متصلًا
+        "name_ar": "سان دييغو (كاليفورنيا)", "cameras": "cameras.sandiego.json", "tz": "America/Los_Angeles", "lat": 32.8, "lng": -117.1,
+        "climate": {1: (19.5, 9.5), 2: (19.5, 10.5), 3: (20.0, 12.0), 4: (21.0, 13.5), 5: (21.5, 15.5),
+                    6: (23.0, 17.0), 7: (25.5, 19.0), 8: (26.5, 20.0), 9: (26.0, 19.0), 10: (24.5, 16.5),
+                    11: (22.0, 12.5), 12: (19.5, 9.5)},
+        "attribution": "Live video: California Department of Transportation (Caltrans)",
+    },
     "tampa": {
         # ساحل خليج المكسيك: حار رطب وأمطار صيفية غزيرة — يشبه رطوبة الساحل الخليجي (الدمام، الدوحة، دبي)
         "name_ar": "تامبا (فلوريدا)", "cameras": "cameras.tampa.json", "tz": "America/New_York", "lat": 27.95, "lng": -82.46,
@@ -51,7 +67,7 @@ REGIONS = {
     },
 }
 # المناطق المفعّلة (DARB_REGION القديم ما زال مدعومًا لمنطقة واحدة)
-REGION_KEYS = [r.strip() for r in os.getenv("DARB_REGIONS", os.getenv("DARB_REGION", "singapore,phoenix,tucson,yuma,tampa")).split(",") if r.strip()]
+REGION_KEYS = [r.strip() for r in os.getenv("DARB_REGIONS", os.getenv("DARB_REGION", "singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego")).split(",") if r.strip()]
 for _r in REGION_KEYS:
     if _r not in REGIONS:
         raise ValueError(f"منطقة غير معروفة: {_r} — المتاح: {', '.join(REGIONS)}")

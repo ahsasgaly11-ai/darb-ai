@@ -1,0 +1,233 @@
+{
+  "_comment": "بث فيديو HLS متصل من وزارة النقل في كاليفورنيا (Caltrans) — اختيرت كاميرات بدقة 1280×720 فأعلى. url = البث، still = الصورة الثابتة المنخفضة الدقة. roi غير محددة بعد (يُستخدم الافتراضي حتى تُضبط على صور النهار). الحمل المروري وتاريخ الرصف تقديرات تقريبية.",
+  "cameras": [
+    {
+      "id": "la-i110-exposition",
+      "name": "I-110 — شارع إكسبوزيشن (جامعة جنوب كاليفورنيا)",
+      "road": "I-110 @ (178) Exposition Blvd",
+      "lat": 34.0198,
+      "lng": -118.2794,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-178.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i110178expositionblvd/i110178expositionblvd.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 280000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2012-01-01"
+      }
+    },
+    {
+      "id": "la-i110-i405",
+      "name": "I-110 — جنوب تقاطع I-405 (غاردينا)",
+      "road": "I-110 @ (341) South of I-405",
+      "lat": 33.84896,
+      "lng": -118.28529,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-341.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i110341southofi405/i110341southofi405.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 250000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2010-01-01"
+      }
+    },
+    {
+      "id": "la-i405-imperial",
+      "name": "I-405 — جنوب طريق إمبيريال (مطار LAX)",
+      "road": "I-405 @ (862) s/o Imperial Hwy",
+      "lat": 33.92887,
+      "lng": -118.370225,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-862.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i405862soimperialhwy/i405862soimperialhwy.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 300000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2015-01-01"
+      }
+    },
+    {
+      "id": "la-i405-century",
+      "name": "I-405 — شارع سنتشري (إنغلوود)",
+      "road": "I-405 @ (869) WB Century Blvd On-Ramp",
+      "lat": 33.947128,
+      "lng": -118.367265,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-869.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i405869wbcenturyblvdonramp/i405869wbcenturyblvdonramp.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 290000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "la-i405-manchester",
+      "name": "I-405 — شارع مانشستر (إنغلوود)",
+      "road": "I-405 @ (872) Manchester Blvd On-Ramp",
+      "lat": 33.96089,
+      "lng": -118.36843,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-872.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i405872manchesterblvdonramp/i405872manchesterblvdonramp.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 285000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "la-i5-pioneer",
+      "name": "I-5 — شارع بايونير (نوروك)",
+      "road": "I-5 @ (573) Pioneer BL",
+      "lat": 33.921084,
+      "lng": -118.082296,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-573.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i5573pioneerbl/i5573pioneerbl.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 200000,
+        "heavy_vehicle_pct": 10,
+        "surface_date": "2018-01-01"
+      }
+    },
+    {
+      "id": "la-i710-long-beach",
+      "name": "I-710 — شارع لونغ بيتش (ميناء لونغ بيتش)",
+      "road": "I-710 @ (269) Long Beach Blvd",
+      "lat": 33.86191,
+      "lng": -118.20004,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-269.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i710269longbeachblvd/i710269longbeachblvd.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 160000,
+        "heavy_vehicle_pct": 18,
+        "surface_date": "2011-01-01"
+      }
+    },
+    {
+      "id": "la-us101-western",
+      "name": "US-101 — شارع ويسترن (هوليوود)",
+      "road": "US-101 @ (606) Western Ave",
+      "lat": 34.09536,
+      "lng": -118.31211,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D7/CCTV-606.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/us101606westernave/us101606westernave.jpg",
+        "width": 1536,
+        "height": 864
+      },
+      "meta": {
+        "aadt": 230000,
+        "heavy_vehicle_pct": 4,
+        "surface_date": "2009-01-01"
+      }
+    },
+    {
+      "id": "oc-i405-warner",
+      "name": "I-405 — جنوب شارع وارنر (فاونتن فالي)",
+      "road": "I-405 @ (223) South of Warner Avenue",
+      "lat": 33.71363,
+      "lng": -117.96393,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D12/NB405Warner.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d12/cctv/image/i405223southofwarneravenue/i405223southofwarneravenue.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 330000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2023-01-01"
+      }
+    },
+    {
+      "id": "oc-sr55-macarthur",
+      "name": "SR-55 — شارع ماك آرثر (إرفاين)",
+      "road": "SR-55 @ (23) MacArthur",
+      "lat": 33.699536,
+      "lng": -117.860501,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D12/NB55MACARTHUR.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d12/cctv/image/sr5523macarthur/sr5523macarthur.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 200000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2013-01-01"
+      }
+    },
+    {
+      "id": "oc-sr22-cambridge",
+      "name": "SR-22 — شارع كامبريدج (أورانج)",
+      "road": "SR-22 @ (154) Cambridge Street",
+      "lat": 33.77683,
+      "lng": -117.84185,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D12/WB22CAMBRIDGE.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d12/cctv/image/sr22154cambridgestreet/sr22154cambridgestreet.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 250000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2012-01-01"
+      }
+    },
+    {
+      "id": "oc-sr91-coal-canyon",
+      "name": "SR-91 — كول كانيون عند SR-241",
+      "road": "SR-91: (910)  WB SR-91 at SR-241, Coal Canyon",
+      "lat": 33.87329,
+      "lng": -117.6904,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D12/WB91COALCANYON.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d12/cctv/image/sr91910wbsr91atsr241coalcanyon/sr91910wbsr91atsr241coalcanyon.jpg",
+        "width": 1920,
+        "height": 1080
+      },
+      "meta": {
+        "aadt": 280000,
+        "heavy_vehicle_pct": 9,
+        "surface_date": "2017-01-01"
+      }
+    }
+  ]
+}

@@ -24,7 +24,7 @@
     if (m < 1440) return `قبل ${fmtN(m / 60)} ساعة`;
     return `قبل ${fmtN(m / 1440)} يوم`;
   };
-  const SRC_AR = { demo: "محاكاة", datagovsg: "كاميرا حقيقية · سنغافورة LTA", az511: "كاميرا حقيقية · أريزونا ADOT", fl511: "كاميرا حقيقية · فلوريدا FDOT" };
+  const SRC_AR = { demo: "محاكاة", datagovsg: "كاميرا حقيقية · سنغافورة LTA", az511: "كاميرا حقيقية · أريزونا ADOT", fl511: "كاميرا حقيقية · فلوريدا FDOT", caltrans: "فيديو مباشر · كاليفورنيا Caltrans" };
   const ISSUE_KIND_AR = { deterioration: "تدهور الرصف", pothole: "حفرة", sudden: "تغيّر مفاجئ", cracking: "تشققات" };
   const srcLabel = (t) => SRC_AR[t] || "كاميرا حية";
   const weeksText = (w) => (w == null ? "مستقر" : w === 0 ? "تجاوزها" : w > 52 ? "أكثر من سنة" : `~${fmtN(w)} أسبوع`);
@@ -308,8 +308,13 @@
     return { src: L.url + (L.url.includes("?") ? "&" : "?") + "t=" + Math.floor(Date.now() / 15000) };
   }
   const regionTz = (c) => state.regions.find((r) => r.key === c.region)?.tz;
+  const regionName = (c) => (state.regions.find((r) => r.key === c.region)?.name || "المنطقة").replace(/\s*\(.*\)/, "");
   function liveFrameHTML(c) {
     live.cams[c.id] = c;
+    // بث فيديو متصل (HLS): مشغّل فيديو حقيقي يعمل فقط حين يكون ظاهرًا على الشاشة لتوفير الإنترنت
+    if (c.live.kind === "hls") return `<div class="frame video" data-video="${esc(c.id)}"><video muted playsinline autoplay aria-label="بث فيديو مباشر — ${esc(c.name)}"></video>
+      <span class="loading">جارٍ تشغيل البث…</span><span class="clock"></span>
+      <button class="fs" type="button" data-fs aria-label="ملء الشاشة" title="ملء الشاشة">${svg("expand")}</button></div>`;
     return `<div class="frame" data-live="${esc(c.id)}"><img alt="بث مباشر — ${esc(c.name)}"><span class="loading">جارٍ الاتصال بالكاميرا…</span>
       <span class="clock"></span><button class="fs" type="button" data-fs aria-label="ملء الشاشة" title="ملء الشاشة">${svg("expand")}</button></div>`;
   }
@@ -320,15 +325,49 @@
     if (!f) { msg.textContent = "البث غير متاح الآن"; el.classList.add("off"); return; }
     const tz = regionTz(c);
     const fmt = new Intl.DateTimeFormat("ar-AE", { timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const stamp = () => { clock.textContent = `${f.ts ? "التُقطت" : "حُدّثت"} ${fmt.format(f.ts ? new Date(f.ts) : new Date())} بتوقيت ${(state.regions.find((r) => r.key === c.region)?.name || "المنطقة").replace(/\s*\(.*\)/, "")}`; };
+    const stamp = () => { clock.textContent = `${f.ts ? "التُقطت" : "حُدّثت"} ${fmt.format(f.ts ? new Date(f.ts) : new Date())} بتوقيت ${regionName(c)}`; };
     if (el.dataset.src === f.src) { if (!f.ts) stamp(); return; }
     const pre = new Image();
     pre.onload = () => { img.src = f.src; el.dataset.src = f.src; el.classList.add("on"); el.classList.remove("off"); stamp(); };
     pre.onerror = () => { if (!el.dataset.src) { msg.textContent = "البث غير متاح الآن"; el.classList.add("off"); } };
     pre.src = f.src;
   }
+  const players = new Map();
+  function attachVideo(el) {
+    if (players.has(el) || live.paused) return;
+    const c = live.cams[el.dataset.video], v = el.querySelector("video"), msg = el.querySelector(".loading");
+    const fail = () => { msg.textContent = "البث غير متاح الآن"; el.classList.add("off"); el.classList.remove("on"); };
+    v.onplaying = () => { el.classList.add("on"); el.classList.remove("off"); };
+    let hls = null;
+    if (window.Hls?.isSupported()) {
+      hls = new Hls({ liveSyncDurationCount: 2, maxBufferLength: 10, backBufferLength: 0 });
+      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { fail(); detachVideo(el); } });
+      hls.loadSource(c.live.url); hls.attachMedia(v);
+    } else if (v.canPlayType("application/vnd.apple.mpegurl")) {
+      v.src = c.live.url; v.onerror = fail;   // سفاري يشغّل HLS مباشرة
+    } else { fail(); return; }
+    v.play().catch(() => {});
+    players.set(el, hls);
+  }
+  function detachVideo(el) {
+    if (!players.has(el)) return;
+    const hls = players.get(el), v = el.querySelector("video");
+    players.delete(el); hls?.destroy(); v.removeAttribute("src"); v.load(); el.classList.remove("on");
+  }
+  const io = "IntersectionObserver" in window ? new IntersectionObserver((ents) => ents.forEach((e) =>
+    (e.isIntersecting ? attachVideo : detachVideo)(e.target)), { rootMargin: "120px" }) : null;
+  const inView = (el) => { const r = el.getBoundingClientRect(); return el.offsetParent && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth; };
+  setInterval(() => $$("[data-video].on").forEach((el) => {
+    const c = live.cams[el.dataset.video];
+    el.querySelector(".clock").textContent = `فيديو متصل · ${new Intl.DateTimeFormat("ar-AE", { timeZone: regionTz(c), hour: "2-digit", minute: "2-digit", second: "2-digit" }).format(new Date())} بتوقيت ${regionName(c)}`;
+  }), 1000);
   function liveTick() {
     clearTimeout(live.timer);
+    players.forEach((_, el) => { if (!el.isConnected) detachVideo(el); });
+    $$("[data-video]").forEach((el) => {
+      if (!el.dataset.obs) { el.dataset.obs = "1"; io?.observe(el); }
+      if (live.paused) detachVideo(el); else if (!io && inView(el)) attachVideo(el); else if (io && inView(el)) attachVideo(el);
+    });
     if (!live.paused) $$("[data-live]").filter((el) => el.offsetParent).forEach(updateFrame);
     live.timer = setTimeout(liveTick, 15000);
   }
@@ -336,7 +375,7 @@
     // المناطق التي يسود فيها النهار الآن أولًا
     const hour = (c) => +new Intl.DateTimeFormat("en-US", { timeZone: regionTz(c) || "UTC", hour: "numeric", hourCycle: "h23" }).format(new Date());
     const day = (c) => { const h = hour(c); return h >= 7 && h < 18; };
-    const list = state.cameras.filter((c) => c.live).sort((a, b) => day(b) - day(a));
+    const list = state.cameras.filter((c) => c.live).sort((a, b) => day(b) - day(a) || (b.live.kind === "hls") - (a.live.kind === "hls"));
     $("#liveCount").textContent = fmtN(list.length);
     $("#liveGrid").innerHTML = list.map((c) => `<article class="live-tile">${liveFrameHTML(c)}
       <div class="body"><div><b>${esc(c.name)}</b><span class="muted">${esc(c.road)}</span></div>
@@ -366,7 +405,7 @@
       ${d.live ? `<div class="card live-card">
         <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("live")}</span>البث المباشر من الكاميرا</h2></div>
         ${liveFrameHTML(d)}
-        <p class="muted live-hint">الصورة تأتي مباشرة من ${esc(srcLabel(d.source_type))} وتتحدّث تلقائيًا كل ${fmtN(d.live.refresh)} ثانية تقريبًا. قد تظهر ليلية حسب التوقيت المحلي للمنطقة.</p></div>` : ""}
+        <p class="muted live-hint">${d.live.kind === "hls" ? `بث فيديو متصل لحظيًا من ${esc(srcLabel(d.source_type))}.` : `الصورة تأتي مباشرة من ${esc(srcLabel(d.source_type))} وتتحدّث تلقائيًا كل ${fmtN(d.live.refresh)} ثانية تقريبًا (المصدر لا ينشر فيديو متصلًا).`} قد تظهر ليلية حسب التوقيت المحلي للمنطقة.</p></div>` : ""}
       <div class="d-grid">
         <div class="card viewer">
           <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("image")}</span>لقطات الكاميرا عبر الزمن</h2><label class="switch"><input type="checkbox" id="vAnn" checked> العيوب</label></div>

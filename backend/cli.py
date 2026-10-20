@@ -1,6 +1,6 @@
 """تشغيل دَرْب AI دفعةً واحدة دون خادم دائم — للاستضافة المجانية (GitHub Actions أو أي مجدول).
 
-    python -m backend.cli daily --regions singapore,phoenix,tucson,yuma,tampa --site site/
+    python -m backend.cli daily --regions singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego --site site/
 
 لكل كاميرا: صورة واحدة يوميًا (لقطة «أسبوعية» يوم الإثنين لبناء الاتجاه، وفحص يومي بقية الأيام)،
 تحليل بالذكاء الاصطناعي، تحديث المخاطر ودورة حياة المشكلات، ثم بناء الموقع الثابت.

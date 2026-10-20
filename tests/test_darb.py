@@ -270,3 +270,6 @@ def test_live_sources():
     assert _live({"type": "mjpeg", "url": "https://x/s", "live": True})["kind"] == "mjpeg"
     assert _live({"type": "demo"}) is None
     assert _live({"type": "fl511", "image_id": 4303})["url"] == "https://fl511.com/map/Cctv/4303"
+    hls = {"type": "caltrans", "url": "https://wzmedia.dot.ca.gov/D7/CCTV-178.stream/playlist.m3u8"}
+    assert _live(hls) == {"kind": "hls", "url": hls["url"], "refresh": 0}
+    assert _live({"type": "hls", "url": "https://x/a.m3u8"}) is None

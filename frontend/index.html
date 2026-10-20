@@ -149,10 +149,10 @@
 
     <!-- البث المباشر -->
     <section id="tab-live" class="tab">
-      <div class="block-h"><span class="ico3d crit" data-icon="live"></span><div><h2>البث المباشر</h2><p>صورة حية من كل كاميرا تتجدّد تلقائيًا من مصدرها الرسمي — <b id="liveCount">0</b> كاميرا</p></div></div>
+      <div class="block-h"><span class="ico3d crit" data-icon="live"></span><div><h2>البث المباشر</h2><p>فيديو حي متصل أو صورة حية متجددة من مصدرها الرسمي مباشرة — <b id="liveCount">0</b> كاميرا</p></div></div>
       <div class="toolbar">
         <span class="onair" id="liveState">مباشر</span>
-        <span class="muted">الكاميرات المفتوحة تنشر إطارًا جديدًا كل 30–60 ثانية تقريبًا (وليس فيديو متصلًا)، ويُعرض كما هو دون تحليل.</span>
+        <span class="muted">كاميرات <b>كاليفورنيا</b> تبث <b>فيديو متصلًا لحظيًا</b>. أما بقية المصادر (سنغافورة وأريزونا وفلوريدا) فلا تنشر إلا صورة تتجدد كل 30–60 ثانية.</span>
         <button class="btn ghost" id="livePause" type="button"><span data-icon="pause"></span>إيقاف مؤقت</button>
       </div>
       <div id="liveGrid" class="live-grid"></div>
@@ -218,6 +218,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>

@@ -1,0 +1,157 @@
+{
+  "_comment": "بث فيديو HLS متصل من وزارة النقل في كاليفورنيا (Caltrans) — اختيرت كاميرات بدقة 1280×720 فأعلى. url = البث، still = الصورة الثابتة المنخفضة الدقة. roi غير محددة بعد (يُستخدم الافتراضي حتى تُضبط على صور النهار). الحمل المروري وتاريخ الرصف تقديرات تقريبية.",
+  "cameras": [
+    {
+      "id": "sd-i5-i8",
+      "name": "I-5 — شمال تقاطع I-8",
+      "road": "(C 129) I-5 @ Just North Of I-8_B",
+      "lat": 32.76308,
+      "lng": -117.20452,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C129_NB_5_JNO_Friars.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c129i5justnorthofi8b/c129i5justnorthofi8b.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 210000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "sd-i5-i8-t",
+      "name": "I-5 — شمال I-8 (الاتجاه المعاكس)",
+      "road": "(C 165) I-5 @ Just North Of I-8 _ T",
+      "lat": 32.76308,
+      "lng": -117.20452,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C165_NB_5_JNO_I-8_T.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c165i5justnorthofi8t/c165i5justnorthofi8t.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 210000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "sd-i805-h-street",
+      "name": "I-805 — شارع H (تشولا فيستا)",
+      "road": "(C143) I-805 @ H Street",
+      "lat": 32.64058,
+      "lng": -117.05468,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C143_NB_805_at_H_street.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c143i805hstreet/c143i805hstreet.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 180000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2016-01-01"
+      }
+    },
+    {
+      "id": "sd-i805-sr54",
+      "name": "I-805 — جنوب SR-54 (تشولا فيستا)",
+      "road": "(C144) I-805 @ Just South Of SR-54",
+      "lat": 32.65446,
+      "lng": -117.0716,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C144_SB_805_and_JSO_SR_54.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c144i805justsouthofsr54/c144i805justsouthofsr54.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 190000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2016-01-01"
+      }
+    },
+    {
+      "id": "sd-i805-mira-mesa",
+      "name": "I-805 — شارع ميرا ميسا",
+      "road": "(C149) I-805 @ Mira Mesa Boulevard",
+      "lat": 32.89099,
+      "lng": -117.20618,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C149_NB_805_at_Mira_Mesa_Blvd.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c149i805miramesaboulevard/c149i805miramesaboulevard.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 240000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2019-01-01"
+      }
+    },
+    {
+      "id": "sd-i805-sorrento",
+      "name": "I-805 — سورينتو",
+      "road": "(C150) I-805 @ Mira Mesa / Sorrento",
+      "lat": 32.89061,
+      "lng": -117.20702,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C150_SB_805_at_Sorrento_Road.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c150i805miramesasorrento/c150i805miramesasorrento.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 240000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2019-01-01"
+      }
+    },
+    {
+      "id": "sd-sr56-carmel-valley",
+      "name": "SR-56 — طريق كارمل فالي",
+      "road": "(C135) SR-56 @ Carmel Valley Road",
+      "lat": 32.95172,
+      "lng": -117.19441,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C135_EB_56_on_off_at_Carmel_Valley_Rd.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c135sr56carmelvalleyroad/c135sr56carmelvalleyroad.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 90000,
+        "heavy_vehicle_pct": 4,
+        "surface_date": "2012-01-01"
+      }
+    },
+    {
+      "id": "sd-i15-sr76",
+      "name": "I-15 — شمال SR-76 (فولبروك)",
+      "road": "(C148) I-15 @ Just North Of SR-76",
+      "lat": 33.34233,
+      "lng": -117.1595,
+      "source": {
+        "type": "caltrans",
+        "url": "https://wzmedia.dot.ca.gov/D11/C148_SB_15_JNO_Route_76.stream/playlist.m3u8",
+        "still": "https://cwwp2.dot.ca.gov/data/d11/cctv/image/c148i15justnorthofsr76/c148i15justnorthofsr76.jpg",
+        "width": 1280,
+        "height": 1024
+      },
+      "meta": {
+        "aadt": 110000,
+        "heavy_vehicle_pct": 12,
+        "surface_date": "2010-01-01"
+      }
+    }
+  ]
+}
