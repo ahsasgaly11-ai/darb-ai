@@ -81,6 +81,9 @@ def _mjpeg(src: dict, n: int, interval: float) -> list[np.ndarray]:
 
 def _video(src: dict, n: int, interval: float) -> list[np.ndarray]:
     cap = cv2.VideoCapture(src["url"])
+    if not cap.isOpened():  # خوادم البث ترفض الاتصال أحيانًا لحظيًا: محاولة ثانية بعد ثوانٍ
+        time.sleep(3)
+        cap = cv2.VideoCapture(src["url"])
     if not cap.isOpened():
         raise CaptureError("تعذّر فتح البث (تأكد من دعم FFmpeg في OpenCV)")
     frames, next_at, t0 = [], 0.0, time.time()

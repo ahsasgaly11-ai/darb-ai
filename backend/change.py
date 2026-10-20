@@ -12,26 +12,58 @@ import numpy as np
 from .vision import _normalize, roi_mask
 
 
-_orb = cv2.ORB_create(2000)
+_sift = cv2.SIFT_create(6000)
+_clahe = cv2.createCLAHE(2.0, (8, 8))
+MIN_INLIERS = 40
+
+
+def _scene_mask(h: int, w: int) -> np.ndarray:
+    """يستبعد ما يُطبع فوق الصورة في مكان ثابت (شريط الاسم والوقت، الشعارات في الزوايا): يتطابق دائمًا
+    مهما تحرّكت الكاميرا فيُضلّل المحاذاة نحو «لم تتحرك»."""
+    m = np.full((h, w), 255, np.uint8)
+    m[: int(h * 0.1)] = 0
+    m[int(h * 0.9):] = 0
+    m[: int(h * 0.3), int(w * 0.78):] = 0
+    m[int(h * 0.75):, : int(w * 0.38)] = 0
+    return m
+
+
+def homography(prev: np.ndarray, cur: np.ndarray, width: int = 960) -> tuple[np.ndarray | None, int]:
+    """مصفوفة التحويل من إحداثيات prev إلى إحداثيات cur، أو None إذا تغيّر المنظر كليًا.
+    كاميرا PTZ تدور وتكبّر حول مركزها، فالتحويل بين لقطتيها Homography دقيقة مهما اختلف عمق المشهد.
+    SIFT مع تسوية التباين (CLAHE) أثبت من ORB أمام تغيّر الإضاءة بين لقطتين."""
+    if prev.shape[:2] != cur.shape[:2]:
+        prev = cv2.resize(prev, (cur.shape[1], cur.shape[0]))
+    s = width / cur.shape[1]
+
+    def feats(im):
+        g = _clahe.apply(cv2.cvtColor(cv2.resize(im, (width, int(im.shape[0] * s))), cv2.COLOR_BGR2GRAY))
+        return _sift.detectAndCompute(g, _scene_mask(*g.shape))
+
+    ka, da = feats(prev)
+    kb, db_ = feats(cur)
+    if da is None or db_ is None or len(ka) < 10 or len(kb) < 10:
+        return None, 0
+    pairs = cv2.BFMatcher().knnMatch(da, db_, k=2)
+    good = [m for m, n in (p for p in pairs if len(p) == 2) if m.distance < 0.8 * n.distance]
+    if len(good) < MIN_INLIERS:
+        return None, len(good)
+    pa = np.float32([ka[m.queryIdx].pt for m in good]) / s
+    pb = np.float32([kb[m.trainIdx].pt for m in good]) / s
+    H, mask = cv2.findHomography(pa, pb, cv2.RANSAC, 7.5 / s)
+    inliers = int(mask.sum()) if mask is not None else 0
+    if H is None or inliers < MIN_INLIERS:
+        return None, inliers
+    return H, inliers
 
 
 def register(prev: np.ndarray, cur: np.ndarray) -> tuple[np.ndarray | None, int]:
-    """محاذاة اللقطة السابقة مع الحالية (ORB + Homography) لتعويض اهتزاز الكاميرا أو انحرافها البسيط.
+    """محاذاة اللقطة السابقة مع الحالية لتعويض اهتزاز الكاميرا أو انحرافها البسيط.
     تعيد (الصورة السابقة بعد المحاذاة، عدد النقاط المتطابقة) أو (None, n) إذا تغيّر المنظر كليًا."""
-    s = 640 / cur.shape[1]
-    small = lambda im: cv2.cvtColor(cv2.resize(im, (640, int(im.shape[0] * s))), cv2.COLOR_BGR2GRAY)  # noqa: E731
-    ka, da = _orb.detectAndCompute(small(prev), None)
-    kb, db_ = _orb.detectAndCompute(small(cur), None)
-    if da is None or db_ is None:
-        return None, 0
-    m = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True).match(da, db_)
-    if len(m) < 20:
-        return None, len(m)
-    pa = np.float32([ka[x.queryIdx].pt for x in m]) / s
-    pb = np.float32([kb[x.trainIdx].pt for x in m]) / s
-    H, mask = cv2.findHomography(pa, pb, cv2.RANSAC, 4.0)
-    inliers = int(mask.sum()) if mask is not None else 0
-    if H is None or inliers < 60:
+    if prev.shape != cur.shape:
+        prev = cv2.resize(prev, (cur.shape[1], cur.shape[0]))
+    H, inliers = homography(prev, cur)
+    if H is None:
         return None, inliers
     return cv2.warpPerspective(prev, H, (cur.shape[1], cur.shape[0]), borderMode=cv2.BORDER_REPLICATE), inliers
 

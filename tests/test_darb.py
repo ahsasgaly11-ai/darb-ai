@@ -330,6 +330,28 @@ def test_daily_plan_retries_until_analyzed():
     assert [c["id"] for c, _ in cli.plan_captures([cam], late, P, Src, db, {}, force=True)[0]] == ["t-retry"]
 
 
+def test_roi_follows_ptz_camera():
+    """الكاميرا التي حرّكها المشغّل: تُنقل منطقة الطريق إلى المنظر الجديد، والمنظر المختلف كليًا لا يُحلَّل."""
+    rng = np.random.default_rng(7)
+    scene = np.full((900, 1500, 3), 110, np.uint8)
+    for _ in range(400):  # مشهد غني بالمعالم (علامات، حواف، أعمدة)
+        x, y, r = int(rng.uniform(0, 1500)), int(rng.uniform(0, 900)), int(rng.uniform(4, 30))
+        cv2.circle(scene, (x, y), r, tuple(int(v) for v in rng.integers(0, 255, 3)), -1)
+    view = lambda dx: cv2.resize(scene[100:820, 100 + dx:1380 + dx], (1280, 720))  # noqa: E731
+    cam = {**FAST, "id": "t-ptz", "source": {"type": "az511", "image_id": 2},
+           "meta": {**FAST["meta"], "roi": [[0.3, 0.5], [0.7, 0.5], [0.8, 0.9], [0.2, 0.9]]}}
+    assert pipeline.roi_for_view(cam, view(0)) == (cam["meta"]["roi"], "new")
+    pipeline.remember_view(cam, view(0), cam["meta"]["roi"])
+    assert pipeline.roi_for_view(cam, view(0))[1] == "same"
+    roi, state = pipeline.roi_for_view(cam, view(100))             # دوران أفقي: المشهد انزاح 100 بكسل يسارًا
+    assert state == "moved" and abs(roi[0][0] - (0.3 - 100 / 1280)) < 0.01 and abs(roi[0][1] - 0.5) < 0.01
+    other = np.full((720, 1280, 3), 90, np.uint8)
+    for _ in range(300):
+        cv2.rectangle(other, tuple(int(v) for v in rng.uniform(0, 1200, 2)), tuple(int(v) for v in rng.uniform(0, 1280, 2)),
+                      tuple(int(v) for v in rng.integers(0, 255, 3)), 2)
+    assert pipeline.roi_for_view(cam, other)[1] == "lost"
+
+
 def test_gulf_pavement_physics():
     from datetime import date as _date
     from backend import gulf

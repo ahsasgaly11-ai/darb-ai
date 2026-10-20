@@ -3,6 +3,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import threading
@@ -31,6 +32,7 @@ ALERT_TEXT = {
     "low_quality": "جودة الصورة غير كافية للتحليل",
     "incident": "حادث مروري قرب الكاميرا",
     "view_changed": "تغيّر زاوية الكاميرا",
+    "view_lost": "الكاميرا حُرّكت بعيدًا عن منطقة الطريق",
     "predicted": "تنبؤ بتدهور قادم",
     "resolved": "رُصدت معالجة المشكلة",
     "recurrence": "عودة المشكلة بعد الإصلاح",
@@ -126,6 +128,84 @@ def add_alert(cam: dict, ts: str, typ: str, severity: str, message: str, snapsho
 
 # ---------- الالتقاط والتحليل ----------
 
+REF_WIDTH = 960  # دقة صور مرجع المنظر (أعلى من 640 تزيد النقاط المتطابقة بين لقطتين بإضاءتين مختلفتين)
+
+
+def camera_views(cam: dict) -> list[list[list[float]]]:
+    """مناطق الطريق المرسومة للكاميرا: الأساسية ثم مناظر إضافية. كاميرات كثيرة تدور بين أوضاع ثابتة خلال اليوم
+    (اتجاه آخر، تكبير)، ولكل وضع منطقته وصورة مرجعه في config/roi_ref/<الكاميرا>-<بصمة المنطقة>.jpg."""
+    return [sources.default_roi(cam)] + [v["roi"] for v in cam.get("meta", {}).get("views", [])]
+
+
+def _roi_key(roi) -> str:
+    return hashlib.sha1(json.dumps(roi).encode()).hexdigest()[:8]
+
+
+def _view_files(cam: dict) -> tuple[str, Path, Path]:
+    d = config.DATA_DIR / "roi_ref"
+    return _roi_key(camera_views(cam)), d / f"{cam['id']}.jpg", d / f"{cam['id']}.json"
+
+
+def drawn_ref(cam: dict, roi) -> Path:
+    return config.ROOT / "config" / "roi_ref" / f"{cam['id']}-{_roi_key(roi)}.jpg"
+
+
+def roi_for_view(cam: dict, img: np.ndarray) -> tuple[list[list[float]], str]:
+    """منطقة الطريق في منظر الكاميرا الحالي. كاميرات الطرق السريعة PTZ يحرّكها المشغّلون خلال اليوم، فتُقارن
+    اللقطة بمراجع المنظر: آخر لقطة ناجحة (مرجع متجدد بإضاءة الساعة نفسها أمس) وصور المناظر المرسومة يدويًا.
+    أفضل تطابق يحدد المنطقة، وتُنقل إلى المنظر الحالي بالـHomography إذا تحرّكت الكاميرا قليلًا.
+    تعيد (المنطقة، الحالة): same | moved (نُقلت) | new (لا مرجع: تصير هذه اللقطة مرجعًا) | lost (منظر غير معروف)."""
+    views = camera_views(cam)
+    if cam["source"].get("type") == "demo":
+        return views[0], "same"  # المحاكاة منظرها ثابت
+    key, ref_img, ref_meta = _view_files(cam)
+    try:
+        meta = json.loads(ref_meta.read_text())
+    except (OSError, ValueError):
+        meta = {}
+    refs = [(ref_img, meta["roi"])] if meta.get("key") == key and ref_img.exists() else []
+    refs += [(drawn_ref(cam, v), v) for v in views if drawn_ref(cam, v).exists()]
+    if not refs:
+        return views[0], "new"
+    best = (None, 0, None)
+    for path, roi in refs:
+        H, n = change.homography(cv2.imread(str(path)), img)
+        if H is not None and n > best[1]:
+            best = (H, n, roi)
+        if n >= 150:
+            break  # تطابق قوي: لا داعي لتجربة البقية
+    H, _, roi = best
+    if H is None:
+        return views[0], "lost"
+    h, w = img.shape[:2]
+    pts = np.float32([[x * w, y * h] for x, y in roi])
+    moved = cv2.perspectiveTransform(pts.reshape(-1, 1, 2), H).reshape(-1, 2)
+    if np.abs(moved - pts).max() < 0.03 * w:
+        return roi, "same"  # اهتزاز أو فرق محاذاة بسيط: المنطقة كما هي
+    full = abs(cv2.contourArea(moved))
+    inside = np.zeros((h, w), np.uint8)
+    cv2.fillPoly(inside, [np.round(moved).astype(np.int32)], 1)
+    area0 = abs(cv2.contourArea(pts))
+    if not (0.2 * area0 < full < 5 * area0) or inside.sum() < 0.6 * full or inside.sum() < 0.01 * w * h:
+        return views[0], "lost"  # المنطقة خرجت من الإطار أو تحويل غير معقول
+    return [[round(min(1.0, max(0.0, float(x) / w)), 4), round(min(1.0, max(0.0, float(y) / h)), 4)] for x, y in moved], "moved"
+
+
+def remember_view(cam: dict, img: np.ndarray, roi: list[list[float]]) -> None:
+    """لقطة ناجحة تصير مرجع المنظر للمرة القادمة (مع المنطقة التي حُلّلت بها)."""
+    if cam["source"].get("type") == "demo":
+        return
+    key, ref_img, ref_meta = _view_files(cam)
+    ref_img.parent.mkdir(parents=True, exist_ok=True)
+    cv2.imwrite(str(ref_img), _ref_size(img), [cv2.IMWRITE_JPEG_QUALITY, 85])
+    ref_meta.write_text(json.dumps({"key": key, "roi": roi}))
+
+
+def _ref_size(img: np.ndarray) -> np.ndarray:
+    w = min(REF_WIDTH, img.shape[1])
+    return cv2.resize(img, (w, int(img.shape[0] * w / img.shape[1])), interpolation=cv2.INTER_AREA)
+
+
 def _save(img: np.ndarray, path: Path) -> str:
     path.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(path), img, [cv2.IMWRITE_JPEG_QUALITY, 85])
@@ -168,7 +248,8 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
             add_alert(cam, ts, "capture_failed", "warning", f"الخطأ: {e}")
         return {"ok": False, "error": str(e)}
 
-    roi = sources.default_roi(cam)
+    bg, first = sources.background(frames), frames
+    roi, view = roi_for_view(cam, bg)
     occ = sources.occlusion(frames, roi)
     if occ > config.CONGESTION_OCCLUSION and cam["source"].get("type") == "datagovsg":
         # ازدحام يحجب الطريق: المصادر ذات الأرشيف تسمح بتجربة لحظات قريبة واختيار أوضحها
@@ -185,7 +266,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
                 frames, occ = f2, o2
             if occ <= config.CONGESTION_OCCLUSION:
                 break
-    img = sources.background(frames)
+    img = bg if frames is first else sources.background(frames)  # الأرشيف قد يستبدل الدفعة بلحظة أقل ازدحامًا
     q = vision.quality(img)
     q["occlusion"] = occ
     if q["status"] == "ok" and occ > config.CONGESTION_OCCLUSION:
@@ -194,6 +275,16 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
     base = config.SNAPSHOT_DIR / cam_id / f"{stamp}_{kind}"
     image_path = _save(img, base.with_suffix(".jpg"))
 
+    if view == "lost":
+        # الكاميرا موجّهة إلى منظر آخر: التحليل بالمنطقة القديمة يقرأ أكتافًا أو أشجارًا. يُعاد في التشغيل التالي
+        # (قد يعيدها المشغّل إلى وضعها)، وإن استمر فالمنطقة تحتاج مراجعة على المنظر الجديد
+        sid = db.insert("snapshots", {"camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path,
+                                      "quality": "view_lost", "metrics": {"quality": q, "view": view}})
+        if not db.one("SELECT id FROM alerts WHERE camera_id=? AND type='view_lost' AND ts>?",
+                      (cam_id, (at - timedelta(hours=24)).isoformat())):
+            add_alert(cam, ts, "view_lost", "warning",
+                      "وُجّهت الكاميرا إلى منظر لا يطابق الذي حُدّدت عليه منطقة الطريق — لا تحليل حتى تعود أو تُراجَع المنطقة.", sid)
+        return {"ok": False, "snapshot_id": sid, "quality": {**q, "status": "view_lost"}}
     if q["status"] != "ok":
         # لقطة غير صالحة للتحليل (ظلام/ضبابية/ازدحام): تُحفظ للسجل ولا تدخل الاتجاه ولا المقارنة
         sid = db.insert("snapshots", {"camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path,
@@ -248,13 +339,15 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
             pending = cand
 
     annotated_path = _save(vision.annotate(img, result, roi, diff["boxes"]), base.with_name(base.name + "_ann.jpg"))
-    metrics = {**result, "change": diff, "quality": q, "confirmed": confirmed, **(suspect or {})}
+    metrics = {**result, "change": diff, "quality": q, "confirmed": confirmed, "view": view, **(suspect or {}),
+               **({"roi": roi} if view == "moved" else {})}
     sid = db.insert("snapshots", {
         "camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path, "annotated_path": annotated_path,
         "condition_index": result["condition_index"], "crack_density": result["crack_density"],
         "pothole_count": result["pothole_count"], "changed_pct": diff["changed_pct"], "quality": "ok",
         "metrics": metrics,
     })
+    remember_view(cam, img, roi)
 
     alerts = []
     if diff.get("view_changed"):
