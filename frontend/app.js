@@ -567,6 +567,9 @@
     document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
   }, true);
 
+  // ملاحظة «يُحدَّث آليًا» تُختصر في سطرين على الجوال، وتنفتح بالنقر
+  document.addEventListener("click", (e) => { const n = e.target.closest(".snapnote > div"); if (n) n.classList.toggle("open"); });
+
   // ---------- الرصد الميداني ----------
   const ROUGH = { excellent: ["ممتاز", "#16a34a"], good: ["جيد", "#84cc16"], fair: ["متوسط", "#facc15"], poor: ["سيئ", "#f97316"], very_poor: ["سيئ جدًا", "#dc2626"] };
   const REP_STATUS = { verified: "تأكد بالذكاء الاصطناعي", review: "قيد المراجعة", no_image: "بلا صورة", resolved: "عولج" };
@@ -1211,7 +1214,8 @@
     // على الجوال تمرّ البطاقات أفقيًا: أظهر المنطقة المختارة
     bar.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "center" });
     const active = state.regions.filter((r) => !state.region || r.key === state.region);
-    $("#regionName").textContent = active.map((r) => r.name).join(" · ");
+    // «كل المناطق» باختصار بدل سرد أسماء المدن الثماني (كانت تملأ أربعة أسطر على الجوال)
+    $("#regionName").textContent = state.region ? active.map((r) => r.name).join(" · ") : `كل المناطق · ${fmtN(state.regions.length)} مدن في ${fmtN(new Set(state.regions.map((r) => (r.name.match(/\((.*)\)/) || [, r.name])[1])).size)} دول وولايات`;
     const foot = $("#attribution");
     const attr = active.map((r) => r.attribution).filter(Boolean);
     foot.hidden = !attr.length; foot.textContent = attr.join(" — ");

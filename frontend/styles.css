@@ -436,7 +436,7 @@ form.maint input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(
 .live-hint { margin: 10px 0 0; }
 
 /* ---- الرصد الميداني ---- */
-.rep-form { display: grid; gap: 12px; }
+.rep-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .rep-photo { display: grid; place-items: center; min-height: 170px; border: 2px dashed var(--line-strong); border-radius: 14px; cursor: pointer; overflow: hidden;
   background: var(--surface-2); color: var(--muted); }
 .rep-photo:hover { border-color: var(--brand); color: var(--brand); }
@@ -618,6 +618,20 @@ body.lb-open { overflow: hidden; }
   .foot { padding-inline: 16px; }
 }
 @media (max-width: 720px) {
+  /* الخريطة: الدليل تحتها بدل أن يغطي نصفها، وارتفاع يناسب شاشة الجوال الطولية */
+  #map { height: 62vh; height: 62dvh; min-height: 340px; }
+  .map-wrap .legend { position: static; box-shadow: none; border: 0; border-top: 1px solid var(--line); border-radius: 0;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 12px 14px; }
+  .map-wrap .legend b, .map-wrap .legend .muted { grid-column: 1 / -1; }
+  /* ملاحظة التحديث الآلي: سطران، والباقي بالنقر */
+  .snapnote div { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer;
+    padding-bottom: 0 !important; border-bottom: 10px solid transparent !important; }  /* القص عند حافة المحتوى: لا يظهر نصف سطر ثالث */
+  .snapnote div.open { display: block; -webkit-line-clamp: unset; }
+  .pagebar-t b { font-size: 1.1rem; }
+  .thermo-bar { margin-top: 44px; }
+  .gulf-risk .meter { flex-wrap: wrap; }
+  .gulf-risk .meter .bar { flex-basis: 100%; }
+  .lb { height: 100dvh; }
   .flow li { grid-template-columns: 34px 1fr; }
   .flow li span { grid-column: 2; }
   form.maint { grid-template-columns: 1fr; }
