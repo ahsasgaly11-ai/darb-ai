@@ -53,8 +53,8 @@ window.imgSrc = (id, ann) => window.__IMG[id + ":" + (+ann ? 1 : 0)] || window._
 static_css = '''
 /* نسخة العرض: إخفاء العمليات التي تحتاج الخادم */
 #captureBtn, #maintForm, #maintForm + p, button[data-ack], a[href$="priorities.csv"] { display: none !important; }
-.snapnote { max-width: 1400px; margin: 12px auto 0; padding-inline: 24px; }
-.snapnote div { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: .85rem; color: var(--muted); }
+.snapnote { max-width: 1440px; margin: 18px auto 0; padding-inline: 32px; }
+.snapnote div { background: var(--brand-2); border: 1px solid color-mix(in srgb, var(--brand) 22%, transparent); border-radius: 14px; padding: 11px 16px; font-size: .9rem; color: var(--ink-2); }
 .snapnote b { color: var(--ink); }
 @media (max-width: 720px) { .snapnote { padding-inline: 16px; } }
 '''

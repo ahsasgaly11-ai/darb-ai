@@ -602,9 +602,17 @@
   // ---------- المناطق ----------
   function renderRegions() {
     const bar = $("#regionBar");
-    const all = [{ key: "", name: "كل المناطق" }, ...state.regions];
-    bar.innerHTML = all.map((r) => `<button data-region="${esc(r.key)}" class="${r.key === state.region ? "active" : ""}">${esc(r.name)}</button>`).join("");
+    // بطاقة لكل مدينة: الاسم بخط واضح، وتحته البلد وعدد الكاميرات، ونقطة بلون المناخ
+    const total = state.regions.reduce((n, r) => n + (r.cameras || 0), 0);
+    const all = [{ key: "", name: "كل المناطق", climate: "", kind: "all", cameras: total }, ...state.regions];
+    bar.innerHTML = all.map((r) => {
+      const m = /^(.*?)\s*\((.*)\)\s*$/.exec(r.name), city = m ? m[1] : r.name, country = m ? m[2] : (r.key ? "" : "عرض الكل");
+      return `<button data-region="${esc(r.key)}" class="${r.key === state.region ? "active" : ""}" title="${esc(r.climate || "")}">
+        <i class="k ${esc(r.kind || "")}"></i><span><b>${esc(city)}</b><small>${[country, r.cameras ? `${fmtN(r.cameras)} كاميرا` : ""].filter(Boolean).map(esc).join(" · ")}</small></span></button>`;
+    }).join("");
     bar.hidden = state.regions.length < 2;
+    // على الجوال تمرّ البطاقات أفقيًا: أظهر المنطقة المختارة
+    bar.querySelector(".active")?.scrollIntoView({ block: "nearest", inline: "center" });
     const active = state.regions.filter((r) => !state.region || r.key === state.region);
     $("#regionName").textContent = active.map((r) => r.name).join(" · ");
     const foot = $("#attribution");

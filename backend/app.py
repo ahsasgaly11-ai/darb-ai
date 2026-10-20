@@ -99,6 +99,8 @@ def status():
                          "sentinel_hours": config.SENTINEL_HOURS},
             "maintenance_threshold": config.MAINTENANCE_THRESHOLD,
             "regions": [{"key": k, "name": config.REGIONS[k]["name_ar"], "tz": config.REGIONS[k]["tz"],
+                         "climate": config.REGIONS[k].get("climate_ar", ""), "kind": config.REGIONS[k].get("climate_kind", ""),
+                         "cameras": db.one("SELECT COUNT(*) n FROM cameras WHERE region=? AND enabled=1", (k,))["n"],
                          "attribution": config.REGIONS[k]["attribution"]} for k in config.REGION_KEYS]}
 
 
