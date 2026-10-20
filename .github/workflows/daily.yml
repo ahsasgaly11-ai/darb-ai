@@ -5,7 +5,8 @@ name: DARB AI — daily analysis
 on:
   schedule:
     - cron: "7 4 * * *"    # 12:07 بتوقيت سنغافورة
-    - cron: "7 19 * * *"   # 12:07 بتوقيت فينكس وتوسان ويوما (MST)، و15:07 أو 14:07 في تامبا
+    - cron: "7 11 * * *"   # 13:07 صيفًا / 12:07 شتاءً بتوقيت مدريد
+    - cron: "7 19 * * *"   # 12:07 بتوقيت أريزونا (MST)، وظهر كاليفورنيا تقريبًا، وعصر تامبا
   workflow_dispatch: {}
 
 permissions:
@@ -22,7 +23,7 @@ jobs:
     runs-on: ubuntu-24.04  # مثبّت: ubuntu-latest ينتقل إلى Ubuntu 26
     timeout-minutes: 90
     env:
-      DARB_REGIONS: singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego
+      DARB_REGIONS: singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego,madrid
       DARB_DATA_DIR: ${{ github.workspace }}/darb-state
       DARB_SEED_FRAMES: "3"
       DARB_SITE_MODE: auto

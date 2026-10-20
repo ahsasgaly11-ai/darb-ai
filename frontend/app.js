@@ -24,7 +24,7 @@
     if (m < 1440) return `قبل ${fmtN(m / 60)} ساعة`;
     return `قبل ${fmtN(m / 1440)} يوم`;
   };
-  const SRC_AR = { demo: "محاكاة", datagovsg: "كاميرا حقيقية · سنغافورة LTA", az511: "كاميرا حقيقية · أريزونا ADOT", fl511: "كاميرا حقيقية · فلوريدا FDOT", caltrans: "فيديو مباشر · كاليفورنيا Caltrans" };
+  const SRC_AR = { demo: "محاكاة", datagovsg: "كاميرا حقيقية · سنغافورة LTA", az511: "كاميرا حقيقية · أريزونا ADOT", fl511: "كاميرا حقيقية · فلوريدا FDOT", caltrans: "فيديو مباشر · كاليفورنيا Caltrans", madrid: "كاميرا حقيقية · بلدية مدريد" };
   const ISSUE_KIND_AR = { deterioration: "تدهور الرصف", pothole: "حفرة", sudden: "تغيّر مفاجئ", cracking: "تشققات" };
   const srcLabel = (t) => SRC_AR[t] || "كاميرا حية";
   const weeksText = (w) => (w == null ? "مستقر" : w === 0 ? "تجاوزها" : w > 52 ? "أكثر من سنة" : `~${fmtN(w)} أسبوع`);

@@ -1,0 +1,394 @@
+{
+  "_comment": "كاميرات حقيقية من بلدية مدريد (بيانات مفتوحة CC BY 4.0، datos.madrid.es) — صور 1920×1080 تتجدد كل 3–15 دقيقة. roi ضُبطت على صور نهارية (20-10-2026). الحمل المروري وتاريخ الرصف تقديرات تقريبية.",
+  "cameras": [
+    {
+      "id": "md-01306",
+      "name": "شارع إمباخادوريس",
+      "road": "Embajadores",
+      "lat": 40.405029,
+      "lng": -3.702568,
+      "source": {
+        "type": "madrid",
+        "image_id": "01306",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 42000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2015-01-01",
+        "roi": [
+          [
+            0.3,
+            0.3
+          ],
+          [
+            0.62,
+            0.3
+          ],
+          [
+            0.8,
+            0.95
+          ],
+          [
+            0.18,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-01333",
+      "name": "دوّار رويث خيمينيث",
+      "road": "Gta Ruiz Jimenez",
+      "lat": 40.429598,
+      "lng": -3.705818,
+      "source": {
+        "type": "madrid",
+        "image_id": "01333",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 38000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2013-01-01",
+        "roi": [
+          [
+            0.0,
+            0.5
+          ],
+          [
+            1.0,
+            0.45
+          ],
+          [
+            1.0,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-02310",
+      "name": "بيراميديس",
+      "road": "Piramides",
+      "lat": 40.400623,
+      "lng": -3.714477,
+      "source": {
+        "type": "madrid",
+        "image_id": "02310",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 45000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2014-01-01",
+        "roi": [
+          [
+            0.25,
+            0.35
+          ],
+          [
+            1.0,
+            0.45
+          ],
+          [
+            1.0,
+            0.95
+          ],
+          [
+            0.2,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-04308",
+      "name": "شارع ألكالا — فيلاثكيث (بوابة ألكالا)",
+      "road": "Alcala - Velazquez",
+      "lat": 40.420887,
+      "lng": -3.684416,
+      "source": {
+        "type": "madrid",
+        "image_id": "04308",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 50000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2016-01-01",
+        "roi": [
+          [
+            0.2,
+            0.4
+          ],
+          [
+            0.62,
+            0.4
+          ],
+          [
+            0.85,
+            0.95
+          ],
+          [
+            0.05,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-05309",
+      "name": "بيو الثاني عشر — النصب التذكاري",
+      "road": "Pio Xii - Memorial",
+      "lat": 40.46718,
+      "lng": -3.674344,
+      "source": {
+        "type": "madrid",
+        "image_id": "05309",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 30000,
+        "heavy_vehicle_pct": 4,
+        "surface_date": "2012-01-01",
+        "roi": [
+          [
+            0.0,
+            0.35
+          ],
+          [
+            0.45,
+            0.4
+          ],
+          [
+            1.0,
+            0.65
+          ],
+          [
+            1.0,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-08303",
+      "name": "الطريق الدائري M-30 — بيتانثوس",
+      "road": "M30 - Pk28+500 C (Betanzos)",
+      "lat": 40.480245,
+      "lng": -3.713029,
+      "source": {
+        "type": "madrid",
+        "image_id": "08303",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 120000,
+        "heavy_vehicle_pct": 9,
+        "surface_date": "2017-01-01",
+        "roi": [
+          [
+            0.35,
+            0.3
+          ],
+          [
+            0.65,
+            0.3
+          ],
+          [
+            0.85,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-09319",
+      "name": "شارع كومبلوتنسي (الجامعة)",
+      "road": "Av Complutense - Paraninfo - Antonio Novais",
+      "lat": 40.448145,
+      "lng": -3.728048,
+      "source": {
+        "type": "madrid",
+        "image_id": "09319",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 28000,
+        "heavy_vehicle_pct": 5,
+        "surface_date": "2011-01-01",
+        "roi": [
+          [
+            0.0,
+            0.4
+          ],
+          [
+            1.0,
+            0.35
+          ],
+          [
+            1.0,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-10316",
+      "name": "الطريق السريع A-5 — طريق بواديا",
+      "road": "A5 - Ctra. Boadilla",
+      "lat": 40.399891,
+      "lng": -3.763544,
+      "source": {
+        "type": "madrid",
+        "image_id": "10316",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 95000,
+        "heavy_vehicle_pct": 8,
+        "surface_date": "2019-01-01",
+        "roi": [
+          [
+            0.0,
+            0.35
+          ],
+          [
+            0.35,
+            0.3
+          ],
+          [
+            0.75,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-13310",
+      "name": "الطريق السريع A-4 — الكيلو 5.4",
+      "road": "A4 - Pk 05+400 E",
+      "lat": 40.372305,
+      "lng": -3.679991,
+      "source": {
+        "type": "madrid",
+        "image_id": "13310",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 140000,
+        "heavy_vehicle_pct": 12,
+        "surface_date": "2015-01-01",
+        "roi": [
+          [
+            0.0,
+            0.4
+          ],
+          [
+            0.45,
+            0.38
+          ],
+          [
+            0.48,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-14306",
+      "name": "الطريق السريع A-3 — الكيلو 5.2",
+      "road": "A3 - Pk 05+155 E",
+      "lat": 40.398948,
+      "lng": -3.647133,
+      "source": {
+        "type": "madrid",
+        "image_id": "14306",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 150000,
+        "heavy_vehicle_pct": 10,
+        "surface_date": "2016-01-01",
+        "roi": [
+          [
+            0.0,
+            0.55
+          ],
+          [
+            0.55,
+            0.45
+          ],
+          [
+            0.75,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    },
+    {
+      "id": "md-16329",
+      "name": "ساحة سانتوس دي لا أومُسا",
+      "road": "Plaza Santos De La Humosa",
+      "lat": 40.472887,
+      "lng": -3.648991,
+      "source": {
+        "type": "madrid",
+        "image_id": "16329",
+        "burst_interval": 30
+      },
+      "meta": {
+        "aadt": 20000,
+        "heavy_vehicle_pct": 4,
+        "surface_date": "2010-01-01",
+        "roi": [
+          [
+            0.0,
+            0.25
+          ],
+          [
+            1.0,
+            0.2
+          ],
+          [
+            1.0,
+            0.95
+          ],
+          [
+            0.0,
+            0.95
+          ]
+        ]
+      }
+    }
+  ]
+}

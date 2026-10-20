@@ -57,6 +57,14 @@ REGIONS = {
                     11: (22.0, 12.5), 12: (19.5, 9.5)},
         "attribution": "Live video: California Department of Transportation (Caltrans)",
     },
+    "madrid": {
+        # هضبة وسط إسبانيا: صيف حار جاف 32–35°م وأيام فوق 40°م، ومدى حراري يومي كبير (13–15°م) وشتاء بارد
+        "name_ar": "مدريد (إسبانيا)", "cameras": "cameras.madrid.json", "tz": "Europe/Madrid", "lat": 40.42, "lng": -3.70,
+        "climate": {1: (10.0, 2.7), 2: (12.0, 3.7), 3: (16.0, 6.3), 4: (18.0, 7.8), 5: (22.0, 11.6),
+                    6: (28.0, 16.5), 7: (32.0, 19.7), 8: (31.0, 19.6), 9: (26.0, 15.8), 10: (19.0, 10.8),
+                    11: (13.0, 6.0), 12: (10.0, 3.4)},
+        "attribution": "Cámaras de tráfico: Ayuntamiento de Madrid, datos abiertos (CC BY 4.0)",
+    },
     "tampa": {
         # ساحل خليج المكسيك: حار رطب وأمطار صيفية غزيرة — يشبه رطوبة الساحل الخليجي (الدمام، الدوحة، دبي)
         "name_ar": "تامبا (فلوريدا)", "cameras": "cameras.tampa.json", "tz": "America/New_York", "lat": 27.95, "lng": -82.46,
@@ -67,7 +75,7 @@ REGIONS = {
     },
 }
 # المناطق المفعّلة (DARB_REGION القديم ما زال مدعومًا لمنطقة واحدة)
-REGION_KEYS = [r.strip() for r in os.getenv("DARB_REGIONS", os.getenv("DARB_REGION", "singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego")).split(",") if r.strip()]
+REGION_KEYS = [r.strip() for r in os.getenv("DARB_REGIONS", os.getenv("DARB_REGION", "singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego,madrid")).split(",") if r.strip()]
 for _r in REGION_KEYS:
     if _r not in REGIONS:
         raise ValueError(f"منطقة غير معروفة: {_r} — المتاح: {', '.join(REGIONS)}")

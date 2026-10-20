@@ -1,6 +1,6 @@
 """تصدير نسخة عرض ثابتة من دَرْب AI: بيانات الواجهة البرمجية + الصور + بلاطات الخريطة كملفات JSON.
 
-    DARB_REGIONS=singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego python tools/export_static.py site/
+    DARB_REGIONS=singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego,madrid python tools/export_static.py site/
     python tools/build_static.py site/ leaflet.css     # leaflet.css من unpkg.com/leaflet@1.9.4/dist/leaflet.css
 ثم انشر site/index.html مع site/data/*.json على أي استضافة ثابتة.
 """

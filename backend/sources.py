@@ -8,6 +8,7 @@
   hls       بث مباشر m3u8 (يتطلب OpenCV مع FFmpeg).
   az511     كاميرات وزارة النقل في أريزونا (ADOT) عبر AZ511 — صور 1920×1080 تتجدد كل دقيقة تقريبًا.
   caltrans  بث فيديو HLS متصل من وزارة النقل في كاليفورنيا (Caltrans) — 1280×720 إلى 1920×1080، تُلتقط منه إطارات للتحليل.
+  madrid    كاميرات بلدية مدريد (بيانات مفتوحة CC BY 4.0) — صور 1920×1080 تتجدد كل 3–15 دقيقة.
   fl511     كاميرات وزارة النقل في فلوريدا (FDOT) عبر FL511 — المنصة نفسها (اختيرت كاميرات 1920×1080 فقط).
   datagovsg كاميرات هيئة النقل البري في سنغافورة (LTA) عبر data.gov.sg — مفتوحة المصدر
             برخصة Singapore Open Data Licence، وتحتفظ بالصور السابقة فيمكن بناء سجل تاريخي فعلي.
@@ -161,12 +162,18 @@ BASE_511 = {"az511": "https://az511.gov", "fl511": "https://fl511.com"}
 
 
 def cctv_url(src: dict) -> str:
+    if src["type"] == "madrid":
+        return f"https://informo.madrid.es/cameras/Camara{src['image_id']}.jpg"
     return f"{src.get('base', BASE_511[src['type']])}/map/Cctv/{src['image_id']}"
+
+
+STILL_TYPES = (*BASE_511, "madrid")  # صور ثابتة متجددة: تُجمع الإطارات المختلفة فقط
 
 
 def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
     """صور منصات 511 تتجدد كل ~1–2 دقيقة: نأخذ الإطارات المختلفة فقط على مدى بضع دقائق."""
     url = cctv_url({"type": "az511", **src})
+    label = "مدريد" if src.get("type") == "madrid" else "AZ511"
     headers = {"User-Agent": config.USER_AGENT}
     frames, seen, same = [], set(), 0
     deadline = time.time() + max(60.0, n * interval + 30)
@@ -177,7 +184,7 @@ def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
             r.raise_for_status()
             if "png" in r.headers.get("content-type", "") or len(r.content) < 20000:
                 # صورة بديلة «No live camera feed» — الكاميرا متوقفة
-                raise CaptureError("الكاميرا غير متصلة حاليًا (AZ511: No live camera feed)")
+                raise CaptureError(f"الكاميرا غير متصلة حاليًا ({label}: صورة بديلة)")
             h = hash(r.content)
             same = same + 1 if h in seen else 0
             if h not in seen:
@@ -189,7 +196,7 @@ def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
             if len(frames) < n and interval > 0:
                 time.sleep(interval)
     if not frames:
-        raise CaptureError("لم تُستلم صور من AZ511")
+        raise CaptureError(f"لم تُستلم صور من {label}")
     return frames
 
 
@@ -207,7 +214,7 @@ def capture(camera: dict, at: datetime, n: int | None = None, interval: float | 
         return synthetic.capture_frames(src, camera.get("meta", {}), at, n)
     if kind == "datagovsg":
         return _datagovsg(src, at, n)
-    if kind in BASE_511:
+    if kind in STILL_TYPES:
         return _az511(src, n, src.get("burst_interval", 20.0) if interval else 0)
     if kind == "snapshot":
         return _snapshot(src, n, interval)

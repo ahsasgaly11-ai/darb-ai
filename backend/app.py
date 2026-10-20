@@ -61,8 +61,8 @@ def _live(src: dict) -> dict | None:
     t = src.get("type")
     if t == "datagovsg":
         return {"kind": "datagovsg", "camera_id": str(src["camera_id"]), "refresh": 60}
-    if t in sources.BASE_511:
-        return {"kind": "image", "url": sources.cctv_url(src), "refresh": 30}
+    if t in sources.STILL_TYPES:
+        return {"kind": "image", "url": sources.cctv_url(src), "refresh": 120 if t == "madrid" else 30}
     if t == "caltrans":
         return {"kind": "hls", "url": src["url"], "refresh": 0}
     # الروابط المضافة يدويًا قد تحمل رموز دخول: لا تُكشف إلا إذا صرّح بها الإعداد ("live": true)
@@ -254,9 +254,9 @@ class CameraIn(BaseModel):
 @app.post("/api/cameras", dependencies=[Depends(admin)])
 def add_camera(cam: CameraIn):
     typ = cam.source.get("type")
-    if typ not in ("snapshot", "mjpeg", "rtsp", "hls", "demo", "datagovsg", "az511", "fl511", "caltrans"):
+    if typ not in ("snapshot", "mjpeg", "rtsp", "hls", "demo", "datagovsg", "az511", "fl511", "madrid", "caltrans"):
         raise HTTPException(400, "نوع مصدر غير مدعوم")
-    if typ not in ("demo", "datagovsg", "az511", "fl511") and not re.match(r"^(https?|rtsp)://", str(cam.source.get("url", ""))):
+    if typ not in ("demo", "datagovsg", "az511", "fl511", "madrid") and not re.match(r"^(https?|rtsp)://", str(cam.source.get("url", ""))):
         raise HTTPException(400, "رابط المصدر غير صالح")
     import json
     with db.tx() as c:
