@@ -1,0 +1,5 @@
+# Caddy يصدر شهادة HTTPS ويجددها تلقائيًا للنطاق المضبوط في DARB_DOMAIN
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy darb:8000
+}

@@ -1,0 +1,7 @@
+# الذكاء الاصطناعي (اختياري لكن موصى به). على الخوادم بلا GPU ثبّت PyTorch للمعالج أولًا لتقليل الحجم:
+#   pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+# ثم:
+#   pip install -r requirements-ai.txt && python -m backend.models
+# ملاحظة رخصة: ultralytics مرخّصة AGPL-3.0.
+-r requirements.txt
+ultralytics>=8.3

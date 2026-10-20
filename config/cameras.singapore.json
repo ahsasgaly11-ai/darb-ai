@@ -1,0 +1,149 @@
+{
+  "_comment": "كاميرات حقيقية من هيئة النقل البري في سنغافورة (LTA) عبر data.gov.sg — رخصة Singapore Open Data Licence v1.0. الحمل المروري وتاريخ الرصف تقديرات تقريبية للتجربة. roi = منطقة الطريق في الصورة (نِسَب). لإضافة كاميرا: camera_id من https://api.data.gov.sg/v1/transport/traffic-images",
+  "cameras": [
+    {
+      "id": "sg-bke-woodlands",
+      "name": "طريق BKE السريع — قرب نقطة وودلاندز",
+      "road": "BKE Bukit Timah Expressway",
+      "lat": 1.429588536,
+      "lng": 103.769311,
+      "source": {
+        "type": "datagovsg",
+        "camera_id": "2704"
+      },
+      "meta": {
+        "aadt": 90000,
+        "heavy_vehicle_pct": 22,
+        "surface_date": "2020-06-01",
+        "lanes": 3,
+        "roi": [
+          [
+            0.38,
+            0.98
+          ],
+          [
+            0.92,
+            0.98
+          ],
+          [
+            0.56,
+            0.45
+          ],
+          [
+            0.43,
+            0.45
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sg-aye-tuas",
+      "name": "طريق AYE السريع — باتجاه تواس",
+      "road": "AYE Ayer Rajah Expressway",
+      "lat": 1.341244001,
+      "lng": 103.6439134,
+      "source": {
+        "type": "datagovsg",
+        "camera_id": "4712"
+      },
+      "meta": {
+        "aadt": 110000,
+        "heavy_vehicle_pct": 30,
+        "surface_date": "2019-03-01",
+        "lanes": 4,
+        "roi": [
+          [
+            0.24,
+            0.98
+          ],
+          [
+            0.62,
+            0.98
+          ],
+          [
+            0.93,
+            0.8
+          ],
+          [
+            0.6,
+            0.4
+          ],
+          [
+            0.22,
+            0.4
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sg-sentosa-gateway",
+      "name": "سنتوسا غيتواي — تيلوك بلانغاه",
+      "road": "Sentosa Gateway",
+      "lat": 1.26027777363278,
+      "lng": 103.823888890049,
+      "source": {
+        "type": "datagovsg",
+        "camera_id": "4799"
+      },
+      "meta": {
+        "aadt": 40000,
+        "heavy_vehicle_pct": 8,
+        "surface_date": "2021-01-01",
+        "lanes": 3,
+        "roi": [
+          [
+            0.75,
+            0.98
+          ],
+          [
+            0.97,
+            0.98
+          ],
+          [
+            0.86,
+            0.45
+          ],
+          [
+            0.67,
+            0.45
+          ]
+        ]
+      }
+    },
+    {
+      "id": "sg-bke-causeway",
+      "name": "طريق BKE — مخرج الجسر (Causeway)",
+      "road": "BKE / Woodlands Causeway",
+      "lat": 1.445554109,
+      "lng": 103.7683397,
+      "source": {
+        "type": "datagovsg",
+        "camera_id": "2702"
+      },
+      "meta": {
+        "aadt": 85000,
+        "heavy_vehicle_pct": 25,
+        "surface_date": "2020-01-01",
+        "lanes": 3,
+        "roi": [
+          [
+            0.11,
+            0.97
+          ],
+          [
+            0.28,
+            0.97
+          ],
+          [
+            0.24,
+            0.45
+          ],
+          [
+            0.16,
+            0.45
+          ]
+        ]
+      }
+    }
+  ]
+}

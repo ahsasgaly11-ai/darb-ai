@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>دَرْب AI</title>
+  <meta name="description" content="نظام ذكاء اصطناعي للتنبؤ بمخاطر الطرق وتحسين الصيانة الوقائية في دول الخليج">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5f6b'/%3E%3Cpath d='M22 54 L29 10 M42 54 L35 10' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 46v4M32 34v5M32 22v5M32 12v3' stroke='%23f4c26b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14"/><path class="edge" d="M22 54 L29 10 M42 54 L35 10"/><path class="lane" d="M32 46v4M32 34v5M32 22v5M32 12v3"/></svg>
+        </div>
+        <div>
+          <h1>دَرْب <span class="tag">AI</span></h1>
+          <p>منصة التنبؤ بمخاطر الطرق والصيانة الوقائية · <span id="regionName">…</span></p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="regionbar" id="regionBar" role="tablist" aria-label="المنطقة"></div>
+        <div class="status" id="statusPill" title="حالة النظام"><i></i><span>جارٍ الاتصال…</span></div>
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="الوضع الليلي" title="الوضع الليلي">
+          <span data-icon="moon"></span>
+        </button>
+      </div>
+    </div>
+    <nav class="tabs" role="tablist">
+      <button role="tab" data-tab="dashboard" class="active"><span data-icon="grid"></span>نظرة عامة</button>
+      <button role="tab" data-tab="map"><span data-icon="map"></span>الخريطة</button>
+      <button role="tab" data-tab="lifecycle"><span data-icon="cycle"></span>دورة حياة المشكلات <b id="issueBadge" class="badge soft" hidden></b></button>
+      <button role="tab" data-tab="cameras"><span data-icon="camera"></span>الكاميرات</button>
+      <button role="tab" data-tab="alerts"><span data-icon="bell"></span>التنبيهات <b id="alertBadge" class="badge" hidden></b></button>
+      <button role="tab" data-tab="method"><span data-icon="book"></span>المنهجية</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- لوحة التحكم -->
+    <section id="tab-dashboard" class="tab active">
+      <div class="hero">
+        <div class="hero-text">
+          <span class="eyebrow"><span data-icon="activity"></span>مراقبة آلية لحالة الرصف</span>
+          <h2>نظرة عامة على الشبكة</h2>
+          <p>كاميرات المرور تُحلَّل بالذكاء الاصطناعي أسبوعيًا: تنبؤ بالمشكلة قبل حدوثها، ورصد فوري أثناء وقوعها، ومتابعة بعد إصلاحها.</p>
+          <span class="asof" id="asOf"></span>
+        </div>
+        <div class="road3d" aria-hidden="true"><div class="plane"><i></i></div><div class="horizon"></div></div>
+      </div>
+      <div id="seedingNote" class="note" hidden>⏳ يُبنى الآن السجل التاريخي للكاميرات (لقطات أسبوعية لستة أشهر). تتحدّث اللوحة تلقائيًا.</div>
+      <section class="block">
+        <div class="block-h"><span class="ico3d " data-icon="gauge"></span><div><h2>المؤشرات الرئيسية</h2><p>حالة الشبكة الآن ومراحل المشكلات</p></div></div>
+        <div class="kpis" id="kpis"></div>
+      </section>
+      <section class="block">
+        <div class="block-h"><span class="ico3d " data-icon="trend"></span><div><h2>الاتجاه والمخاطر</h2><p>تطوّر مؤشر الحالة عبر الأسابيع وتوزيع المقاطع حسب الخطر</p></div></div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="trend"></span>اتجاه حالة الشبكة</h2><span class="muted">متوسط مؤشر الحالة أسبوعيًا (0–100)</span></div>
+          <div class="chart-box"><canvas id="networkChart"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="bars"></span>توزيع مستويات الخطر</h2><span class="muted">عدد المقاطع</span></div>
+          <div id="levelBars" class="level-bars"></div>
+          <div class="card-h" style="margin-top:18px"><h2 class="t"><span class="ico-sm" data-icon="bell"></span>أحدث التنبيهات</h2><button class="link" data-goto="alerts">عرض الكل</button></div>
+          <ul id="recentAlerts" class="alert-list compact"></ul>
+        </div>
+      </div>
+      </section>
+      <section class="block">
+        <div class="block-h"><span class="ico3d " data-icon="list"></span><div><h2>أولويات الفحص والصيانة</h2><p>المقاطع مرتّبة حسب الخطر × الأهمية المرورية — ابدأ الفحص الميداني من الأعلى</p></div></div>
+      <div class="card">
+        <div class="card-h">
+          <h2 class="t"><span class="ico-sm" data-icon="wrench"></span>قائمة الأولويات</h2>
+          <div class="actions"><a class="btn ghost" href="/api/export/priorities.csv">⬇ تصدير CSV</a></div>
+        </div>
+        <div class="table-wrap">
+          <table class="prio">
+            <thead><tr><th>#</th><th>المقطع</th><th>الخطر</th><th>احتمال التدهور (90 يومًا)</th><th>مؤشر الحالة</th><th>الاتجاه الأسبوعي</th><th>بلوغ عتبة الصيانة</th><th>العامل الأبرز</th></tr></thead>
+            <tbody id="prioBody"></tbody>
+          </table>
+        </div>
+      </div>
+      </section>
+    </section>
+
+    <!-- الخريطة -->
+    <section id="tab-map" class="tab">
+      <div class="block-h"><span class="ico3d " data-icon="map"></span><div><h2>خريطة الكاميرات</h2><p>موقع كل كاميرا ولون مستوى خطرها؛ انقر العلامة لرؤية آخر لقطة</p></div></div>
+      <div class="map-wrap card">
+        <div id="map"></div>
+        <div class="legend">
+          <b>مستوى الخطر</b>
+          <span><i class="dot low"></i>منخفض</span><span><i class="dot medium"></i>متوسط</span>
+          <span><i class="dot high"></i>مرتفع</span><span><i class="dot critical"></i>حرج</span><span><i class="dot" style="background:var(--muted)"></i>بانتظار أول التقاط</span>
+          <span class="muted">نبض = تنبيه مفتوح</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- دورة حياة المشكلات -->
+    <section id="tab-lifecycle" class="tab">
+      <div class="block-h"><span class="ico3d " data-icon="cycle"></span><div><h2>دورة حياة المشكلات</h2><p>كل مشكلة تُتابَع عبر ثلاث مراحل: قبل حدوثها، وأثناء وقوعها، وبعد معالجتها</p></div></div>
+      <div class="kpis" id="lifeKpis"></div>
+      <div class="board">
+        <div class="col">
+          <div class="col-h before"><b><span class="ico3d sm warn" data-icon="clock"></span>قبل</b><span>مشكلات متوقعة — فرصة للصيانة الوقائية</span></div>
+          <div id="colBefore" class="col-body"></div>
+        </div>
+        <div class="col">
+          <div class="col-h during"><b><span class="ico3d sm crit" data-icon="alert"></span>أثناء</b><span>مشكلات نشطة — تحتاج تدخلًا</span></div>
+          <div id="colDuring" class="col-body"></div>
+        </div>
+        <div class="col">
+          <div class="col-h after"><b><span class="ico3d sm ok" data-icon="check"></span>بعد</b><span>عولجت — مراقبة لرصد أي عودة</span></div>
+          <div id="colAfter" class="col-body"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- الكاميرات -->
+    <section id="tab-cameras" class="tab">
+      <div class="block-h"><span class="ico3d " data-icon="camera"></span><div><h2>الكاميرات</h2><p>آخر لقطة من كل كاميرا مع العيوب التي اكتشفها النموذج</p></div></div>
+      <div class="toolbar">
+        <div class="search"><span data-icon="search"></span><input id="camSearch" type="search" placeholder="ابحث باسم الشارع أو المنطقة…"></div>
+        <label class="switch"><input type="checkbox" id="annToggle" checked> إظهار العيوب المكتشفة</label>
+      </div>
+      <div id="camGrid" class="cam-grid"></div>
+    </section>
+
+    <!-- التنبيهات -->
+    <section id="tab-alerts" class="tab">
+      <div class="block-h"><span class="ico3d " data-icon="bell"></span><div><h2>التنبيهات</h2><p>الأحداث المرصودة مرتّبة من الأحدث</p></div></div>
+      <div class="toolbar">
+        <div class="seg" id="alertFilter">
+          <button data-f="all" class="active">الكل</button>
+          <button data-f="critical">حرجة</button>
+          <button data-f="warning">تحذير</button>
+          <button data-f="open">غير مُعالجة</button>
+        </div>
+      </div>
+      <div class="card"><ul id="alertList" class="alert-list"></ul></div>
+    </section>
+
+    <!-- المنهجية -->
+    <section id="tab-method" class="tab">
+      <div class="block-h"><span class="ico3d " data-icon="book"></span><div><h2>المنهجية</h2><p>كيف تتحوّل صورة الكاميرا إلى تنبؤ وتوصية</p></div></div>
+      <div class="card prose">
+        <h2>كيف يعمل دَرْب AI؟</h2>
+        <ol class="flow">
+          <li><b>الالتقاط</b><span>دفعة إطارات من كل كاميرا <em>أسبوعيًا</em> (الإثنين 10 صباحًا بالتوقيت المحلي لكل منطقة) لبناء الاتجاه، وفحص <em>يومي</em> ظهرًا لرصد المفاجآت. لا التقاط ليلًا.</span></li>
+          <li><b>تنظيف الصورة</b><span>الوسيط الزمني يُخفي المركبات؛ ومؤشر «حجب» يستبعد لحظات الازدحام ويجرّب لحظات أوضح؛ ومحاذاة الصورتين تعوّض اهتزاز الكاميرا.</span></li>
+          <li><b>الذكاء الاصطناعي</b><span>تجميع نموذجَي YOLO مدرّبين على مجموعة RDD2022 الدولية لعيوب الطرق: تشقق طولي وعرضي وتمساحي وحفر وترقيعات. تُقطَّع منطقة الطريق إلى بلاطات بالدقة الكاملة لاكتشاف التشققات الصغيرة في الكاميرات البعيدة.</span></li>
+          <li><b>تتبّع العيوب</b><span>كل عيب يُطابَق مع اللقطات السابقة بموقعه، فيُعرف متى ظهر، وهل ينمو، ومتى اختفى أو رُقّع.</span></li>
+          <li><b>قبل</b><span>نموذج مخاطر قابل للتفسير (الحالة، سرعة التدهور، الحرارة، المدى الحراري، المرور والشاحنات، عمر الطبقة) يتوقع موعد بلوغ عتبة الصيانة ويفتح «مشكلة متوقعة» قبل حدوثها.</span></li>
+          <li><b>أثناء</b><span>تحقق التوقع أو حدث مفاجئ مؤكَّد في لقطتين (حفرة، هبوط، مخلّفات) يفتح «مشكلة نشطة» مع تنبيه فوري وتوصيات.</span></li>
+          <li><b>بعد</b><span>يرصد النظام زوال المشكلة تلقائيًا (إصلاح أو إزالة)، ويقيس زمن الاستجابة، ثم يراقب المقطع 8 أسابيع وينبّه إن عاد العيب.</span></li>
+        </ol>
+        <h3>لماذا لقطة أسبوعية؟</h3>
+        <p>تدهور الرصف عملية تمتد أسابيع إلى أشهر، واللقطة الأسبوعية تعطي 52 نقطة سنويًا لكل مقطع، وهذا كافٍ لتقدير الاتجاه بدقة دون تخزين بيانات زائدة. الحفر المفاجئة والانهيارات والمخلّفات يلتقطها الفحص اليومي، وتُتابَع حوادث المرور كل 10 دقائق عند تفعيل Dubai Pulse.</p>
+        <h3>مصادر الكاميرات: بيئات قريبة من الخليج وبجودة عالية</h3>
+        <p id="srcNote">لا تنشر دول الخليج صور كاميرات المرور مفتوحةً حتى الآن، فاختيرت مصادر مفتوحة بدقة <b>1920×1080</b> في بيئتين تشبهان الخليج: <b>فينكس (أريزونا)</b> بصحرائها الحارة الجافة (صيف 45–48°م ومدى حراري يومي كبير)، و<b>سنغافورة</b> بحرّها ورطوبتها الشبيهة بالساحل الخليجي. يقبل النظام أي كاميرا أخرى (JPEG/MJPEG/RTSP/HLS) فور توفر روابط مرخّصة في الخليج.</p>
+        <h3>حدود النموذج الأولي</h3>
+        <ul>
+          <li>نماذج الذكاء الاصطناعي دُرّبت على صور من كاميرات السيارات لا كاميرات المرور المرتفعة؛ التقطيع يقلّص الفجوة لكنه لا يلغيها، والخطوة التالية ضبط النماذج (Fine-tuning) على صور موسومة من هذه الكاميرات نفسها.</li>
+          <li>أوزان نموذج المخاطر مبدئية من أدبيات هندسة الرصف، وتُعايَر بسجلات الصيانة الفعلية عند توفرها.</li>
+          <li>زاوية كاميرات المرور ليست مصممة لفحص الرصف؛ الهدف ترتيب أولويات الفحص الميداني لا استبداله.</li>
+        </ul>
+        <div id="sysInfo" class="sysinfo"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot" id="attribution" hidden></footer>
+
+  <!-- تفاصيل الكاميرا -->
+  <div class="drawer" id="drawer" aria-hidden="true">
+    <div class="drawer-bg" data-close></div>
+    <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="dTitle">
+      <header class="drawer-h">
+        <div><h2 id="dTitle"></h2><p id="dRoad" class="muted"></p></div>
+        <button class="icon-btn" data-close aria-label="إغلاق">✕</button>
+      </header>
+      <div class="drawer-body" id="dBody"></div>
+    </aside>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+# تشغيل دَرْب AI على خادم حقيقي: التطبيق + Caddy (شهادة HTTPS تلقائية من Let's Encrypt)
+#   cp .env.example .env   # ثم عدّل DARB_DOMAIN و DARB_ADMIN_TOKEN
+#   docker compose up -d --build
+services:
+  darb:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DARB_DATA_DIR: /data
+    volumes:
+      - darb-data:/data          # قاعدة البيانات والصور تبقى بعد التحديث وإعادة التشغيل
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/status', timeout=5)"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    depends_on:
+      - darb
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DARB_DOMAIN:-localhost}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  darb-data:
+  caddy-data:
+  caddy-config:

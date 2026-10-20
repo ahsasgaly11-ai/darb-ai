@@ -1,0 +1,430 @@
+"""المسار الكامل لكل التقاط: صور → خلفية بلا مركبات → كشف العيوب → مقارنة باللقطة السابقة
+→ تقدير المخاطر والتنبؤ → تنبيهات. يُستدعى من المجدول (أسبوعي/يومي) أو يدويًا من الواجهة.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import cv2
+import httpx
+import numpy as np
+
+from . import change, config, db, incidents, lifecycle, risk, sources, vision, weather
+
+log = logging.getLogger("darb.pipeline")
+_cam_locks: dict[str, threading.Lock] = {}
+followup_hook = None  # يضبطه المجدول: جدولة فحص متابعة قريب لكاميرا عليها اشتباه
+
+ALERT_TEXT = {
+    "sudden_change": "تغيّر مفاجئ في سطح الطريق",
+    "new_pothole": "حفرة جديدة",
+    "threshold": "بلوغ عتبة الصيانة",
+    "risk_up": "ارتفاع مستوى الخطر",
+    "capture_failed": "تعذّر الالتقاط من الكاميرا",
+    "low_quality": "جودة الصورة غير كافية للتحليل",
+    "incident": "حادث مروري قرب الكاميرا",
+    "view_changed": "تغيّر زاوية الكاميرا",
+    "predicted": "تنبؤ بتدهور قادم",
+    "resolved": "رُصدت معالجة المشكلة",
+    "recurrence": "عودة المشكلة بعد الإصلاح",
+    "scene_change": "تغيّر في المشهد",
+}
+
+
+# ---------- الكاميرات ----------
+
+def tz(cam: dict) -> ZoneInfo:
+    return ZoneInfo(config.tz_of(cam.get("region", "")))
+
+
+def _camera_files() -> list[tuple[str, Path]]:
+    if config.CAMERAS_FILE:
+        return [(config.REGION_KEYS[0], Path(config.CAMERAS_FILE))]
+    return [(r, config.ROOT / "config" / config.REGIONS[r]["cameras"]) for r in config.REGION_KEYS]
+
+
+def sync_cameras(now: datetime | None = None) -> None:
+    """مزامنة ملفات كاميرات المناطق المفعّلة مع قاعدة البيانات (الكاميرات المضافة من الواجهة تبقى كما هي)."""
+    now = now or datetime.now(timezone.utc)
+    for region, path in _camera_files():
+        data = json.loads(path.read_text(encoding="utf-8"))
+        for cam in data.get("cameras", []):
+            existing = db.one("SELECT source FROM cameras WHERE id=?", (cam["id"],))
+            prev_src = json.loads(existing["source"]) if existing else {}
+            src = dict(cam["source"])
+            # أحداث المحاكاة النسبية («قبل N أيام») تُثبَّت بتاريخ مطلق عند أول تشغيل
+            for key in ("sudden_event", "repair_event"):
+                ev = src.get(key)
+                if ev and "days_ago" in ev and not ev.get("at"):
+                    at = prev_src.get(key, {}).get("at") or (now - timedelta(days=ev["days_ago"])).replace(
+                        hour=3, minute=0, second=0, microsecond=0).isoformat()
+                    src[key] = {**ev, "at": at}
+            ev = src.get("sudden_event")
+            if ev and "clear_after_days" in ev and ev.get("at") and not ev.get("clear_at"):
+                src["sudden_event"]["clear_at"] = (datetime.fromisoformat(ev["at"]) + timedelta(days=ev["clear_after_days"])).isoformat()
+            with db.tx() as c:
+                c.execute("""INSERT INTO cameras(id,name,road,lat,lng,source,meta,region) VALUES (?,?,?,?,?,?,?,?)
+                             ON CONFLICT(id) DO UPDATE SET name=excluded.name, road=excluded.road, lat=excluded.lat,
+                             lng=excluded.lng, source=excluded.source, meta=excluded.meta, region=excluded.region""",
+                          (cam["id"], cam["name"], cam["road"], cam["lat"], cam["lng"],
+                           json.dumps(src, ensure_ascii=False), json.dumps(cam.get("meta", {}), ensure_ascii=False), region))
+
+
+def get_camera(cam_id: str) -> dict | None:
+    cam = db.loads(db.one("SELECT * FROM cameras WHERE id=?", (cam_id,)), "source", "meta")
+    if cam:
+        m = db.one("SELECT date FROM maintenance WHERE camera_id=? ORDER BY date DESC LIMIT 1", (cam_id,))
+        if m:
+            cam["meta"]["last_maintenance"] = m["date"]
+    return cam
+
+
+def cameras(enabled_only: bool = True, region: str | None = None) -> list[dict]:
+    where, params = [], []
+    if enabled_only:
+        where.append("enabled=1")
+    if region:
+        where.append("region=?")
+        params.append(region)
+    sql = "SELECT id FROM cameras" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY region, id"
+    return [get_camera(r["id"]) for r in db.query(sql, params)]
+
+
+def history(cam_id: str, limit: int = 400) -> list[dict]:
+    rows = db.query("""SELECT id,ts,kind,condition_index,crack_density,pothole_count,changed_pct,quality,metrics
+                       FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL
+                       ORDER BY ts DESC LIMIT ?""", (cam_id, limit))
+    rows.reverse()
+    for r in rows:
+        db.loads(r, "metrics")
+    return rows
+
+
+def latest_risk(cam_id: str) -> dict | None:
+    return db.loads(db.one("SELECT * FROM risk WHERE camera_id=? ORDER BY ts DESC LIMIT 1", (cam_id,)),
+                    "factors", "forecast", "recommendations")
+
+
+# ---------- التنبيهات ----------
+
+def add_alert(cam: dict, ts: str, typ: str, severity: str, message: str, snapshot_id: int | None = None) -> dict:
+    title = f"{ALERT_TEXT.get(typ, typ)} — {cam['name']}"
+    row = {"camera_id": cam["id"], "ts": ts, "type": typ, "severity": severity, "title": title,
+           "message": message, "snapshot_id": snapshot_id,
+           # ملاحظات المراجعة البصرية لا تُحسب ضمن التنبيهات المفتوحة
+           "ack": 1 if typ == "scene_change" else 0}
+    row["id"] = db.insert("alerts", row)
+    if config.ALERT_WEBHOOK:
+        try:
+            httpx.post(config.ALERT_WEBHOOK, json={**row, "text": f"{title}\n{message}",
+                                                   "lat": cam["lat"], "lng": cam["lng"]}, timeout=10)
+        except Exception as e:
+            log.warning("webhook failed: %s", e)
+    return row
+
+
+# ---------- الالتقاط والتحليل ----------
+
+def _save(img: np.ndarray, path: Path) -> str:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    cv2.imwrite(str(path), img, [cv2.IMWRITE_JPEG_QUALITY, 85])
+    return str(path.relative_to(config.DATA_DIR))
+
+
+def load_image(rel: str) -> np.ndarray | None:
+    p = config.DATA_DIR / rel
+    return cv2.imread(str(p)) if p.exists() else None
+
+
+def run_capture(cam_id: str, kind: str = "manual", at: datetime | None = None,
+                n_frames: int | None = None, interval: float | None = None) -> dict:
+    lock = _cam_locks.setdefault(cam_id, threading.Lock())
+    with lock:
+        return _run_capture(cam_id, kind, at, n_frames, interval)
+
+
+def _run_capture(cam_id, kind, at, n_frames, interval) -> dict:
+    cam = get_camera(cam_id)
+    if cam is None:
+        raise KeyError(cam_id)
+    at = (at or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    ts = at.isoformat(timespec="seconds")
+    if n_frames is None:
+        n_frames = config.SENTINEL_BURST_FRAMES if kind == "sentinel" else config.BURST_FRAMES
+
+    try:
+        frames = sources.capture(cam, at, n_frames, interval)
+    except Exception as e:
+        log.warning("capture failed for %s: %s", cam_id, e)
+        recent = db.one("SELECT id FROM alerts WHERE camera_id=? AND type='capture_failed' AND ts>?",
+                        (cam_id, (at - timedelta(hours=24)).isoformat()))
+        if not recent:
+            add_alert(cam, ts, "capture_failed", "warning", f"الخطأ: {e}")
+        return {"ok": False, "error": str(e)}
+
+    roi = sources.default_roi(cam)
+    occ = sources.occlusion(frames, roi)
+    if occ > config.CONGESTION_OCCLUSION and cam["source"].get("type") == "datagovsg":
+        # ازدحام يحجب الطريق: المصادر ذات الأرشيف تسمح بتجربة لحظات قريبة واختيار أوضحها
+        for minutes in (-20, -40, 20, -60):
+            alt = at + timedelta(minutes=minutes)
+            if alt > datetime.now(timezone.utc):
+                continue
+            try:
+                f2 = sources.capture(cam, alt, n_frames, interval)
+            except Exception:
+                continue
+            o2 = sources.occlusion(f2, roi)
+            if o2 < occ:
+                frames, occ = f2, o2
+            if occ <= config.CONGESTION_OCCLUSION:
+                break
+    img = sources.background(frames)
+    q = vision.quality(img)
+    q["occlusion"] = occ
+    if q["status"] == "ok" and occ > config.CONGESTION_OCCLUSION:
+        q["status"] = "congested"
+    stamp = at.astimezone(tz(cam)).strftime("%Y%m%dT%H%M%S")
+    base = config.SNAPSHOT_DIR / cam_id / f"{stamp}_{kind}"
+    image_path = _save(img, base.with_suffix(".jpg"))
+
+    if q["status"] != "ok":
+        # لقطة غير صالحة للتحليل (ظلام/ضبابية/ازدحام): تُحفظ للسجل ولا تدخل الاتجاه ولا المقارنة
+        sid = db.insert("snapshots", {"camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path,
+                                      "quality": q["status"], "metrics": {"quality": q}})
+        if q["status"] != "congested":
+            add_alert(cam, ts, "low_quality", "info", f"السطوع {q['brightness']}، الحدة {q['sharpness']} — ستُعاد المحاولة في الموعد التالي.", sid)
+        return {"ok": False, "snapshot_id": sid, "quality": q}
+
+    prev = db.one("""SELECT * FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL AND ts<?
+                     ORDER BY ts DESC LIMIT 1""", (cam_id, ts))
+    prev_img = load_image(prev["image_path"]) if prev else None
+    use_ai = cam["source"].get("type") != "demo"  # المحاكاة مرسومة — يناسبها الكشف الكلاسيكي
+    result, diff = _analyze(img, roi, prev_img, use_ai)
+    confirmed = False
+    if prev and config.CONFIRM_RECAPTURE and _suspicious(prev, result, diff):
+        # تأكيد قبل التنبيه: دفعة ثانية بعد مهلة، ثم وسيط زمني على الدفعتين معًا —
+        # المركبة المتوقفة أو الظل العابر يختفي، والحفرة الحقيقية تبقى
+        try:
+            target = at + timedelta(seconds=config.CONFIRM_DELAY)
+            if cam["source"].get("type") != "demo":
+                # اللقطة الحية تنتظر فعلًا؛ اللقطة التاريخية (سجل سابق) لحظتها في الماضي فلا انتظار
+                wait = (target - datetime.now(timezone.utc)).total_seconds()
+                if wait > 0:
+                    time.sleep(wait)
+            frames2 = sources.capture(cam, target, n_frames, interval)
+            img = sources.background(frames + frames2)
+            _save(img, base.with_suffix(".jpg"))
+            result, diff = _analyze(img, roi, prev_img, use_ai)
+            confirmed = True
+        except Exception as e:
+            log.warning("confirmation capture failed for %s: %s", cam_id, e)
+
+    # تنبيه على مرحلتين: الاكتشاف الأول «اشتباه» فقط، ويُطلق التنبيه إذا بقي التغيّر في اللقطة التالية
+    # مقارنةً بالمرجع نفسه (يستبعد الظلال وتغيّر الإضاءة والأجسام العابرة التي تختلف بين يوم وآخر)
+    pending, suspect = None, None
+    prev_metrics = json.loads(prev["metrics"]) if prev else {}
+    prev_suspect = prev_metrics.get("suspect")
+    ref = (db.one("SELECT * FROM snapshots WHERE id=?", (prev_metrics["suspect_ref"],))
+           if prev_metrics.get("suspect_ref") and prev_suspect != "scene_change" else None)
+    ref_img = load_image(ref["image_path"]) if ref else None
+    if ref is not None and ref_img is not None:
+        diff_ref = change.compare(ref_img, img, roi)
+        cand = _sudden_alert(ref, result, diff_ref, True)
+        # التأكيد يصحّ لنفس نوع الحدث فقط: اشتباه بتغيّر لا يؤكّد حفرة ظهرت لأول مرة الآن
+        if cand and cand[0] == prev_suspect:
+            pending, diff = cand, diff_ref
+    if pending is None and prev and not diff.get("view_changed"):
+        cand = _sudden_alert(prev, result, diff, confirmed)
+        if cand and cand[1] != "info":
+            suspect = {"suspect": cand[0], "suspect_ref": prev["id"]}
+        elif cand:  # تغيّر في المشهد: ملاحظة للمراجعة فقط، لا اشتباه ولا مشكلة
+            pending = cand
+
+    annotated_path = _save(vision.annotate(img, result, roi, diff["boxes"]), base.with_name(base.name + "_ann.jpg"))
+    metrics = {**result, "change": diff, "quality": q, "confirmed": confirmed, **(suspect or {})}
+    sid = db.insert("snapshots", {
+        "camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path, "annotated_path": annotated_path,
+        "condition_index": result["condition_index"], "crack_density": result["crack_density"],
+        "pothole_count": result["pothole_count"], "changed_pct": diff["changed_pct"], "quality": "ok",
+        "metrics": metrics,
+    })
+
+    alerts = []
+    if diff.get("view_changed"):
+        alerts.append(add_alert(cam, ts, "view_changed", "info",
+                                "تغيّر منظر الكاميرا (دوران أو تكبير) — اعتُمدت هذه اللقطة مرجعًا جديدًا للمقارنة.", sid))
+    elif pending:
+        typ, sev, msg = pending
+        note = "" if sev == "info" else " (تأكّد في لقطتين متتاليتين)"
+        alerts.append(add_alert(cam, ts, typ, sev, msg + note, sid))
+    if suspect and followup_hook and abs((datetime.now(timezone.utc) - at).total_seconds()) < 600:
+        followup_hook(cam_id)  # لقطة حية: فحص متابعة قريب بدل انتظار الموعد التالي
+
+    assessment = assess_camera(cam, at)
+    if assessment:
+        prev_r = db.loads(db.one("SELECT level, forecast FROM risk WHERE camera_id=? AND ts<? ORDER BY ts DESC LIMIT 1",
+                                 (cam_id, ts)), "forecast")
+        # عتبة الصيانة تُقاس على المؤشر المُنعَّم (وسيط آخر 3 لقطات أسبوعية) لا على لقطة منفردة
+        thr = config.MAINTENANCE_THRESHOLD
+        prev_ci = (prev_r or {}).get("forecast", {}).get("ci") if prev_r else None
+        if prev_ci is not None and prev_ci > thr >= assessment["ci"]:
+            alerts.append(add_alert(cam, ts, "threshold", "critical",
+                                    f"مؤشر الحالة المُنعَّم {assessment['ci']:.0f} أصبح دون عتبة الصيانة {thr:.0f}.", sid))
+        order = ["low", "medium", "high", "critical"]
+        if prev_r and order.index(assessment["level"]) > order.index(prev_r["level"]) and assessment["level"] in ("high", "critical"):
+            alerts.append(add_alert(cam, ts, "risk_up", "warning",
+                                    f"مستوى الخطر ارتفع إلى «{assessment['level_ar']}» (الدرجة {assessment['score']:.0f}/100). "
+                                    f"أبرز العوامل: {assessment['factors'][0]['label']}.", sid))
+        db.insert("risk", {"camera_id": cam_id, "ts": ts, "score": assessment["score"], "level": assessment["level"],
+                           "prob_90d": assessment["prob_90d"], "weeks_to_threshold": assessment["weeks_to_threshold"],
+                           "factors": assessment["factors"],
+                           "forecast": {k: assessment[k] for k in ("forecast", "ci", "ci_slope", "effective_slope",
+                                                                   "season_factor", "heat", "outlook", "priority",
+                                                                   "level_ar", "next_inspection_days", "features")},
+                           "recommendations": assessment["recommendations"]})
+    try:  # دورة حياة المشكلة: قبل ← أثناء ← بعد
+        lifecycle.update(cam, ts, result, assessment, alerts, add_alert)
+    except Exception:
+        log.exception("lifecycle update failed for %s", cam_id)
+    return {"ok": True, "snapshot_id": sid, "condition_index": result["condition_index"],
+            "risk": assessment and {k: assessment[k] for k in ("score", "level", "level_ar")}, "alerts": alerts}
+
+
+def _sudden_alert(ref: dict, result: dict, diff: dict, confirmed: bool) -> tuple[str, str, str] | None:
+    """قواعد التغيّر المفاجئ مقارنةً بلقطة مرجعية — تعيد (النوع، الخطورة، الرسالة) أو None."""
+    ci_drop = ref["condition_index"] - result["condition_index"]
+    new_potholes = result["pothole_count"] - (ref["pothole_count"] or 0)
+    area_change = diff["changed_pct"] >= config.SUDDEN_CHANGE_PCT and diff["darker_ratio"] >= 0.5
+    if str(result.get("engine", "")).startswith("ai") and area_change and ci_drop < 5 and new_potholes <= 0:
+        # مع الذكاء الاصطناعي: فرق البكسلات وحده (ظلال الشمس، الغيوم، أرض مبتلة، مركبات) ليس دليلًا على عيب.
+        # يُسجَّل للمراجعة البصرية فقط ولا يفتح مشكلة — قد يكون مخلّفات لا يعرفها النموذج
+        return ("scene_change", "info",
+                f"تغيّر في {diff['changed_pct']:.1f}% من المشهد دون عيب يكتشفه النموذج — غالبًا ظلال أو إضاءة أو مركبات؛ "
+                "للمراجعة البصرية إن لزم.") if confirmed else None
+    if area_change and (ci_drop >= 5 or new_potholes > 0):
+        extra = f" ورُصدت {new_potholes} حفرة جديدة" if new_potholes > 0 else ""
+        return ("sudden_change", "critical",
+                f"تغيّر {diff['changed_pct']:.1f}% من مساحة الطريق{extra}، وانخفض مؤشر الحالة {ci_drop:.0f} نقطة. "
+                "قد يكون حفرة مفاجئة أو هبوطًا أو مخلّفات — يوصى بفحص ميداني فوري.")
+    if new_potholes > 0:
+        return ("new_pothole", "critical",
+                f"عدد الحفر المرصودة ارتفع من {ref['pothole_count']} إلى {result['pothole_count']}.")
+    if area_change and confirmed:
+        return ("sudden_change", "warning",
+                f"تغيّر مستمر في {diff['changed_pct']:.1f}% من سطح الطريق — قد يكون مخلّفات أو انسكابًا أو تجمّع مياه "
+                "أو أعمالًا على الطريق أو بداية هبوط. يوصى بالتحقق.")
+    if ci_drop >= config.SUDDEN_CI_DROP:
+        return ("sudden_change", "warning",
+                f"انخفض مؤشر الحالة من {ref['condition_index']:.0f} إلى {result['condition_index']:.0f}.")
+    return None
+
+
+def _analyze(img, roi, prev_img, use_ai=True):
+    result = vision.analyze(img, roi, use_ai)
+    diff = change.compare(prev_img, img, roi) if prev_img is not None else {"changed_pct": 0.0, "boxes": [], "darker_ratio": 0.0}
+    if diff.get("view_changed"):
+        return result, diff
+    return result, diff
+
+
+def _suspicious(prev: dict, result: dict, diff: dict) -> bool:
+    if diff.get("view_changed"):
+        return False
+    return ((diff["changed_pct"] >= config.SUDDEN_CHANGE_PCT and diff["darker_ratio"] >= 0.5)
+            or result["pothole_count"] > (prev["pothole_count"] or 0)
+            or prev["condition_index"] - result["condition_index"] >= config.SUDDEN_CI_DROP)
+
+
+def assess_camera(cam: dict, at: datetime) -> dict | None:
+    hist = [h for h in history(cam["id"]) if h["ts"] <= at.isoformat(timespec="seconds")]
+    if not hist:
+        return None
+    region = cam.get("region") or config.REGION_KEYS[0]
+    day = at.astimezone(tz(cam)).date()
+    heat = weather.heat_features(day, region)
+    out = weather.outlook(day + timedelta(days=1), region)
+    n_inc = len(incidents.near(cam)) if incidents.enabled() and at > datetime.now(timezone.utc) - timedelta(hours=1) else 0
+    return risk.assess(cam, hist, heat, out, n_inc, at.astimezone(tz(cam)))
+
+
+def check_incidents() -> int:
+    """تنبيه فوري عند حادث قريب جدًا من كاميرا خلال آخر ساعتين، مع التقاط فحص سريع."""
+    if not incidents.enabled():
+        return 0
+    n = 0
+    for cam in cameras():
+        recent = incidents.near(cam, radius_km=0.4, within=timedelta(hours=2))
+        if recent and not db.one("SELECT id FROM alerts WHERE camera_id=? AND type='incident' AND ts>?",
+                                 (cam["id"], (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat())):
+            add_alert(cam, datetime.now(timezone.utc).isoformat(timespec="seconds"), "incident", "info",
+                      f"{len(recent)} حادث/حوادث خلال 400 م — سيُجرى فحص سريع للقطة الطريق.")
+            run_capture(cam["id"], "sentinel")
+            n += 1
+    return n
+
+
+def is_daylight(cam: dict, at: datetime | None = None) -> bool:
+    h = (at or datetime.now(timezone.utc)).astimezone(tz(cam)).hour
+    return config.DAYLIGHT_HOURS[0] <= h < config.DAYLIGHT_HOURS[1]
+
+
+def catch_up(max_age: timedelta = timedelta(days=7)) -> int:
+    """عند تشغيل الخادم: التقاط فوري لأي كاميرا لم تُحلَّل منذ أسبوع (مثل كاميرا حقيقية أضيفت حديثًا
+    أو خادم كان متوقفًا وقت الجدول الأسبوعي)."""
+    cutoff = (datetime.now(timezone.utc) - max_age).isoformat()
+    n = 0
+    for cam in cameras():
+        if not db.one("SELECT id FROM snapshots WHERE camera_id=? AND ts>? LIMIT 1", (cam["id"], cutoff)):
+            if cam["source"].get("type") != "demo" and not is_daylight(cam):
+                continue  # ليلًا في منطقة الكاميرا — يلتقطها المجدول في موعدها النهاري
+            run_capture(cam["id"], "weekly")
+            n += 1
+    return n
+
+
+# ---------- السجل التاريخي التجريبي ----------
+
+def seed_history(weeks: int | None = None, now: datetime | None = None) -> int:
+    """للمصادر التي تحتفظ بصورها السابقة (المحاكاة، data.gov.sg): بناء لقطات أسبوعية لعدد من الأسابيع
+    الماضية + فحوص يومية لآخر أسبوع، حتى تظهر الاتجاهات والتنبؤات والتنبيهات فور التشغيل الأول.
+    مع كاميرات data.gov.sg تكون هذه صورًا حقيقية من الأرشيف لا محاكاة."""
+    weeks = config.SEED_WEEKS if weeks is None else weeks
+    now_utc = now or datetime.now(timezone.utc)
+    demo = [c for c in cameras() if sources.supports_history(c)
+            and not db.one("SELECT id FROM snapshots WHERE camera_id=? LIMIT 1", (c["id"],))]
+    if not demo or weeks <= 0:
+        return 0
+    for region in {c["region"] for c in demo}:
+        try:  # جلب الطقس للفترة كلها دفعة واحدة لكل منطقة
+            weather.daily_range((now_utc - timedelta(weeks=weeks, days=31)).date(), (now_utc + timedelta(days=15)).date(), region)
+        except Exception as e:
+            log.warning("weather prefetch failed: %s", e)
+
+    def plan_for(cam):
+        # الجدول بالتوقيت المحلي للكاميرا: الإثنين في ساعة الالتقاط + فحص يومي ظهرًا لآخر 6 أيام
+        now = now_utc.astimezone(tz(cam))
+        last_monday = (now - timedelta(days=now.weekday())).replace(hour=config.WEEKLY_HOUR, minute=0, second=0, microsecond=0)
+        if last_monday > now:
+            last_monday -= timedelta(weeks=1)
+        plan = [(last_monday - timedelta(weeks=w), "seed") for w in range(weeks - 1, -1, -1)]
+        plan += [(now.replace(hour=11, minute=0, second=0, microsecond=0) - timedelta(days=d), "sentinel")
+                 for d in range(6, 0, -1)]
+        return sorted(p for p in plan if p[0] < now)
+
+    def seed_one(cam):
+        plan = plan_for(cam)
+        for at, kind in plan:
+            run_capture(cam["id"], kind, at.astimezone(timezone.utc), n_frames=config.SEED_FRAMES, interval=0)
+        log.info("seeded %s", cam["id"])
+        return len(plan)
+
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        return sum(ex.map(seed_one, demo))

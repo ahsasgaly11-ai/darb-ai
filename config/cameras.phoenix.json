@@ -1,0 +1,317 @@
+{
+  "_comment": "كاميرات حقيقية من وزارة النقل في أريزونا (ADOT) عبر AZ511 — صور 1920×1080. image_id هو رقم الصورة في https://az511.gov/map/Cctv/{image_id}. الحمل المروري وتاريخ الرصف تقديرات تقريبية للتجربة. roi = منطقة الطريق (نِسَب)، ضُبطت مبدئيًا من صور ليلية وتُراجع على صور النهار.",
+  "cameras": [
+    {
+      "id": "az-sr87-fort-mcdowell",
+      "name": "SR-87 — تقاطع فورت ماكدويل",
+      "road": "SR-87 Beeline Hwy @ Fort McDowell Rd",
+      "lat": 33.580224,
+      "lng": -111.678246,
+      "source": {
+        "type": "az511",
+        "image_id": 741,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 22000,
+        "heavy_vehicle_pct": 12,
+        "surface_date": "2012-01-01",
+        "roi": [
+          [
+            0.15,
+            0.5
+          ],
+          [
+            0.95,
+            0.48
+          ],
+          [
+            0.95,
+            0.92
+          ],
+          [
+            0.6,
+            0.95
+          ],
+          [
+            0.45,
+            0.8
+          ],
+          [
+            0.15,
+            0.78
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-sr87-shea",
+      "name": "SR-87 — عند شارع شيا",
+      "road": "SR-87 Beeline Hwy @ Shea Blvd",
+      "lat": 33.5665690000001,
+      "lng": -111.708129,
+      "source": {
+        "type": "az511",
+        "image_id": 743,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 26000,
+        "heavy_vehicle_pct": 14,
+        "surface_date": "2010-01-01",
+        "roi": [
+          [
+            0.33,
+            0.98
+          ],
+          [
+            0.98,
+            0.98
+          ],
+          [
+            0.98,
+            0.82
+          ],
+          [
+            0.42,
+            0.34
+          ],
+          [
+            0.2,
+            0.34
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-i10-43rd",
+      "name": "I-10 — شرق شارع 43",
+      "road": "I-10 E of 43rd Ave",
+      "lat": 33.4625436700001,
+      "lng": -112.1397535,
+      "source": {
+        "type": "az511",
+        "image_id": 826,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 230000,
+        "heavy_vehicle_pct": 9,
+        "surface_date": "2016-01-01",
+        "roi": [
+          [
+            0.0,
+            0.55
+          ],
+          [
+            0.0,
+            0.98
+          ],
+          [
+            0.28,
+            0.98
+          ],
+          [
+            0.46,
+            0.2
+          ],
+          [
+            0.33,
+            0.18
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-i10-tunnel",
+      "name": "I-10 — نفق دك بارك (الاتجاه الشرقي)",
+      "road": "I-10 Deck Park Tunnel EB",
+      "lat": 33.46149689,
+      "lng": -112.075333,
+      "source": {
+        "type": "az511",
+        "image_id": 837,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 210000,
+        "heavy_vehicle_pct": 8,
+        "surface_date": "2015-01-01",
+        "roi": [
+          [
+            0.22,
+            0.98
+          ],
+          [
+            1.0,
+            0.98
+          ],
+          [
+            1.0,
+            0.7
+          ],
+          [
+            0.6,
+            0.45
+          ],
+          [
+            0.33,
+            0.45
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-i10-chandler",
+      "name": "I-10 — شارع تشاندلر",
+      "road": "I-10 @ Chandler Blvd",
+      "lat": 33.3048233800001,
+      "lng": -111.971914,
+      "source": {
+        "type": "az511",
+        "image_id": 864,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 180000,
+        "heavy_vehicle_pct": 11,
+        "surface_date": "2017-01-01",
+        "roi": [
+          [
+            0.48,
+            0.98
+          ],
+          [
+            1.0,
+            0.98
+          ],
+          [
+            1.0,
+            0.62
+          ],
+          [
+            0.48,
+            0.28
+          ],
+          [
+            0.33,
+            0.28
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-us60-val-vista",
+      "name": "US-60 — غرب فال فيستا",
+      "road": "US-60 W of Val Vista Dr",
+      "lat": 33.38678372,
+      "lng": -111.7627429,
+      "source": {
+        "type": "az511",
+        "image_id": 976,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 190000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2014-01-01",
+        "roi": [
+          [
+            0.25,
+            0.98
+          ],
+          [
+            0.78,
+            0.98
+          ],
+          [
+            0.93,
+            0.42
+          ],
+          [
+            0.8,
+            0.36
+          ],
+          [
+            0.25,
+            0.82
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-l101-union-hills",
+      "name": "Loop 101 — يونيون هيلز",
+      "road": "Loop 101 @ Union Hills Dr",
+      "lat": 33.6524344600001,
+      "lng": -112.2329603,
+      "source": {
+        "type": "az511",
+        "image_id": 1006,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 150000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2013-01-01",
+        "roi": [
+          [
+            0.0,
+            0.62
+          ],
+          [
+            1.0,
+            0.8
+          ],
+          [
+            1.0,
+            0.98
+          ],
+          [
+            0.0,
+            0.98
+          ]
+        ]
+      }
+    },
+    {
+      "id": "az-sr303-grand",
+      "name": "SR-303 — شرق غراند أفنيو",
+      "road": "SR-303 E of Grand Ave",
+      "lat": 33.69406028,
+      "lng": -112.3836259,
+      "source": {
+        "type": "az511",
+        "image_id": 1180,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 60000,
+        "heavy_vehicle_pct": 18,
+        "surface_date": "2019-01-01",
+        "roi": [
+          [
+            0.1,
+            0.98
+          ],
+          [
+            0.95,
+            0.98
+          ],
+          [
+            0.85,
+            0.55
+          ],
+          [
+            0.55,
+            0.4
+          ],
+          [
+            0.2,
+            0.45
+          ]
+        ]
+      }
+    }
+  ]
+}
