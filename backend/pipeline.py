@@ -44,16 +44,10 @@ def tz(cam: dict) -> ZoneInfo:
     return ZoneInfo(config.tz_of(cam.get("region", "")))
 
 
-def _camera_files() -> list[tuple[str, Path]]:
-    if config.CAMERAS_FILE:
-        return [(config.REGION_KEYS[0], Path(config.CAMERAS_FILE))]
-    return [(r, config.ROOT / "config" / config.REGIONS[r]["cameras"]) for r in config.REGION_KEYS]
-
-
 def sync_cameras(now: datetime | None = None) -> None:
     """مزامنة ملفات كاميرات المناطق المفعّلة مع قاعدة البيانات (الكاميرات المضافة من الواجهة تبقى كما هي)."""
     now = now or datetime.now(timezone.utc)
-    for region, path in _camera_files():
+    for region, path in config.camera_files():
         data = json.loads(path.read_text(encoding="utf-8"))
         for cam in data.get("cameras", []):
             existing = db.one("SELECT source FROM cameras WHERE id=?", (cam["id"],))

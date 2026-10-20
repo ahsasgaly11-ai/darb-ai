@@ -1,7 +1,8 @@
 """تشغيل دَرْب AI دفعةً واحدة دون خادم دائم — للاستضافة المجانية (GitHub Actions أو أي مجدول).
 
-    python -m backend.cli daily   --site site/   # الالتقاط اليومي (يُشغَّل كل بضع ساعات؛ يلتقط المناطق التي في نافذتها)
+    python -m backend.cli daily   --site site/   # الالتقاط اليومي (يُشغَّل كل نصف ساعة؛ يلتقط المستحق في نافذته)
     python -m backend.cli confirm --site site/   # تأكيد الاشتباهات بعد ساعة
+    python -m backend.cli due                    # ما المطلوب الآن؟ daily | confirm | none (بلا مكتبات ثقيلة)
 
 لكل كاميرا مرة يوميًا بين 9 و12 صباحًا بالتوقيت المحلي (ضوء جيد قبل تموّج الهواء من حرارة الأسفلت):
 دفعة من 5 إطارات ← وسيط زمني يزيل المركبات ← تحليل بالذكاء الاصطناعي ← المخاطر ودورة حياة المشكلات.
@@ -28,6 +29,8 @@ TARGET_HOUR = int(os.getenv("DARB_CAPTURE_HOUR", "10"))   # الساعة الم�
 WINDOW = (int(os.getenv("DARB_WINDOW_START", "9")), int(os.getenv("DARB_WINDOW_END", "12")))
 CONFIRM_AFTER = timedelta(minutes=int(os.getenv("DARB_CONFIRM_AFTER_MIN", "50")))
 PENDING_FILE = "pending_confirm.json"
+MAX_TRIES = int(os.getenv("DARB_MAX_TRIES", "3"))  # محاولات الكاميرا المتعطلة في اليوم قبل تركها لليوم التالي
+ATTEMPTS_FILE = "attempts.json"
 
 
 def capture_time(cam, now_utc, pipeline, sources) -> datetime | None:
@@ -89,6 +92,75 @@ def load_pending(config) -> list[str]:
         return []
 
 
+def day_key(cam, at, pipeline) -> str:
+    return f"{at.astimezone(pipeline.tz(cam)).date().isoformat()}|{cam['id']}"
+
+
+def load_attempts(config, now) -> dict:
+    try:
+        data = json.loads((config.DATA_DIR / ATTEMPTS_FILE).read_text())
+    except (OSError, ValueError):
+        return {}
+    oldest = (now - timedelta(days=3)).date().isoformat()
+    return {k: v for k, v in data.items() if k.split("|")[0] >= oldest}
+
+
+def save_attempts(config, attempts: dict) -> None:
+    (config.DATA_DIR / ATTEMPTS_FILE).write_text(json.dumps(attempts, sort_keys=True))
+
+
+def plan_captures(cams, now, pipeline, sources, db, attempts) -> tuple[list, int]:
+    """الكاميرات المستحقة الآن: في نافذة منطقتها، ولم تُحلَّل بنجاح اليوم، ولم تستنفد محاولاتها.
+    كل تشغيل في النافذة فرصة جديدة: تشغيل مجدول قد يسقط، وكاميرا قد تكون متوقفة لحظتها."""
+    plan, skipped = [], 0
+    for cam in cams:
+        at = capture_time(cam, now, pipeline, sources)
+        if at is None:
+            skipped += 1  # خارج نافذة 9–12 صباحًا في منطقتها
+            continue
+        day = at.astimezone(pipeline.tz(cam)).replace(hour=0, minute=0, second=0, microsecond=0)
+        if db.one("""SELECT id FROM snapshots WHERE camera_id=? AND ts>=? AND ts<? AND kind IN ('weekly','sentinel','seed')
+                     AND condition_index IS NOT NULL""",
+                  (cam["id"], day.astimezone(timezone.utc).isoformat(), (day + timedelta(days=1)).astimezone(timezone.utc).isoformat())):
+            skipped += 1  # حُلّلت اليوم (لقطة مظلمة أو مزدحمة لا تُحسب: تُعاد في التشغيل التالي)
+            continue
+        if attempts.get(day_key(cam, at, pipeline), 0) >= MAX_TRIES:
+            skipped += 1  # متعطلة طوال النافذة: يحاولها اليوم التالي
+            continue
+        plan.append((cam, at))
+    return plan, skipped
+
+
+def due(args) -> int:
+    """يطبع ما يلزم تشغيله الآن: daily | confirm | none. يعتمد على المكتبة القياسية فقط،
+    فيعمل قبل تثبيت PyTorch وينتهي التشغيل المجدول خلال ثوانٍ إن لم يكن هناك عمل."""
+    from types import SimpleNamespace
+    from zoneinfo import ZoneInfo
+    from . import config, db
+    now = datetime.now(timezone.utc)
+    cams = []
+    for region, path in config.camera_files():
+        for cam in json.loads(path.read_text(encoding="utf-8")).get("cameras", []):
+            if cam.get("enabled", True):
+                cams.append({**cam, "region": cam.get("region") or region})
+    pl = SimpleNamespace(tz=lambda cam: ZoneInfo(config.tz_of(cam.get("region", ""))))
+    src = SimpleNamespace(supports_history=lambda cam: cam["source"].get("type") in config.HISTORY_SOURCES)
+    plan, _ = plan_captures(cams, now, pipeline=pl, sources=src, db=db, attempts=load_attempts(config, now))
+    if plan:
+        log.info("due: %d cameras (%s)", len(plan), ", ".join(sorted({c["region"] for c, _ in plan})))
+        print("daily")
+        return 0
+    for cid in load_pending(config):
+        last = db.one("SELECT ts, metrics FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL ORDER BY ts DESC LIMIT 1", (cid,))
+        if last and json.loads(last["metrics"]).get("suspect"):
+            age = now - datetime.fromisoformat(last["ts"])
+            if max(CONFIRM_AFTER, timedelta(hours=1)) <= age <= timedelta(hours=6):
+                print("confirm")
+                return 0
+    print("none")
+    return 0
+
+
 def build_site(args) -> None:
     if args.site:
         site = Path(args.site)
@@ -129,21 +201,13 @@ def daily(args) -> int:
         except Exception:
             log.exception("GitHub reports ingest failed")
     now = datetime.now(timezone.utc)
-    plan, skipped = [], 0
-    for cam in pipeline.cameras():
-        at = capture_time(cam, now, pipeline, sources)
-        if at is None:
-            skipped += 1  # خارج نافذة 9–12 صباحًا في منطقتها
-            continue
-        local = at.astimezone(pipeline.tz(cam))
-        day_start = local.replace(hour=0, minute=0, second=0, microsecond=0).astimezone(timezone.utc).isoformat()
-        day_end = (local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)).astimezone(timezone.utc).isoformat()
-        if db.one("SELECT id FROM snapshots WHERE camera_id=? AND ts>=? AND ts<? AND kind IN ('weekly','sentinel','seed')",
-                  (cam["id"], day_start, day_end)):
-            skipped += 1  # التُقطت اليوم مسبقًا
-            continue
-        plan.append((cam, at))
+    attempts = load_attempts(config, now)
+    plan, skipped = plan_captures(pipeline.cameras(), now, pipeline, sources, db, attempts)
     log.info("capturing %d cameras (%d frames each), skipped %d", len(plan), FRAMES, skipped)
+    for cam, at in plan:
+        key = day_key(cam, at, pipeline)
+        attempts[key] = attempts.get(key, 0) + 1
+    save_attempts(config, attempts)
     frames = capture_all(plan, sources)
     weekday_kind = lambda cam, at: "weekly" if at.astimezone(pipeline.tz(cam)).weekday() == 0 else "sentinel"
     done, failed, suspects = analyze_all(plan, frames, weekday_kind, pipeline)
@@ -192,7 +256,8 @@ def main() -> int:
     p = argparse.ArgumentParser(prog="python -m backend.cli")
     sub = p.add_subparsers(dest="cmd", required=True)
     for name, help_ in (("daily", "التقاط يومي (5 إطارات) للمناطق التي في نافذة 9–12 صباحًا + تحليل + بناء الموقع"),
-                        ("confirm", "إعادة التقاط الكاميرات المشتبه بها بعد ساعة")):
+                        ("confirm", "إعادة التقاط الكاميرات المشتبه بها بعد ساعة"),
+                        ("due", "ما المطلوب الآن: daily | confirm | none")):
         d = sub.add_parser(name, help=help_)
         d.add_argument("--regions", help="المناطق (يتجاوز DARB_REGIONS)")
         d.add_argument("--site", help="مجلد إخراج الموقع الثابت")
@@ -202,7 +267,7 @@ def main() -> int:
         os.environ["DARB_REGIONS"] = args.regions  # قبل استيراد config
     os.environ.setdefault("DARB_CONFIRM_RECAPTURE", "0")
     os.environ.setdefault("DARB_SCHEDULER", "0")
-    return confirm(args) if args.cmd == "confirm" else daily(args)
+    return {"confirm": confirm, "due": due}.get(args.cmd, daily)(args)
 
 
 if __name__ == "__main__":

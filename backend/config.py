@@ -112,6 +112,17 @@ def tz_of(region: str) -> str:
     return REGIONS.get(region, REGIONS[REGION_KEYS[0]])["tz"]
 
 
+def camera_files() -> list[tuple[str, Path]]:
+    """ملفات كاميرات المناطق المفعّلة: (المنطقة، المسار)."""
+    if CAMERAS_FILE:
+        return [(REGION_KEYS[0], Path(CAMERAS_FILE))]
+    return [(r, ROOT / "config" / REGIONS[r]["cameras"]) for r in REGION_KEYS]
+
+
+# مصادر يمكن طلب صورها في لحظة ماضية (أرشيف)
+HISTORY_SOURCES = ("demo", "datagovsg")
+
+
 # جدول الالتقاط: تحليل كامل أسبوعي لبناء الاتجاه الزمني + فحص سريع يومي لرصد المشاكل المفاجئة
 WEEKLY_DAY = os.getenv("DARB_WEEKLY_DAY", "mon")      # يوم الالتقاط الأسبوعي
 WEEKLY_HOUR = int(os.getenv("DARB_WEEKLY_HOUR", "10"))  # 10 صباحًا: إضاءة جيدة وظلال أقصر
@@ -138,7 +149,7 @@ SEED_FRAMES = int(os.getenv("DARB_SEED_FRAMES", "5"))
 FOLLOWUP_MINUTES = float(os.getenv("DARB_FOLLOWUP_MINUTES", "60"))
 
 # فوق هذه النسبة من حجب المركبات تُعدّ اللقطة «مزدحمة» ولا تدخل التحليل (انظر sources.occlusion)
-CONGESTION_OCCLUSION = float(os.getenv("DARB_CONGESTION_OCCLUSION", "0.10"))
+CONGESTION_OCCLUSION = float(os.getenv("DARB_CONGESTION_OCCLUSION", "0.06"))
 
 # عتبة مؤشر الحالة التي تستوجب الصيانة (على غرار PCI)
 MAINTENANCE_THRESHOLD = float(os.getenv("DARB_MAINTENANCE_THRESHOLD", "55"))

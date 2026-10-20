@@ -211,7 +211,7 @@ def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
 
 def supports_history(camera: dict) -> bool:
     """مصادر يمكن طلب صورها في لحظة ماضية — تُستخدم لبناء سجل تاريخي عند أول تشغيل."""
-    return camera["source"].get("type") in ("demo", "datagovsg")
+    return camera["source"].get("type") in config.HISTORY_SOURCES
 
 
 def capture(camera: dict, at: datetime, n: int | None = None, interval: float | None = None) -> list[np.ndarray]:
@@ -245,14 +245,15 @@ def background(frames: list[np.ndarray]) -> np.ndarray:
 
 def occlusion(frames: list[np.ndarray], roi: list[list[float]]) -> float:
     """نسبة منطقة الطريق التي تحجبها مركبات لا يزيلها الوسيط (ازدحام/توقف): بكسلات تختلف عن الوسيط
-    في أكثر من 20% من الإطارات. القيم فوق ~0.10 تعني أن سطح الطريق غير ظاهر بما يكفي للتحليل."""
+    في نصف الإطارات أو أكثر (الوسيط يستعيد البكسل ما دامت أغلب الإطارات نظيفة، فالمرور المتحرك لا يُحسب).
+    القيم فوق ~0.06 تعني أن سطح الطريق غير ظاهر بما يكفي للتحليل."""
     if len(frames) < 3:
         return 0.0
     from .vision import roi_mask
     st = np.stack([cv2.cvtColor(f, cv2.COLOR_BGR2GRAY) for f in frames]).astype(np.int16)
     dev = (np.abs(st - np.median(st, axis=0)) > 30).mean(axis=0)
     m = roi_mask(frames[0].shape, roi) > 0
-    return round(float((dev[m] > 0.2).mean()), 3)
+    return round(float((dev[m] >= 0.5).mean()), 3)
 
 
 def default_roi(camera: dict) -> list[list[float]]:

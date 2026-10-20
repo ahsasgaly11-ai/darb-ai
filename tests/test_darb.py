@@ -19,7 +19,7 @@ import numpy as np  # noqa: E402
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from backend import app as app_mod, db, pipeline, risk, sources, synthetic, vision  # noqa: E402
+from backend import app as app_mod, config, db, pipeline, risk, sources, synthetic, vision  # noqa: E402
 
 NOW = datetime(2026, 10, 20, 6, tzinfo=timezone.utc)
 FAST = {"id": "t-fast", "name": "مقطع اختبار سريع التدهور", "road": "T1", "lat": 25.1, "lng": 55.2,
@@ -158,7 +158,12 @@ def test_occlusion_flags_congestion():
             x, y = int(rng.uniform(150, 800)), int(rng.uniform(280, 520))
             cv2.rectangle(f, (x, y), (x + 70, y + 40), tuple(int(v) for v in rng.integers(0, 255, 3)), -1)
         jam.append(f)
-    assert sources.occlusion(jam, roi) > 0.10
+    assert sources.occlusion(jam, roi) > config.CONGESTION_OCCLUSION
+    moving = [clean.copy() for _ in range(5)]  # مرور متحرك: كل موضع محجوب في إطارين فقط فيستعيده الوسيط
+    for i in range(5):
+        for k in (i, (i + 1) % 5):
+            cv2.rectangle(moving[i], (150 + 130 * k, 300), (260 + 130 * k, 500), (20, 20, 20), -1)
+    assert sources.occlusion(moving, roi) < config.CONGESTION_OCCLUSION
 
 
 def test_smoothing_ignores_single_spike_but_keeps_persistent_drop():
@@ -295,6 +300,31 @@ def test_capture_window_and_weekly_median():
     # وسيط الأسبوع: يوم شاذ واحد (مبتل/ظل) لا يغيّر نقطة الأسبوع
     days = [{"ts": (NOW - timedelta(days=30 - d)).isoformat(), "condition_index": 40 if d == 2 else 90} for d in range(7)]
     assert all(w["condition_index"] == 90 for w in risk.weekly(days))
+
+
+def test_daily_plan_retries_until_analyzed():
+    """كل تشغيل في نافذة 9–12 فرصة جديدة: اللقطة المزدحمة تُعاد، والمتعطلة تُترك بعد 3 محاولات، والمحلَّلة لا تُكرر."""
+    from zoneinfo import ZoneInfo
+    from backend import cli
+
+    class P:
+        tz = staticmethod(lambda cam: ZoneInfo("America/Phoenix"))
+
+    class Src:
+        supports_history = staticmethod(lambda cam: False)
+
+    cam = {**FAST, "id": "t-retry", "source": {"type": "az511", "image_id": 1}}
+    _add(cam)
+    now = datetime(2026, 10, 21, 10, 7, tzinfo=ZoneInfo("America/Phoenix")).astimezone(timezone.utc)
+    plan = lambda attempts={}: [c["id"] for c, _ in cli.plan_captures([cam], now, P, Src, db, attempts)[0]]
+    assert plan() == ["t-retry"]
+    db.insert("snapshots", {"camera_id": "t-retry", "ts": now.isoformat(timespec="seconds"), "kind": "sentinel",
+                            "image_path": "x.jpg", "quality": "congested", "metrics": {}})
+    assert plan() == ["t-retry"]                                   # مزدحمة: تُعاد في التشغيل التالي
+    assert plan({cli.day_key(cam, now, P): cli.MAX_TRIES}) == []    # استنفدت محاولات اليوم
+    db.insert("snapshots", {"camera_id": "t-retry", "ts": now.isoformat(timespec="seconds"), "kind": "sentinel",
+                            "image_path": "x.jpg", "condition_index": 90.0, "metrics": {}})
+    assert plan() == []                                            # حُلّلت اليوم
 
 
 def test_gulf_pavement_physics():
