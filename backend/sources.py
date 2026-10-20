@@ -83,17 +83,25 @@ def _video(src: dict, n: int, interval: float) -> list[np.ndarray]:
     cap = cv2.VideoCapture(src["url"])
     if not cap.isOpened():
         raise CaptureError("تعذّر فتح البث (تأكد من دعم FFmpeg في OpenCV)")
-    frames, next_at, deadline = [], 0.0, time.time() + n * interval + 60
+    frames, next_at, t0 = [], 0.0, time.time()
+    deadline = t0 + n * interval + 60
     try:
         while len(frames) < n and time.time() < deadline:
-            ok, f = cap.read()
-            if not ok:
+            if not cap.grab():
                 break
-            if time.time() >= next_at:
-                if f.shape[1] > 1280:  # مثل بقية المصادر: 1280 عرضًا تكفي للتحليل
-                    f = cv2.resize(f, (1280, int(f.shape[0] * 1280 / f.shape[1])), interpolation=cv2.INTER_AREA)
-                frames.append(f)
-                next_at = time.time() + interval
+            # التباعد بزمن البث نفسه لا بالساعة: HLS يصل مقاطع تُفك دفعةً واحدة (أول ~30 ث مخزّنة مسبقًا)،
+            # فالتوقيت بالساعة كان يأخذ إطارًا واحدًا من كل مقطع. البث بلا طوابع زمنية يرجع للساعة.
+            pos = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+            t = pos if pos > 0 else time.time() - t0
+            if t < next_at:
+                continue
+            ok, f = cap.retrieve()
+            if not ok:
+                continue
+            if f.shape[1] > 1280:  # مثل بقية المصادر: 1280 عرضًا تكفي للتحليل
+                f = cv2.resize(f, (1280, int(f.shape[0] * 1280 / f.shape[1])), interpolation=cv2.INTER_AREA)
+            frames.append(f)
+            next_at = t + interval
     finally:
         cap.release()
     if not frames:

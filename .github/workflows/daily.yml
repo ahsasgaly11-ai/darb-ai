@@ -1,4 +1,4 @@
-# دَرْب AI — تشغيل مجاني: التقاط يومي لكل كاميرا (5 إطارات) ← تحليل بالذكاء الاصطناعي ← نشر الموقع على GitHub Pages
+# دَرْب AI — تشغيل مجاني: التقاط يومي لكل كاميرا (5–25 إطارًا) ← تحليل بالذكاء الاصطناعي ← نشر الموقع على GitHub Pages
 # كل منطقة تُحلَّل مرة يوميًا بين 9 و12 صباحًا بتوقيتها (ضوء جيد قبل تموّج الهواء من حرارة الأسفلت)،
 # وأي اشتباه بحدث مفاجئ يُعاد التقاطه بعد ساعة قبل التنبيه. البيانات تُحفظ في فرع darb-data.
 name: DARB AI — daily analysis
@@ -86,7 +86,7 @@ jobs:
           pip install onnx onnxslim onnxruntime
           python -m backend.models --onnx
 
-      - name: Capture (5 frames per camera) + analyze + build site
+      - name: Capture (5–25 frames per camera) + analyze + build site
         if: steps.work.outputs.run == 'true'
         env:
           GITHUB_TOKEN: ${{ github.token }}

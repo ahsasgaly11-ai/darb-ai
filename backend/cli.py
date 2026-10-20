@@ -24,7 +24,11 @@ from pathlib import Path
 log = logging.getLogger("darb.cli")
 ROOT = Path(__file__).resolve().parent.parent
 KEEP_IMAGES = int(os.getenv("DARB_KEEP_IMAGES", "10"))  # صور كل كاميرا المحفوظة على القرص (المقاييس تبقى كاملة)
-FRAMES = int(os.getenv("DARB_DAILY_FRAMES", "5"))         # إطارات كل التقاط (للوسيط الزمني)
+FRAMES = int(os.getenv("DARB_DAILY_FRAMES", "5"))         # إطارات كل التقاط (للوسيط الزمني) للصور المتجددة كل دقيقة أو أكثر
+# البث المرئي إطاراته مجانية: 25 إطارًا على ~30 ث من البث. بخمسة إطارات على 16 ث كانت السيارات في الطرق المزدحمة
+# تغطي النقطة نفسها في 3 منها فتبقى أجزاء منها في الصورة؛ الوسيط يحتاج أن يظهر الطريق في أكثر من نصف الإطارات فقط.
+VIDEO_FRAMES = int(os.getenv("DARB_VIDEO_FRAMES", "25"))
+VIDEO_TYPES = ("caltrans", "hls", "rtsp", "video", "mjpeg")
 TARGET_HOUR = int(os.getenv("DARB_CAPTURE_HOUR", "10"))   # الساعة المحلية المستهدفة
 WINDOW = (int(os.getenv("DARB_WINDOW_START", "9")), int(os.getenv("DARB_WINDOW_END", "12")))
 CONFIRM_AFTER = timedelta(minutes=int(os.getenv("DARB_CONFIRM_AFTER_MIN", "50")))
@@ -44,13 +48,17 @@ def capture_time(cam, now_utc, pipeline, sources) -> datetime | None:
 
 
 def interval_for(cam) -> float:
-    """الفاصل بين الإطارات: الفيديو كل 4 ثوانٍ، والصور المتجددة حسب المصدر، والأرشيف دقيقة."""
+    """الفاصل بين الإطارات: الفيديو كل 1.2 ث (من زمن البث)، والصور المتجددة حسب المصدر، والأرشيف دقيقة."""
     t = cam["source"].get("type")
-    if t in ("caltrans", "hls", "rtsp", "video", "mjpeg"):
-        return 4.0
+    if t in VIDEO_TYPES:
+        return 1.2
     if t == "datagovsg":
         return 60.0
     return float(cam["source"].get("burst_interval", 20.0))
+
+
+def frames_for(cam) -> int:
+    return VIDEO_FRAMES if cam["source"].get("type") in VIDEO_TYPES else FRAMES
 
 
 def capture_all(plan, sources, workers: int = 12) -> list:
@@ -58,7 +66,7 @@ def capture_all(plan, sources, workers: int = 12) -> list:
     def one(item):
         cam, at = item
         try:
-            return sources.capture(cam, at, FRAMES, interval_for(cam))
+            return sources.capture(cam, at, frames_for(cam), interval_for(cam))
         except Exception as e:  # يُمرَّر للتحليل فيُسجَّل كتعطّل للكاميرا
             return e
     with ThreadPoolExecutor(workers) as ex:
@@ -203,7 +211,7 @@ def daily(args) -> int:
     now = datetime.now(timezone.utc)
     attempts = load_attempts(config, now)
     plan, skipped = plan_captures(pipeline.cameras(), now, pipeline, sources, db, attempts)
-    log.info("capturing %d cameras (%d frames each), skipped %d", len(plan), FRAMES, skipped)
+    log.info("capturing %d cameras (%d frames each, %d for video), skipped %d", len(plan), FRAMES, VIDEO_FRAMES, skipped)
     for cam, at in plan:
         key = day_key(cam, at, pipeline)
         attempts[key] = attempts.get(key, 0) + 1
