@@ -290,13 +290,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
             alerts.append(add_alert(cam, ts, "risk_up", "warning",
                                     f"مستوى الخطر ارتفع إلى «{assessment['level_ar']}» (الدرجة {assessment['score']:.0f}/100). "
                                     f"أبرز العوامل: {assessment['factors'][0]['label']}.", sid))
-        db.insert("risk", {"camera_id": cam_id, "ts": ts, "score": assessment["score"], "level": assessment["level"],
-                           "prob_90d": assessment["prob_90d"], "weeks_to_threshold": assessment["weeks_to_threshold"],
-                           "factors": assessment["factors"],
-                           "forecast": {k: assessment[k] for k in ("forecast", "ci", "ci_slope", "effective_slope",
-                                                                   "season_factor", "heat", "outlook", "priority",
-                                                                   "level_ar", "next_inspection_days", "features", "gulf")},
-                           "recommendations": assessment["recommendations"]})
+        store_risk(cam_id, ts, assessment)
     try:  # دورة حياة المشكلة: قبل ← أثناء ← بعد
         lifecycle.update(cam, ts, result, assessment, alerts, add_alert)
     except Exception:
@@ -363,6 +357,29 @@ def _suspicious(prev: dict, result: dict, diff: dict) -> bool:
     return ((diff["changed_pct"] >= config.SUDDEN_CHANGE_PCT and diff["darker_ratio"] >= 0.5)
             or result["pothole_count"] > (prev["pothole_count"] or 0)
             or prev["condition_index"] - result["condition_index"] >= config.SUDDEN_CI_DROP)
+
+
+def store_risk(cam_id: str, ts: str, a: dict) -> None:
+    db.insert("risk", {"camera_id": cam_id, "ts": ts, "score": a["score"], "level": a["level"],
+                       "prob_90d": a["prob_90d"], "weeks_to_threshold": a["weeks_to_threshold"], "factors": a["factors"],
+                       "forecast": {k: a[k] for k in ("forecast", "ci", "ci_slope", "effective_slope", "season_factor", "heat",
+                                                      "outlook", "priority", "level_ar", "next_inspection_days", "features", "gulf")},
+                       "recommendations": a["recommendations"]})
+
+
+def refresh_risk(max_age: timedelta = timedelta(hours=20)) -> int:
+    """تحديث يومي لتقييم المقاطع التي لم تُلتقط اليوم: الطقس وحرارة الرصف وخطر التخدد تتغير ولو لم تتغير الصورة."""
+    now = datetime.now(timezone.utc)
+    n = 0
+    for cam in cameras():
+        last = db.one("SELECT ts FROM risk WHERE camera_id=? ORDER BY ts DESC LIMIT 1", (cam["id"],))
+        if last and now - datetime.fromisoformat(last["ts"]) < max_age:
+            continue
+        a = assess_camera(cam, now)
+        if a:
+            store_risk(cam["id"], now.isoformat(timespec="seconds"), a)
+            n += 1
+    return n
 
 
 def assess_camera(cam: dict, at: datetime) -> dict | None:

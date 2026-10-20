@@ -142,6 +142,7 @@ def daily(args) -> int:
     weekday_kind = lambda cam, at: "weekly" if at.astimezone(pipeline.tz(cam)).weekday() == 0 else "sentinel"
     done, failed, suspects = analyze_all(plan, frames, weekday_kind, pipeline)
     save_pending(config, load_pending(config) + suspects)
+    log.info("risk refreshed for %d cameras (weather/pavement physics)", pipeline.refresh_risk())
     log.info("captured=%d skipped=%d failed=%d suspects=%d pruned_images=%d", done, skipped, failed, len(suspects), prune_images(config, db))
     build_site(args)
     return 0
