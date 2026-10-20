@@ -10,6 +10,7 @@ LEAFLET_CSS = Path(sys.argv[2]).read_text()
 html = (SRC / "index.html").read_text()
 css = (SRC / "styles.css").read_text()
 js = (SRC / "app.js").read_text()
+lab_js = (SRC / "lab.js").read_text()
 
 # الصور من البيانات المضمّنة بدل الخادم
 js = js.replace('src="/api/snapshots/${s.id}/image?annotated=1"', 'src="${imgSrc(s.id, 1)}"')
@@ -65,7 +66,7 @@ static_css = '''
 
 head_links = '\n'.join(re.findall(r'<link rel="(?:preconnect|stylesheet)" href="https://fonts\.[^"]+"[^>]*>', html))
 body = html[html.index("<body>") + 6: html.index("</body>")]
-body = re.sub(r'\s*<script src="app\.js"></script>', "", body)
+body = re.sub(r'\s*<script src="(?:app|lab)\.js"></script>', "", body)
 body = body.replace('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>',
                     '<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>')
 import os
@@ -90,6 +91,7 @@ page = f'''<title>دَرْب AI</title>
 {body}
 <script>{shim}</script>
 <script>{js}</script>
+<script>{lab_js}</script>
 '''
 if os.getenv("DARB_SITE_MODE") == "auto":
     # استضافة عادية (GitHub Pages وغيرها): مستند HTML كامل

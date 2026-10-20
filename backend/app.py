@@ -404,4 +404,6 @@ def export_csv(region: str | None = None):
                     headers={"Content-Disposition": "attachment; filename=darb-priorities.csv"})
 
 
+if config.MODELS_DIR.exists():  # نماذج المتصفح (ONNX) لتحليل نماذج الطرق بالكاميرا
+    app.mount("/models", StaticFiles(directory=config.MODELS_DIR), name="models")
 app.mount("/", StaticFiles(directory=config.FRONTEND_DIR, html=True), name="frontend")

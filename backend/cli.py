@@ -15,6 +15,7 @@ import os
 import subprocess
 import sys
 import json
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -91,6 +92,11 @@ def load_pending(config) -> list[str]:
 def build_site(args) -> None:
     if args.site:
         site = Path(args.site)
+        from . import config
+        (site / "models").mkdir(parents=True, exist_ok=True)
+        for f in [*config.MODELS_DIR.glob("*.q8.onnx"), config.MODELS_DIR / "browser-models.json"]:
+            if f.exists():  # نماذج المتصفح تُنشر مع الموقع (التحليل اللحظي لنماذج الطرق بالكاميرا)
+                shutil.copy(f, site / "models" / f.name)
         env = {**os.environ}
         subprocess.run([sys.executable, str(ROOT / "tools" / "export_static.py"), str(site)], check=True, env=env)
         subprocess.run([sys.executable, str(ROOT / "tools" / "build_static.py"), str(site), args.leaflet_css], check=True, env=env)

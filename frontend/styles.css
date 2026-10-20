@@ -435,6 +435,42 @@ form.maint input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(
 .live-card .frame { border-radius: 12px; }
 .live-hint { margin: 10px 0 0; }
 
+/* ---- مختبر نماذج الطرق ---- */
+.lab { margin-bottom: 20px; }
+.lab-ctl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.lab-ctl label.btn { cursor: pointer; }
+.lab-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 16px; }
+.lab-stage { position: relative; aspect-ratio: 16/9; max-height: 72vh; margin-inline: auto; width: 100%; border-radius: 14px; overflow: hidden; background: #0b1736; }
+.lab-stage video, .lab-stage img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.lab-stage [hidden] { display: none !important; }
+.lab-stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.lab-empty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 10px; color: #c9d3ee; text-align: center; padding: 16px; }
+.lab-empty svg { width: 40px; height: 40px; }
+.lab-stage.on .lab-empty { display: none; }
+.lab-panel { display: flex; flex-direction: column; gap: 10px; }
+.pill.big { font-size: 1.35rem; padding: 8px 18px; align-self: flex-start; font-family: var(--display); }
+.lab-ci { display: flex; align-items: baseline; gap: 8px; }
+.lab-ci b { font-family: var(--display); font-size: 3rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.lab-bar { height: 10px; border-radius: 99px; background: var(--surface-3); overflow: hidden; }
+.lab-bar i { display: block; height: 100%; width: 0; transition: width .3s, background .3s; }
+.lab-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: .9rem; }
+.lab-counts span { display: flex; align-items: center; gap: 6px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.lab-counts i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.lab-panel p { margin: 0; }
+.lab-ai { font-size: .82rem; }
+.lab-save { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
+.lab-msg { margin: 12px 0 0; font-size: .9rem; color: var(--ink-2); min-height: 1.4em; }
+.lab-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.lab-slot { border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); padding: 12px; display: grid; gap: 8px; align-content: start; font-size: .9rem; }
+.lab-slot.empty { place-content: center; text-align: center; min-height: 150px; border-style: dashed; }
+.lab-slot img { width: 100%; border-radius: 10px; display: block; }
+.ls-h { display: flex; justify-content: space-between; align-items: center; }
+.ls-ci b { font-family: var(--display); font-size: 1.8rem; margin-inline: 6px; }
+.ls-p em.bad, .ls-t em.bad { font-style: normal; color: var(--critical); font-weight: 700; }
+.lab-tips { margin-top: 14px; font-size: .9rem; }
+.lab-tips summary { cursor: pointer; font-weight: 600; color: var(--brand); }
+.lab-tips ul { margin: 8px 0 0; padding-inline-start: 20px; display: grid; gap: 4px; color: var(--ink-2); }
+
 /* ---- الرصد الميداني ---- */
 .rep-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .rep-photo { display: grid; place-items: center; min-height: 170px; border: 2px dashed var(--line-strong); border-radius: 14px; cursor: pointer; overflow: hidden;
@@ -652,6 +688,15 @@ body.lb-open { overflow: hidden; }
   .bubble { max-width: 95%; }
   .rough-live { grid-template-columns: 130px 1fr; }
   .rep-list { grid-template-columns: 1fr; }
+  .lab-grid, .lab-slots { grid-template-columns: 1fr; }
+  .lab-ctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .lab-ctl .btn { justify-content: center; padding: 10px 8px; font-size: .88rem; }
+  .lab-ctl .switch { grid-column: 1 / -1; }
+  .lab-stage { scroll-margin-top: 130px; max-height: 60vh; }
+  .lab-panel { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px 12px; }
+  .lab-panel > :not(#labKind):not(.lab-ci) { grid-column: 1 / -1; }
+  .pill.big { font-size: 1.1rem; padding: 6px 14px; }
+  .lab-ci b { font-size: 2.4rem; }
   .chat-log { max-height: 52vh; max-height: 52dvh; min-height: 240px; }
   /* الاقتراحات صف واحد يمرّ أفقيًا بدل ثمانية أسطر تدفع الإجابات خارج الشاشة */
   .chat-sugg { flex-wrap: nowrap; overflow-x: auto; margin-inline: -22px; padding: 2px 22px 6px; scrollbar-width: none; }

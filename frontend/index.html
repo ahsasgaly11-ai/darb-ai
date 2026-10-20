@@ -207,6 +207,42 @@
     <!-- الرصد الميداني -->
     <section id="tab-field" class="tab">
       <div class="block-h"><span class="ico3d warn" data-icon="report"></span><div><h2>الرصد الميداني</h2><p>تغطية ما بين الكاميرات: بلاغات المواطنين بالصور، وقياس خشونة الطريق بحساسات الهاتف أثناء القيادة</p></div></div>
+      <div class="card lab">
+        <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="brain"></span>مختبر نماذج الطرق: تحليل لحظي بالكاميرا</h2>
+          <span class="muted">وجّه الكاميرا إلى نموذج الطريق (سليم، متشقق، متضرر بالحفر) ليحلّله الذكاء الاصطناعي في الحال</span></div>
+        <div class="lab-ctl">
+          <button class="btn" type="button" id="labStart"><span data-icon="camera"></span>تشغيل الكاميرا</button>
+          <button class="btn ghost" type="button" id="labCal" title="وجّه الكاميرا للنموذج السليم أولًا"><span data-icon="target"></span>معايرة على النموذج السليم</button>
+          <label class="btn ghost"><span data-icon="image"></span>تحليل صورة<input type="file" id="labFile" accept="image/*" hidden></label>
+          <label class="switch"><input type="checkbox" id="labAIon" checked> تأكيد بالذكاء الاصطناعي (YOLO)</label>
+        </div>
+        <div class="lab-grid">
+          <div class="lab-stage" id="labStage">
+            <video id="labVideo" muted playsinline autoplay></video><img id="labImg" alt="" hidden>
+            <canvas id="labOverlay"></canvas>
+            <div class="lab-empty"><span data-icon="camera"></span>اضغط «تشغيل الكاميرا» وضع النموذج داخل الإطار</div>
+          </div>
+          <div class="lab-panel">
+            <span class="pill big low" id="labKind">—</span>
+            <div class="lab-ci"><span>مؤشر الحالة</span><b id="labCI">—</b><span>/100</span></div>
+            <div class="lab-bar"><i id="labCIbar"></i></div>
+            <div class="lab-counts" id="labCounts"></div>
+            <p class="muted" id="labStats"></p>
+            <p class="muted lab-ai" id="labAI">الذكاء الاصطناعي يُحمَّل عند تشغيل الكاميرا</p>
+            <div class="lab-save" id="labSave"><span class="muted">احفظ القراءة في:</span>
+              <button class="chip-btn" type="button" data-slot="0">النموذج 1</button><button class="chip-btn" type="button" data-slot="1">النموذج 2</button><button class="chip-btn" type="button" data-slot="2">النموذج 3</button></div>
+          </div>
+        </div>
+        <p class="lab-msg" id="labMsg"></p>
+        <div class="lab-slots" id="labSlots"></div>
+        <details class="lab-tips"><summary>نصائح لتصميم النماذج وتصويرها بدقة</summary><ul>
+          <li><b>السطح:</b> اطلِ الفلين بلون رمادي غامق مطفي (غير لامع) يشبه الإسفلت، وأضف خطوط الطريق باللون الأبيض أو الأصفر.</li>
+          <li><b>التشققات:</b> ارسمها بقلم أسود عريض (2–4 مم) أو احفرها بخفة؛ اجعل بعضها طوليًا وبعضها عرضيًا، وأضف شبكة متقاطعة للتشقق التمساحي.</li>
+          <li><b>الحفر:</b> احفرها فعليًا في الفلين بعمق 1–2 سم ولوّن داخلها بالأسود أو البني الداكن، فالظل يزيد وضوحها.</li>
+          <li><b>التصوير:</b> إضاءة متساوية دون انعكاس أو ظل اليد، والكاميرا فوق النموذج بزاوية 30–60°، والنموذج يملأ الإطار المتقطع.</li>
+          <li><b>المعايرة:</b> ابدأ بالنموذج السليم واضغط «معايرة»، ثم انتقل للنموذجين الآخرين دون تغيير الإضاءة.</li>
+        </ul></details>
+      </div>
       <div class="grid-2 field-grid">
         <div class="card">
           <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="camera"></span>بلّغ عن مشكلة في الطريق</h2><span class="muted">يتحقق منها الذكاء الاصطناعي تلقائيًا</span></div>
@@ -306,5 +342,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.13/hls.min.js"></script>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
+  <script src="lab.js"></script>
 </body>
 </html>

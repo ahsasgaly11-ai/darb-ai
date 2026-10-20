@@ -78,11 +78,13 @@ jobs:
         uses: actions/cache@v5
         with:
           path: models
-          key: darb-models-v1
+          key: darb-models-v2   # v2: يشمل نسخ ONNX للمتصفح
 
       - name: Download models
         if: steps.work.outputs.run == 'true'
-        run: python -m backend.models
+        run: |
+          pip install onnx onnxslim onnxruntime
+          python -m backend.models --onnx
 
       - name: Capture (5 frames per camera) + analyze + build site
         if: steps.work.outputs.run == 'true'

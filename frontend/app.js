@@ -567,6 +567,9 @@
     document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
   }, true);
 
+  // واجهة مشتركة لمختبر نماذج الطرق (lab.js)
+  window.DARB = { $, fmtN, esc, svg, money: (usd) => money(usd), color, safeGet, safeSet };
+
   // ملاحظة «يُحدَّث آليًا» تُختصر في سطرين على الجوال، وتنفتح بالنقر
   document.addEventListener("click", (e) => { const n = e.target.closest(".snapnote > div"); if (n) n.classList.toggle("open"); });
 
