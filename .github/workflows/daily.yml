@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: write   # حفظ البيانات في فرع darb-data
+  issues: write     # الرد على بلاغات المواطنين وإغلاقها بعد التحقق
   pages: write
   id-token: write
 
@@ -85,6 +86,8 @@ jobs:
 
       - name: Capture (5 frames per camera) + analyze + build site
         if: steps.work.outputs.run == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: python -m backend.cli ${{ steps.work.outputs.cmd }} --site "${{ github.workspace }}/site"
 
       - name: Save data (single-commit snapshot, keeps the repo small)

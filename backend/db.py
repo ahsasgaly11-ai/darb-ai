@@ -117,6 +117,36 @@ CREATE TABLE IF NOT EXISTS issues (
     events TEXT NOT NULL DEFAULT '[]'  -- JSON [{ts, stage, note}]
 );
 CREATE INDEX IF NOT EXISTS idx_issues_cam ON issues(camera_id, stage);
+-- الرصد الميداني: بلاغات المواطنين وصور مركبات الأسطول (حافلات، بلدية، كاميرات سيارات)
+CREATE TABLE IF NOT EXISTS reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL,
+    source TEXT NOT NULL,          -- citizen | fleet | github
+    ref TEXT,                      -- مرجع خارجي (رقم بلاغ GitHub، معرّف المركبة)
+    lat REAL NOT NULL,
+    lng REAL NOT NULL,
+    region TEXT NOT NULL DEFAULT '',
+    kind TEXT NOT NULL,            -- pothole | cracks | sand | water | debris | other
+    note TEXT NOT NULL DEFAULT '',
+    image_path TEXT,
+    annotated_path TEXT,
+    ai TEXT NOT NULL DEFAULT '{}', -- JSON: نتيجة التحقق بالذكاء الاصطناعي
+    status TEXT NOT NULL,          -- verified | review | no_image | resolved
+    camera_id TEXT,                -- أقرب كاميرا (إن كانت ضمن 500 م)
+    distance_m REAL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_reports_ref ON reports(source, ref);
+-- خشونة الطريق من حساسات الهواتف أثناء القيادة (تقدير لمؤشر IRI)
+CREATE TABLE IF NOT EXISTS roughness (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts TEXT NOT NULL,
+    device TEXT NOT NULL,
+    lat REAL NOT NULL,
+    lng REAL NOT NULL,
+    iri REAL NOT NULL,             -- م/كم (تقديري)
+    speed REAL
+);
+CREATE INDEX IF NOT EXISTS idx_rough_cell ON roughness(lat, lng);
 """
 
 

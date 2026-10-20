@@ -37,6 +37,7 @@
       <button role="tab" data-tab="budget"><span data-icon="coins"></span><em>الميزانية والقرار</em></button>
       <button role="tab" data-tab="cameras"><span data-icon="camera"></span><em>الكاميرات</em></button>
       <button role="tab" data-tab="live"><span data-icon="live"></span><em>البث المباشر</em><b class="badge live-dot">مباشر</b></button>
+      <button role="tab" data-tab="field"><span data-icon="report"></span><em>الرصد الميداني</em></button>
       <button role="tab" data-tab="alerts"><span data-icon="bell"></span><em>التنبيهات</em><b id="alertBadge" class="badge" hidden></b></button>
       <button role="tab" data-tab="method"><span data-icon="book"></span><em>المنهجية</em></button>
     </nav>
@@ -116,6 +117,9 @@
           <span><i class="dot low"></i>منخفض</span><span><i class="dot medium"></i>متوسط</span>
           <span><i class="dot high"></i>مرتفع</span><span><i class="dot critical"></i>حرج</span><span><i class="dot" style="background:var(--muted)"></i>بانتظار أول التقاط</span>
           <span class="muted">نبض = تنبيه مفتوح</span>
+          <b class="lg2">الرصد الميداني</b>
+          <span><i class="tri"></i>بلاغ مؤكد بالذكاء الاصطناعي</span><span><i class="tri review"></i>بلاغ قيد المراجعة</span>
+          <span><i class="rough-dot" style="background:#16a34a"></i><i class="rough-dot" style="background:#facc15"></i><i class="rough-dot" style="background:#dc2626"></i>خشونة الطريق (من الهواتف)</span>
         </div>
       </div>
     </section>
@@ -200,6 +204,42 @@
       <div id="liveGrid" class="live-grid"></div>
     </section>
 
+    <!-- الرصد الميداني -->
+    <section id="tab-field" class="tab">
+      <div class="block-h"><span class="ico3d warn" data-icon="report"></span><div><h2>الرصد الميداني</h2><p>تغطية ما بين الكاميرات: بلاغات المواطنين بالصور، وقياس خشونة الطريق بحساسات الهاتف أثناء القيادة</p></div></div>
+      <div class="grid-2 field-grid">
+        <div class="card">
+          <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="camera"></span>بلّغ عن مشكلة في الطريق</h2><span class="muted">يتحقق منها الذكاء الاصطناعي تلقائيًا</span></div>
+          <form id="repForm" class="rep-form">
+            <label class="rep-photo" id="repPhotoBox"><input type="file" id="repPhoto" accept="image/*" capture="environment" hidden>
+              <img id="repPreview" alt="" hidden><span id="repPhotoTxt"><span data-icon="camera"></span>التقط صورة أو اخترها</span></label>
+            <div class="rep-kinds" id="repKinds"></div>
+            <div class="rep-loc"><button type="button" class="btn ghost" id="repLocBtn"><span data-icon="pin"></span>حدد موقعي</button>
+              <input id="repLoc" placeholder="أو اكتب الإحداثيات: 25.2854, 51.5310" inputmode="decimal"></div>
+            <textarea id="repNote" rows="2" maxlength="500" placeholder="ملاحظة (اختياري): مثلًا «في المسار الأيمن أمام المدرسة»"></textarea>
+            <button class="btn" type="submit" id="repSend"><span data-icon="send"></span>إرسال البلاغ</button>
+            <p class="muted rep-msg" id="repMsg"></p>
+          </form>
+        </div>
+        <div class="card">
+          <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="phone"></span>قِس خشونة الطريق بهاتفك</h2><span class="muted">ثبّت الهاتف في السيارة ثم ابدأ</span></div>
+          <div class="rough-live" id="roughLive">
+            <div class="rl-gauge"><b id="rlIri">—</b><span>IRI م/كم (تقديري)</span><em id="rlClass"></em></div>
+            <div class="rl-stats"><span>المسافة <b id="rlDist">0.0</b> كم</span><span>القراءات <b id="rlN">0</b></span><span>السرعة <b id="rlSpeed">—</b> كم/س</span><span>المتوسط <b id="rlAvg">—</b></span></div>
+          </div>
+          <div class="rough-actions">
+            <button class="btn" type="button" id="roughBtn"><span data-icon="play"></span>ابدأ القياس</button>
+            <button class="btn ghost" type="button" id="roughSave" hidden><span data-icon="download"></span>حفظ القياس</button>
+          </div>
+          <p class="muted rough-note" id="roughMsg">يقيس الهاتف اهتزاز السيارة كل ثانية ويربطه بالموقع والسرعة، فيقدّر مؤشر الخشونة الدولي IRI: أقل من 2 ممتاز، 2–4 جيد، 4–6 متوسط، أكثر من 6 سيئ. القراءات تحت 15 كم/س تُهمل.</p>
+        </div>
+      </div>
+      <div class="card mt">
+        <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="list"></span>آخر البلاغات</h2><span class="muted" id="repCount"></span></div>
+        <div class="rep-list" id="repList"></div>
+      </div>
+    </section>
+
     <!-- التنبيهات -->
     <section id="tab-alerts" class="tab">
       <div class="block-h"><span class="ico3d " data-icon="bell"></span><div><h2>التنبيهات</h2><p>الأحداث المرصودة مرتّبة من الأحدث</p></div></div>
@@ -227,6 +267,9 @@
           <li><b>قبل</b><span>نموذج مخاطر قابل للتفسير (الحالة، سرعة التدهور، الحرارة، المدى الحراري، المرور والشاحنات، عمر الطبقة) يتوقع موعد بلوغ عتبة الصيانة ويفتح «مشكلة متوقعة» قبل حدوثها.</span></li>
           <li><b>أثناء</b><span>تحقق التوقع أو حدث مفاجئ مؤكَّد في لقطتين (حفرة، هبوط، مخلّفات) يفتح «مشكلة نشطة» مع تنبيه فوري وتوصيات.</span></li>
           <li><b>بعد</b><span>يرصد النظام زوال المشكلة تلقائيًا (إصلاح أو إزالة)، ويقيس زمن الاستجابة، ثم يراقب المقطع 8 أسابيع وينبّه إن عاد العيب.</span></li>
+          <li><b>فيزياء الخليج</b><span>حرارة الإسفلت على عمق 20 مم من حرارة الهواء وخط العرض (نموذج SHRP) مصحّحة بالإشعاع الشمسي الفعلي، ثم درجة الرابط PG اللازمة للمناخ والأحمال، وخطر <em>التخدد</em> — أخطر عيوب طرق الخليج ولا تكتشفه النماذج العالمية. ويُكشف <em>زحف الرمال</em> باللون، وتُطلب جولة فحص بعد <em>السيول والعواصف</em>.</span></li>
+          <li><b>القرار الاقتصادي</b><span>لكل مقطع: المعالجة المناسبة لحالته الآن وكلفتها، وما سيحتاجه إن أُجّل سنة بحسب سرعة تدهوره. ثم توزيع أي ميزانية: الإلزامي للسلامة أولًا، فالأعلى عائدًا لكل وحدة نقدية.</span></li>
+          <li><b>الرصد الميداني</b><span>الكاميرا الثابتة ترى ~200 م فقط؛ لتغطية ما بينها: بلاغات المواطنين بالصور (تحقق آلي وربط بأقرب كاميرا)، وخشونة الطريق من اهتزاز الهاتف وسرعته أثناء القيادة (تقدير IRI)، وصور مركبات الأسطول.</span></li>
         </ol>
         <h3>لماذا التقاط يومي واتجاه أسبوعي؟</h3>
         <p>تدهور الرصف يمتد أسابيع إلى أشهر، فيُبنى الاتجاه من نقطة لكل أسبوع هي <b>وسيط أيامه</b>: يوم مبتل أو ظل أو مركبة متوقفة لا يغيّر النتيجة، و52 نقطة سنويًا تكفي لتقدير الميل. يصبح التنبؤ موثوقًا بعد 8–12 أسبوعًا من السجل، ويظهر أثر الصيف بعد 6 أشهر، والدورة الموسمية كاملة بعد سنة. أما الحفر المفاجئة والانهيارات والمخلّفات فيرصدها الالتقاط اليومي، ويؤكدها التقاط ثانٍ بعد ساعة، والتغيّر الذي يبقى يومين متتاليين يظهر في التقييم فورًا.</p>

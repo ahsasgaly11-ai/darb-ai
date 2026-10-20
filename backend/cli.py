@@ -116,6 +116,12 @@ def daily(args) -> int:
     seeded = pipeline.seed_history()  # أول تشغيل: سجل من الأرشيف للمصادر التي تدعمه
     if seeded:
         log.info("seeded %d archive captures", seeded)
+    if os.getenv("GITHUB_REPOSITORY") and os.getenv("GITHUB_TOKEN"):  # بلاغات المواطنين عبر GitHub Issues (الموقع المجاني)
+        from . import field
+        try:
+            log.info("field reports from GitHub: %d", field.ingest_github(os.environ["GITHUB_REPOSITORY"], os.environ["GITHUB_TOKEN"]))
+        except Exception:
+            log.exception("GitHub reports ingest failed")
     now = datetime.now(timezone.utc)
     plan, skipped = [], 0
     for cam in pipeline.cameras():

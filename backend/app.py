@@ -11,12 +11,12 @@ import threading
 from contextlib import asynccontextmanager
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import ai, assistant, config, db, economics, incidents, lifecycle, pipeline, scheduler, sources, vision
+from . import ai, assistant, config, db, economics, field, incidents, lifecycle, pipeline, scheduler, sources, vision
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("darb.app")
@@ -148,6 +148,70 @@ def summary(region: str | None = None):
         "gulf": _gulf_overview(cams),
         "seeding": state["seeding"],
     }
+
+
+# ---------- الرصد الميداني ----------
+class ReportIn(BaseModel):
+    lat: float
+    lng: float
+    kind: str = "other"
+    note: str = Field("", max_length=500)
+    image: str | None = Field(None, max_length=6_000_000)  # data URL بصيغة JPEG/PNG (الواجهة تصغّرها إلى 1280 قبل الإرسال)
+    source: str = "citizen"                                 # citizen | fleet
+    ref: str | None = Field(None, max_length=80)            # لمركبات الأسطول: معرّف الرحلة/الصورة
+
+
+_report_hits: dict[str, list[float]] = {}
+
+
+@app.post("/api/reports")
+def post_report(body: ReportIn, request: Request, x_admin_token: str = Header(default="")):
+    """بلاغ مواطن (مفتوح، بحد 20 بلاغًا في الساعة لكل عنوان) أو صورة من مركبة أسطول (برمز المشرف)."""
+    if body.source == "fleet":
+        admin(x_admin_token)
+    elif body.source != "citizen":
+        raise HTTPException(400, "مصدر غير معروف")
+    else:
+        ip = request.client.host if request.client else "?"
+        now = datetime.now(timezone.utc).timestamp()
+        hits = [t for t in _report_hits.get(ip, []) if now - t < 3600]
+        if len(hits) >= 20:
+            raise HTTPException(429, "تجاوزت حد البلاغات لهذه الساعة")
+        _report_hits[ip] = hits + [now]
+    try:
+        return field.create_report(body.lat, body.lng, body.kind, body.note, body.image, body.source, body.ref)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.get("/api/reports")
+def get_reports(region: str | None = None, limit: int = Query(300, le=1000)):
+    return [{k: v for k, v in r.items() if k not in ("image_path", "annotated_path")} | {"has_image": bool(r["image_path"])}
+            for r in field.list_reports(region, limit)]
+
+
+@app.get("/api/reports/{rid}/image")
+def report_image(rid: int, annotated: int = 1):
+    r = db.one("SELECT image_path, annotated_path FROM reports WHERE id=?", (rid,))
+    rel = r and ((r["annotated_path"] if annotated else None) or r["image_path"])
+    if not rel or not (config.DATA_DIR / rel).exists():
+        raise HTTPException(404, "لا صورة")
+    return FileResponse(config.DATA_DIR / rel, media_type="image/jpeg")
+
+
+class RoughIn(BaseModel):
+    device: str = Field("anon", max_length=60)
+    points: list[dict] = Field(max_length=20000)
+
+
+@app.post("/api/roughness")
+def post_roughness(body: RoughIn):
+    return {"accepted": field.add_roughness(body.device, body.points)}
+
+
+@app.get("/api/roughness")
+def get_roughness(region: str | None = None):
+    return field.roughness_cells(region)
 
 
 class AskIn(BaseModel):

@@ -70,6 +70,16 @@ for r in [""] + config.REGION_KEYS:
     save(f"cameras_{tag}.json", get("/api/cameras" + q))
     save(f"issues_{tag}.json", get("/api/issues" + q))
     save(f"economics_{tag}.json", get("/api/economics" + q))
+    save(f"roughness_{tag}.json", get("/api/roughness" + q))
+    reports = get("/api/reports" + q)
+    for rep in reports:  # صورة مصغّرة مضمّنة لكل بلاغ (الموقع الثابت لا يملك نقطة صور البلاغات)
+        row = db.one("SELECT annotated_path, image_path FROM reports WHERE id=?", (rep["id"],))
+        rel = row and (row["annotated_path"] or row["image_path"])
+        im = cv2.imread(str(config.DATA_DIR / rel)) if rel else None
+        if im is not None:
+            im = cv2.resize(im, (560, int(im.shape[0] * 560 / im.shape[1])), interpolation=cv2.INTER_AREA)
+            rep["thumb"] = "data:image/jpeg;base64," + base64.b64encode(cv2.imencode(".jpg", im, [cv2.IMWRITE_JPEG_QUALITY, 70])[1]).decode()
+    save(f"reports_{tag}.json", reports)
 save("alerts.json", get("/api/alerts?limit=300"))
 
 thumbs, hi_all = {}, set()

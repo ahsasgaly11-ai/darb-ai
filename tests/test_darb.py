@@ -369,3 +369,36 @@ def test_assistant_server_mode(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
     assert assistant.available() is False
+
+
+def test_field_reports_roughness_and_github_parse():
+    from backend import field
+    c = TestClient(app_mod.app)
+    db.insert("cameras", {"id": "fld-cam", "name": "مقطع ميداني", "road": "R1", "lat": 1.3000, "lng": 103.8000,
+                          "source": json.dumps({"type": "demo"}), "meta": "{}", "enabled": 1, "region": "singapore"})
+    # بلاغ مواطن بصورة فيها حفرة داكنة على إسفلت (المحرك الكلاسيكي في الاختبار) على بعد ~110 م من الكاميرا
+    img = np.full((720, 1280, 3), 105, np.uint8)
+    cv2.ellipse(img, (640, 560), (90, 45), 0, 0, 360, (25, 25, 25), -1)
+    url = "data:image/jpeg;base64," + __import__("base64").b64encode(cv2.imencode(".jpg", img)[1]).decode()
+    r = c.post("/api/reports", json={"lat": 1.3010, "lng": 103.8000, "kind": "pothole", "note": "حفرة عميقة", "image": url})
+    assert r.status_code == 200, r.text
+    out = r.json()
+    assert out["camera_id"] == "fld-cam" and 90 <= out["distance_m"] <= 130 and out["status"] in ("verified", "review")
+    lst = c.get("/api/reports").json()
+    assert lst[0]["kind_ar"] == "حفرة" and lst[0]["has_image"] and "image_path" not in lst[0]
+    assert c.get(f"/api/reports/{out['id']}/image").status_code == 200
+    assert c.post("/api/reports", json={"lat": 1.3, "lng": 103.8, "source": "fleet"}).status_code in (200, 401)  # الأسطول برمز المشرف إن وُجد
+    assert c.post("/api/reports", json={"lat": 200, "lng": 0}).status_code == 400
+    # الخشونة: الاهتزاز الأعلى = IRI أعلى؛ القراءات البطيئة تُهمل؛ وسيط الخلية
+    assert field.iri_estimate(2.0, 20) > field.iri_estimate(0.5, 20) and field.iri_estimate(1.0, 30) < field.iri_estimate(1.0, 10)
+    pts = [{"lat": 1.3001, "lng": 103.8001, "rms": 1.5, "speed": 20}] * 5 + [{"lat": 1.3001, "lng": 103.8001, "rms": 3, "speed": 2}]
+    assert c.post("/api/roughness", json={"device": "t1", "points": pts}).json() == {"accepted": 5}
+    cells = c.get("/api/roughness").json()
+    assert len(cells) == 1 and cells[0]["n"] == 5 and cells[0]["class"] in ("good", "fair")
+    # بلاغ GitHub: العنوان «[بلاغ]» + سطر الموقع + صورة مرفقة
+    issue = {"number": 7, "title": "[بلاغ] حفرة", "created_at": "2026-10-20T10:00:00Z",
+             "body": "النوع: حفرة\nالموقع: 25.2854, 51.5310\nالملاحظة: أمام المدرسة\n![صورة](https://github.com/user-attachments/assets/abc.jpg)"}
+    p = field.parse_issue(issue)
+    assert p == {"lat": 25.2854, "lng": 51.531, "kind": "pothole", "image_url": "https://github.com/user-attachments/assets/abc.jpg",
+                 "note": "أمام المدرسة", "ref": "7", "ts": "2026-10-20T10:00:00Z"}
+    assert field.parse_issue({**issue, "title": "سؤال عام"}) is None

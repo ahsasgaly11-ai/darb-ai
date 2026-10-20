@@ -247,6 +247,18 @@
       state.map.fitBounds(L.latLngBounds(state.cameras.map((c) => [c.lat, c.lng])).pad(0.25), { maxZoom: 13 });
       state.fitPending = false;
     }
+    // طبقة الرصد الميداني: خلايا الخشونة ثم البلاغات
+    state.fieldLayer?.remove();
+    state.fieldLayer = L.layerGroup().addTo(state.map);
+    for (const r of state.rough || []) {
+      L.circleMarker([r.lat, r.lng], { radius: 5, stroke: false, fillOpacity: 0.8, fillColor: ROUGH[r.class]?.[1] || "#999" })
+        .bindTooltip(`خشونة ${fmtN(r.iri, 1)} م/كم · ${ROUGH[r.class]?.[0] || ""} · ${fmtN(r.n)} قراءة`).addTo(state.fieldLayer);
+    }
+    for (const r of state.reports || []) {
+      const icon = L.divIcon({ className: "", iconSize: [20, 18], iconAnchor: [10, 16], html: `<i class="tri ${r.status === "verified" ? "" : "review"}"></i>` });
+      L.marker([r.lat, r.lng], { icon }).bindPopup(`<div class="pop">${r.thumb ? `<img src="${r.thumb}" alt="">` : ""}<b>${esc(r.kind_ar)}</b>
+        <span class="muted">${fmtDT(r.ts)} · ${REP_STATUS[r.status] || r.status}</span>${r.note ? `<div>${esc(r.note)}</div>` : ""}</div>`, { maxWidth: 270 }).addTo(state.fieldLayer);
+    }
     for (const c of state.cameras) {
       const lvl = c.risk?.level || "low";
       const col = c.risk ? color(lvl) : css("--muted");
@@ -554,6 +566,126 @@
     const f = fs.closest(".frame");
     document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
   }, true);
+
+  // ---------- الرصد الميداني ----------
+  const ROUGH = { excellent: ["ممتاز", "#16a34a"], good: ["جيد", "#84cc16"], fair: ["متوسط", "#facc15"], poor: ["سيئ", "#f97316"], very_poor: ["سيئ جدًا", "#dc2626"] };
+  const REP_STATUS = { verified: "تأكد بالذكاء الاصطناعي", review: "قيد المراجعة", no_image: "بلا صورة", resolved: "عولج" };
+  const REP_KINDS = { pothole: "حفرة", cracks: "تشققات", sand: "رمال", water: "تجمّع مياه", debris: "مخلّفات", other: "أخرى" };
+  const isStatic = () => !!state.status?.static_snapshot;
+  const repo = () => { const o = location.hostname.split(".")[0], r = location.pathname.split("/").filter(Boolean)[0]; return location.hostname.endsWith("github.io") && r ? `${o}/${r}` : "ahsasgaly11-ai/darb-ai"; };
+  const rep_ = { kind: "pothole", img: null, loc: null };
+  $("#repKinds").innerHTML = Object.entries(REP_KINDS).map(([k, v]) => `<button type="button" class="chip-btn ${k === rep_.kind ? "on" : ""}" data-kind="${k}">${v}</button>`).join("");
+  $("#repKinds").addEventListener("click", (e) => { const b = e.target.closest("[data-kind]"); if (!b) return; rep_.kind = b.dataset.kind; $$("#repKinds .chip-btn").forEach((x) => x.classList.toggle("on", x === b)); });
+  $("#repPhoto").addEventListener("change", (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    const im = new Image();
+    im.onload = () => {  // تصغير إلى 1280 قبل الإرسال (أسرع وأوفر للبيانات)
+      const k = Math.min(1, 1280 / im.width), cv = document.createElement("canvas");
+      cv.width = Math.round(im.width * k); cv.height = Math.round(im.height * k);
+      cv.getContext("2d").drawImage(im, 0, 0, cv.width, cv.height);
+      rep_.img = cv.toDataURL("image/jpeg", 0.85);
+      $("#repPreview").src = rep_.img; $("#repPreview").hidden = false; $("#repPhotoTxt").hidden = true;
+      URL.revokeObjectURL(im.src);
+    };
+    im.src = URL.createObjectURL(f);
+  });
+  $("#repLocBtn").addEventListener("click", () => {
+    if (!navigator.geolocation) { $("#repMsg").textContent = "المتصفح لا يدعم تحديد الموقع — اكتب الإحداثيات."; return; }
+    $("#repMsg").textContent = "جارٍ تحديد موقعك…";
+    navigator.geolocation.getCurrentPosition((p) => {
+      rep_.loc = [p.coords.latitude, p.coords.longitude];
+      $("#repLoc").value = `${rep_.loc[0].toFixed(5)}, ${rep_.loc[1].toFixed(5)}`; $("#repMsg").textContent = `تم تحديد الموقع (دقة ~${fmtN(p.coords.accuracy)} م).`;
+    }, () => { $("#repMsg").textContent = "تعذّر تحديد الموقع — اسمح للمتصفح بالوصول أو اكتب الإحداثيات."; }, { enableHighAccuracy: true, timeout: 15000 });
+  });
+  $("#repForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const m = $("#repLoc").value.match(/(-?\d+(?:\.\d+)?)\s*[,،]\s*(-?\d+(?:\.\d+)?)/);
+    if (!m) { $("#repMsg").textContent = "حدد الموقع أولًا."; return; }
+    const lat = +m[1], lng = +m[2], note = $("#repNote").value.trim();
+    if (isStatic()) {
+      // الموقع المجاني بلا خادم: البلاغ يُرسل عبر GitHub Issues، ويتحقق منه التشغيل اليومي بالذكاء الاصطناعي ويرد عليك
+      const body = `النوع: ${REP_KINDS[rep_.kind] === "رمال" ? "رمال على الطريق" : REP_KINDS[rep_.kind]}\nالموقع: ${lat.toFixed(5)}, ${lng.toFixed(5)}\nالملاحظة: ${note || "—"}\n\n<!-- اسحب صورة المشكلة إلى هذا المربع قبل الضغط على Submit -->\n`;
+      window.open(`https://github.com/${repo()}/issues/new?title=${encodeURIComponent(`[بلاغ] ${REP_KINDS[rep_.kind]} — ${lat.toFixed(4)}, ${lng.toFixed(4)}`)}&body=${encodeURIComponent(body)}`, "_blank", "noopener");
+      $("#repMsg").innerHTML = `فُتحت صفحة البلاغ على GitHub: <b>اسحب الصورة إلى مربع النص</b> ثم اضغط Submit. يتحقق منه دَرْب بالذكاء الاصطناعي في التشغيل التالي ويرد عليك هناك.`;
+      return;
+    }
+    $("#repSend").disabled = true; $("#repMsg").textContent = "جارٍ الإرسال والتحقق بالذكاء الاصطناعي…";
+    try {
+      const r = await api("/api/reports", { method: "POST", body: JSON.stringify({ lat, lng, kind: rep_.kind, note, image: rep_.img }) });
+      $("#repMsg").innerHTML = `${r.status === "verified" ? "✅ <b>تأكد البلاغ آليًا</b>" : r.status === "review" ? "🔎 <b>سُجّل وسيراجعه مختص</b>" : "📍 <b>سُجّل بلا صورة</b>"}
+        ${r.ai?.pothole_count != null ? ` · حفر: ${fmtN(r.ai.pothole_count)} · تشققات: ${fmtN(r.ai.crack_count)}` : ""}${r.camera_id ? ` · أقرب كاميرا على بعد ~${fmtN(r.distance_m)} م` : ""}. شكرًا لك!`;
+      refresh().catch(() => {});
+    } catch (err) { $("#repMsg").textContent = `تعذّر الإرسال: ${err.message}`; }
+    $("#repSend").disabled = false;
+  });
+  function renderReports() {
+    const list = state.reports || [];
+    $("#repCount").textContent = list.length ? `${fmtN(list.length)} بلاغ · ${fmtN(list.filter((r) => r.status === "verified").length)} مؤكد` : "";
+    $("#repList").innerHTML = list.slice(0, 30).map((r) => `<article class="rep">
+      ${r.thumb ? `<img src="${r.thumb}" alt="" loading="lazy">` : `<div class="noimg">${svg("pin")}</div>`}
+      <div><b>${esc(r.kind_ar)}</b> <span class="pill ${r.status === "verified" ? "high" : "low"}">${REP_STATUS[r.status] || r.status}</span>
+        <div class="muted">${fmtDT(r.ts)} · ${esc(regionLabel(r.region))}${r.camera_id ? ` · قرب كاميرا (~${fmtN(r.distance_m)} م)` : ""}</div>
+        ${r.note ? `<div>${esc(r.note)}</div>` : ""}</div></article>`).join("") || `<div class="empty">لا بلاغات بعد — كن أول من يبلّغ عن مشكلة في طريقه.</div>`;
+  }
+  // قياس الخشونة: الاهتزاز (مقدار التسارع ناقص الجاذبية) كل ثانية + الموقع والسرعة ← تقدير IRI
+  const rough = { on: false, samples: [], pts: [], pos: null, last: null, dist: 0, watch: null, timer: null };
+  const iriEst = (rms, v) => Math.max(0.5, 0.9 + 2.1 * rms * Math.sqrt(20 / Math.max(v, 5)));  // نفس صيغة الخادم (field.iri_estimate)
+  const onMotion = (e) => {
+    const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
+    rough.samples.push(Math.hypot(a.x, a.y, a.z));
+  };
+  async function roughStart() {
+    if (!navigator.geolocation || !("DeviceMotionEvent" in window)) { $("#roughMsg").textContent = "هذا الجهاز لا يدعم حساسات الحركة أو الموقع — جرّب من هاتف."; return; }
+    if (typeof DeviceMotionEvent.requestPermission === "function") {  // آيفون: إذن صريح
+      try { if (await DeviceMotionEvent.requestPermission() !== "granted") throw 0; } catch { $("#roughMsg").textContent = "يلزم السماح بالوصول لحساسات الحركة."; return; }
+    }
+    Object.assign(rough, { on: true, samples: [], pts: [], last: null, dist: 0 });
+    addEventListener("devicemotion", onMotion);
+    rough.watch = navigator.geolocation.watchPosition((p) => {
+      const c = p.coords;
+      if (rough.pos) rough.dist += haversine(rough.pos.lat, rough.pos.lng, c.latitude, c.longitude);
+      const dt = rough.pos ? (p.timestamp - rough.pos.t) / 1000 : 0;
+      const v = c.speed ?? (dt > 0 && rough.pos ? haversine(rough.pos.lat, rough.pos.lng, c.latitude, c.longitude) * 1000 / dt : 0);
+      rough.pos = { lat: c.latitude, lng: c.longitude, speed: v, t: p.timestamp };
+    }, () => {}, { enableHighAccuracy: true, maximumAge: 0 });
+    rough.timer = setInterval(() => {
+      const s = rough.samples.splice(0); if (s.length < 5 || !rough.pos) return;
+      const mean = s.reduce((a, b) => a + b, 0) / s.length;
+      const rms = Math.sqrt(s.reduce((a, b) => a + (b - mean) ** 2, 0) / s.length);
+      const v = rough.pos.speed || 0;
+      $("#rlSpeed").textContent = fmtN(v * 3.6);
+      if (v < 4.2) { $("#rlClass").textContent = "سرعة منخفضة — القراءة متوقفة"; return; }
+      const iri = iriEst(rms, v), cls = iri < 2 ? "excellent" : iri < 4 ? "good" : iri < 6 ? "fair" : iri < 8 ? "poor" : "very_poor";
+      rough.pts.push({ lat: +rough.pos.lat.toFixed(6), lng: +rough.pos.lng.toFixed(6), rms: +rms.toFixed(3), speed: +v.toFixed(1), iri: +iri.toFixed(2), ts: new Date().toISOString() });
+      $("#rlIri").textContent = fmtN(iri, 1); $("#rlClass").textContent = ROUGH[cls][0]; $("#roughLive").style.setProperty("--rc", ROUGH[cls][1]);
+      $("#rlN").textContent = fmtN(rough.pts.length); $("#rlDist").textContent = fmtN(rough.dist, 1);
+      $("#rlAvg").textContent = fmtN(rough.pts.reduce((a, p) => a + p.iri, 0) / rough.pts.length, 1);
+    }, 1000);
+    $("#roughBtn").innerHTML = `${svg("pause")}إيقاف القياس`; $("#roughSave").hidden = true;
+    $("#roughMsg").textContent = "القياس يعمل — أبقِ الصفحة مفتوحة والهاتف مثبتًا.";
+  }
+  function roughStop() {
+    rough.on = false; removeEventListener("devicemotion", onMotion); navigator.geolocation.clearWatch(rough.watch); clearInterval(rough.timer);
+    $("#roughBtn").innerHTML = `${svg("play")}ابدأ القياس`;
+    $("#roughSave").hidden = !rough.pts.length;
+    $("#roughMsg").textContent = rough.pts.length ? `انتهى القياس: ${fmtN(rough.pts.length)} قراءة على ${fmtN(rough.dist, 1)} كم.` : "لم تُسجل قراءات (السرعة أقل من 15 كم/س أو لا إشارة GPS).";
+  }
+  const haversine = (a, b, c, d) => { const p = Math.PI / 180, x = 0.5 - Math.cos((c - a) * p) / 2 + Math.cos(a * p) * Math.cos(c * p) * (1 - Math.cos((d - b) * p)) / 2; return 12742 * Math.asin(Math.sqrt(x)); };
+  $("#roughBtn").addEventListener("click", () => (rough.on ? roughStop() : roughStart()));
+  $("#roughSave").addEventListener("click", async () => {
+    if (!isStatic()) {
+      try {
+        const r = await api("/api/roughness", { method: "POST", body: JSON.stringify({ device: safeGet("darb-device") || (() => { const d = "p" + Math.random().toString(36).slice(2, 10); safeSet("darb-device", d); return d; })(), points: rough.pts }) });
+        $("#roughMsg").textContent = `أُرسل القياس: ${fmtN(r.accepted)} قراءة أُضيفت لخريطة الخشونة. شكرًا لك!`; refresh().catch(() => {}); return;
+      } catch (err) { $("#roughMsg").textContent = `تعذّر الإرسال (${err.message}) — نُزّل ملفًا بدلًا منه.`; }
+    }
+    // الموقع المجاني: ملف GeoJSON يمكن إرفاقه ببلاغ GitHub أو فتحه في أي برنامج خرائط
+    const gj = { type: "FeatureCollection", features: rough.pts.map((p) => ({ type: "Feature", geometry: { type: "Point", coordinates: [p.lng, p.lat] }, properties: p })) };
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(gj)], { type: "application/geo+json" }));
+    a.download = `darb-roughness-${new Date().toISOString().slice(0, 16).replace(":", "")}.geojson`; a.click();
+    if (isStatic()) $("#roughMsg").innerHTML = `نُزّل ملف القياس. لإضافته للخريطة: <a href="https://github.com/${repo()}/issues/new?title=${encodeURIComponent("[خشونة] قياس من هاتف")}" target="_blank" rel="noopener">افتح بلاغًا على GitHub</a> وأرفق الملف.`;
+  });
 
   // ---------- المساعد الهندسي ----------
   // محرك أسئلة عربي يعمل في المتصفح على بيانات الشبكة كلها (فيعمل في الموقع الثابت المجاني بلا أي مفتاح)،
@@ -1046,6 +1178,8 @@
     const [summary, cams, issues, econ] = await Promise.all([api(rq("/api/summary")), api(rq("/api/cameras")), api(rq("/api/issues")),
       api(rq("/api/economics")).catch(() => null)]);
     state.summary = summary; state.cameras = cams; state.issues = issues; state.econ = econ;
+    [state.reports, state.rough] = await Promise.all([api(rq("/api/reports")).catch(() => []), api(rq("/api/roughness")).catch(() => [])]);
+    renderReports();
     renderBudget();
     renderSummary(summary); renderCameras(); renderMarkers(); renderLifecycle(summary.lifecycle, issues);
     if ($("#tab-live").classList.contains("active")) renderLive();
