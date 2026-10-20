@@ -24,7 +24,8 @@ log = logging.getLogger("darb.lifecycle")
 STAGE_AR = {"predicted": "متوقعة", "active": "نشطة", "monitoring": "مراقبة بعد المعالجة", "closed": "مغلقة"}
 KIND_AR = {"deterioration": "تدهور الرصف", "pothole": "حفرة", "sudden": "تغيّر مفاجئ", "cracking": "تشققات"}
 RESOLUTION_AR = {"repaired": "أُصلحت", "cleared": "أُزيلت", "not_occurred": "لم يتحقق التوقع", "recurred": "عادت بعد الإصلاح",
-                 "merged": "دُمجت في مشكلة التدهور", "prevented": "عولجت وقائيًا قبل وقوعها"}
+                 "merged": "دُمجت في مشكلة التدهور", "prevented": "عولجت وقائيًا قبل وقوعها",
+                 "invalid": "قراءة خاطئة: منطقة التحليل لم تكن على الطريق"}
 FAMILY = {"crack_long": "crack", "crack_trans": "crack", "alligator": "crack", "pothole": "pothole"}
 
 
@@ -300,7 +301,7 @@ def maintenance_logged(cam: dict, date: str, action: str) -> int:
 
 
 def kpis(region_cams: list[str] | None = None) -> dict:
-    rows = db.query("SELECT * FROM issues")
+    rows = [r for r in db.query("SELECT * FROM issues") if r["resolution"] != "invalid"]  # الملغاة لا تُحسب في الأداء
     if region_cams is not None:
         rows = [r for r in rows if r["camera_id"] in region_cams]
     stages = {k: sum(1 for r in rows if r["stage"] == k) for k in STAGE_AR}
