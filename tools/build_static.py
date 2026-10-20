@@ -20,15 +20,18 @@ js = re.sub(r'L\.tileLayer\("https://\{s\}\.tile\.openstreetmap\.org/\{z\}/\{x\}
             r'state.tiles = new (L.GridLayer.extend({ createTile(c) { const t = (window.__TILES || {})[`${c.z}/${c.x}/${c.y}`]; if (!t) return document.createElement("div"); const i = document.createElement("img"); i.alt = ""; i.src = t; return i; } }))({ maxZoom: 12, attribution: \1 }).addTo(state.map); window.__redrawTiles = () => state.tiles.redraw();', js)
 js = js.replace('L.map("map", { zoomControl: true })', 'L.map("map", { zoomControl: true, maxZoom: 12, minZoom: 1 })')
 js = js.replace("{ maxZoom: 13 }", "{ maxZoom: 12 }")
-assert "imgSrc(s.id" in js and "GridLayer" in js, "patch failed"
+js = js.replace("const hiSrc = (id, ann) => `/api/snapshots/${id}/image?annotated=${ann}`;", "const hiSrc = (id, ann) => window.imgHi(id, ann);")
+assert "imgSrc(s.id" in js and "GridLayer" in js and "window.imgHi" in js, "patch failed"
 
 shim = r'''
-window.__IMG = {}; window.__TILES = {};
+window.__IMG = {}; window.__TILES = {}; window.__HI = new Set();
 window.imgSrc = (id, ann) => window.__IMG[id + ":" + (+ann ? 1 : 0)] || window.__IMG[id + ":1"] || "";
+// عارض التكبير: الدقة الكاملة لأحدث اللقطات (ملفات مستقلة)، والمضمّنة لما قبلها
+window.imgHi = (id, ann) => window.__HI.has(+id) ? `img/${id}_${+ann ? 1 : 0}.jpg` : window.imgSrc(id, ann);
 (() => {
   const real = window.fetch.bind(window);
   const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "Content-Type": "application/json" } });
-  const ready = real("data/thumbs.json").then((r) => r.json()).then((t) => Object.assign(window.__IMG, t)).catch(() => {});
+  const ready = real("data/thumbs.json").then((r) => r.json()).then((t) => { (t._hi || []).forEach((i) => window.__HI.add(i)); delete t._hi; Object.assign(window.__IMG, t); }).catch(() => {});
   // بلاطات الخريطة كبيرة: تُحمَّل في الخلفية وتُرسم عند وصولها
   real("data/tiles.json").then((r) => r.json()).then((t) => { Object.assign(window.__TILES, t); window.__redrawTiles?.(); }).catch(() => {});
   window.fetch = async (url, opts = {}) => {
@@ -45,6 +48,7 @@ window.imgSrc = (id, ann) => window.__IMG[id + ":" + (+ann ? 1 : 0)] || window._
     if (!r.ok) return json({ detail: "غير متاح في نسخة العرض" }, 404);
     const j = await r.json();
     if (j._images) { Object.assign(window.__IMG, j._images); delete j._images; }
+    if (j._hi) { j._hi.forEach((i) => window.__HI.add(i)); delete j._hi; }
     return json(j);
   };
 })();

@@ -78,6 +78,11 @@
     pause: "<path d=\"M208,48V208a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8h40A8,8,0,0,1,208,48ZM96,40H56a8,8,0,0,0-8,8V208a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\" class=\"d\"/><path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>",
     play: "<path d=\"M228.23,134.69,84.15,222.81A8,8,0,0,1,72,216.12V39.88a8,8,0,0,1,12.15-6.69l144.08,88.12A7.82,7.82,0,0,1,228.23,134.69Z\" class=\"d\"/><path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>",
     expand: "<path d=\"M208,48V208H48V48Z\" class=\"d\"/><path d=\"M216,48V96a8,8,0,0,1-16,0V67.31l-42.34,42.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM98.34,146.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l42.35-42.34a8,8,0,0,0-11.32-11.32ZM208,152a8,8,0,0,0-8,8v28.69l-42.34-42.35a8,8,0,0,0-11.32,11.32L188.69,200H160a8,8,0,0,0,0,16h48a8,8,0,0,0,8-8V160A8,8,0,0,0,208,152ZM67.31,56H96a8,8,0,0,0,0-16H48a8,8,0,0,0-8,8V96a8,8,0,0,0,16,0V67.31l42.34,42.35a8,8,0,0,0,11.32-11.32Z\"/>",
+    zoomin: "<path d=\"M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z\" class=\"d\"/><path d=\"M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Zm112,0a8,8,0,0,1-8,8H120v24a8,8,0,0,1-16,0V120H80a8,8,0,0,1,0-16h24V80a8,8,0,0,1,16,0v24h24A8,8,0,0,1,152,112Z\"/>",
+    zoomout: "<path d=\"M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z\" class=\"d\"/><path d=\"M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Zm112,0a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h64A8,8,0,0,1,152,112Z\"/>",
+    fit: "<path d=\"M208,64V192a16,16,0,0,1-16,16H64a16,16,0,0,1-16-16V64A16,16,0,0,1,64,48H192A16,16,0,0,1,208,64Z\" class=\"d\"/><path d=\"M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\"/>",
+    prev: "<path d=\"M176,128,96,208V48Z\" class=\"d\"/><path d=\"M181.66,122.34l-80-80A8,8,0,0,0,88,48V208a8,8,0,0,0,13.66,5.66l80-80A8,8,0,0,0,181.66,122.34ZM104,188.69V67.31L164.69,128Z\"/>",
+    next: "<path d=\"M160,48V208L80,128Z\" class=\"d\"/><path d=\"M163.06,40.61a8,8,0,0,0-8.72,1.73l-80,80a8,8,0,0,0,0,11.32l80,80A8,8,0,0,0,168,208V48A8,8,0,0,0,163.06,40.61ZM152,188.69,91.31,128,152,67.31Z\"/>",
   };
   const svg = (name) => `<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${ICONS[name] || ""}</svg>`;
   function hydrateIcons(root = document) {
@@ -233,7 +238,7 @@
         html: `<div class="marker ${c.open_alerts ? "pulse" : ""}" style="background:${col};color:${col}"></div>` });
       const s = c.last_snapshot;
       const m = L.marker([c.lat, c.lng], { icon }).addTo(state.map).bindPopup(`<div class="pop">
-        ${s ? `<img src="/api/snapshots/${s.id}/image?annotated=1" alt="">` : ""}
+        ${s ? `<img src="/api/snapshots/${s.id}/image?annotated=1" alt="" data-zoom-cam="${esc(c.id)}" title="اضغط للتكبير">` : ""}
         <b>${esc(c.name)}</b><span class="muted">${esc(c.road)}</span>
         <div class="row">${c.risk ? `<span class="pill ${lvl}">${LEVEL_AR[lvl]} · ${fmtN(c.risk.score)}</span>` : ""}
         <span class="muted">${s ? `مؤشر الحالة <b style="display:inline">${fmtN(c.risk?.ci ?? s.condition_index)}</b>` : "بانتظار أول التقاط نهاري"}</span></div>
@@ -241,6 +246,142 @@
       state.markers[c.id] = m;
     }
   }
+
+  // ---------- معاينة الصور وتكبيرها ----------
+  // عارض بملء الشاشة: تكبير حتى 8× بالعجلة أو القرص بإصبعين أو النقر المزدوج، سحب للتنقل، تبديل العيوب، وتصفح اللقطات
+  const hiSrc = (id, ann) => `/api/snapshots/${id}/image?annotated=${ann}`;
+  const lb = { items: [], i: 0, ann: 1, s: 1, x: 0, y: 0, fit: 1, cam: null, onClose: null, ptrs: new Map(), pinch: null, tap: 0, touchAt: 0 };
+  document.body.insertAdjacentHTML("beforeend", `<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="معاينة الصورة">
+    <div class="lb-stage" id="lbStage"><img id="lbImg" alt="" draggable="false"><span class="lb-spin"></span></div>
+    <div class="lb-top"><div class="lb-cap"><b id="lbTitle"></b><span id="lbMeta"></span></div>
+      <button class="lb-btn" type="button" data-lb="close" aria-label="إغلاق" title="إغلاق (Esc)">${svg("close")}</button></div>
+    <button class="lb-nav prev" type="button" data-lb="prev" aria-label="اللقطة الأقدم" title="الأقدم">${svg("prev")}</button>
+    <button class="lb-nav next" type="button" data-lb="next" aria-label="اللقطة الأحدث" title="الأحدث">${svg("next")}</button>
+    <div class="lb-bar">
+      <button class="lb-btn" type="button" data-lb="out" aria-label="تصغير" title="تصغير (−)">${svg("zoomout")}</button>
+      <span class="lb-zoom" id="lbZoom">100%</span>
+      <button class="lb-btn" type="button" data-lb="in" aria-label="تكبير" title="تكبير (+)">${svg("zoomin")}</button>
+      <button class="lb-btn" type="button" data-lb="fit" aria-label="ملاءمة الشاشة" title="ملاءمة الشاشة (0)">${svg("fit")}</button>
+      <span class="lb-sep"></span>
+      <label class="lb-switch"><input type="checkbox" id="lbAnn" checked> إظهار العيوب</label>
+      <a class="lb-btn" id="lbDl" download aria-label="تنزيل الصورة" title="تنزيل">${svg("download")}</a>
+      <span class="lb-count" id="lbCount"></span>
+    </div></div>`);
+  const lbEl = $("#lb"), lbImg = $("#lbImg"), lbStage = $("#lbStage");
+  function lbApply() {
+    lbImg.style.transform = `translate(${lb.x}px, ${lb.y}px) scale(${lb.s})`;
+    $("#lbZoom").textContent = `${Math.round((lb.s / lb.fit) * 100)}%`;
+    lbEl.classList.toggle("zoomed", lb.s > lb.fit * 1.01);
+  }
+  function lbFit() {
+    const r = lbStage.getBoundingClientRect(), w = lbImg.naturalWidth || 1, h = lbImg.naturalHeight || 1;
+    lb.fit = lb.s = Math.min(r.width / w, r.height / h);
+    lb.x = (r.width - w * lb.s) / 2; lb.y = (r.height - h * lb.s) / 2;
+    lbApply();
+  }
+  function lbClamp() {  // لا تخرج الصورة المكبّرة كلها من الشاشة
+    const r = lbStage.getBoundingClientRect(), w = lbImg.naturalWidth * lb.s, h = lbImg.naturalHeight * lb.s;
+    lb.x = w <= r.width ? (r.width - w) / 2 : Math.min(0, Math.max(r.width - w, lb.x));
+    lb.y = h <= r.height ? (r.height - h) / 2 : Math.min(0, Math.max(r.height - h, lb.y));
+  }
+  function lbZoomAt(f, cx, cy) {
+    const r = lbStage.getBoundingClientRect();
+    const ns = Math.min(lb.fit * 8, Math.max(lb.fit, lb.s * f));
+    const px = (cx ?? r.left + r.width / 2) - r.left, py = (cy ?? r.top + r.height / 2) - r.top;
+    lb.x = px - ((px - lb.x) * ns) / lb.s; lb.y = py - ((py - lb.y) * ns) / lb.s; lb.s = ns;
+    lbClamp(); lbApply();
+  }
+  function lbShow(keepView = false) {
+    const it = lb.items[lb.i]; if (!it) return;
+    const src = hiSrc(it.id, lb.ann);
+    lbEl.classList.add("loading");
+    lbImg.onload = () => { lbEl.classList.remove("loading"); if (!keepView) lbFit(); };
+    lbImg.onerror = () => lbEl.classList.remove("loading");
+    lbImg.src = src;
+    const dl = $("#lbDl"); dl.href = src; dl.download = `darb-${lb.cam?.id || "camera"}-${(it.ts || "").slice(0, 10)}${lb.ann ? "-defects" : ""}.jpg`;
+    $("#lbTitle").textContent = lb.cam?.name || "";
+    $("#lbMeta").textContent = [it.ts && fmtDT(it.ts), KIND_AR[it.kind] || it.kind, it.condition_index != null && `الحالة ${fmtN(it.condition_index)}`,
+      it.pothole_count ? `حفر ${fmtN(it.pothole_count)}` : ""].filter(Boolean).join(" · ");
+    $("#lbCount").textContent = lb.items.length > 1 ? `${fmtN(lb.i + 1)} / ${fmtN(lb.items.length)}` : "";
+    lbEl.querySelector(".prev").hidden = lb.i <= 0;
+    lbEl.querySelector(".next").hidden = lb.i >= lb.items.length - 1;
+  }
+  function openLightbox(cam, items, i = items.length - 1, ann = true, onClose = null) {
+    Object.assign(lb, { cam, items, i, ann: ann ? 1 : 0, onClose });
+    $("#lbAnn").checked = !!ann;
+    lbEl.hidden = false; document.body.classList.add("lb-open");
+    lbShow();
+  }
+  function closeLightbox() {
+    lbEl.hidden = true; document.body.classList.remove("lb-open");
+    lb.onClose?.(lb.i, lb.ann); lb.onClose = null;
+  }
+  function lbStep(d) { const n = lb.i + d; if (n >= 0 && n < lb.items.length) { lb.i = n; lbShow(); } }
+  lbEl.addEventListener("click", (e) => {
+    const a = e.target.closest("[data-lb]")?.dataset.lb;
+    if (a === "close") closeLightbox();
+    else if (a === "prev") lbStep(-1);
+    else if (a === "next") lbStep(1);
+    else if (a === "in") lbZoomAt(1.5);
+    else if (a === "out") lbZoomAt(1 / 1.5);
+    else if (a === "fit") lbFit();
+  });
+  $("#lbAnn").addEventListener("change", (e) => { lb.ann = e.target.checked ? 1 : 0; lbShow(true); });
+  lbStage.addEventListener("wheel", (e) => { e.preventDefault(); lbZoomAt(e.deltaY < 0 ? 1.18 : 1 / 1.18, e.clientX, e.clientY); }, { passive: false });
+  lbStage.addEventListener("dblclick", (e) => {
+    if (Date.now() - lb.touchAt < 800) return;  // اللمس يعالَج بالنقر المزدوج أدناه (المتصفح يطلق dblclick أيضًا)
+    lb.s > lb.fit * 1.05 ? lbFit() : lbZoomAt(2.5, e.clientX, e.clientY);
+  });
+  lbStage.addEventListener("pointerdown", (e) => {
+    lbStage.setPointerCapture(e.pointerId);
+    if (e.pointerType === "touch") lb.touchAt = Date.now();
+    lb.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (lb.ptrs.size === 2) {
+      const [a, b] = [...lb.ptrs.values()];
+      lb.pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), s: lb.s };
+    }
+  });
+  lbStage.addEventListener("pointermove", (e) => {
+    const p = lb.ptrs.get(e.pointerId); if (!p) return;
+    if (lb.ptrs.size === 2 && lb.pinch) {  // قرص بإصبعين
+      p.x = e.clientX; p.y = e.clientY;
+      const [a, b] = [...lb.ptrs.values()];
+      const f = (lb.pinch.s * (Math.hypot(a.x - b.x, a.y - b.y) / lb.pinch.d)) / lb.s;
+      lbZoomAt(f, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    } else if (lb.ptrs.size === 1) {  // سحب
+      lb.x += e.clientX - p.x; lb.y += e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+      lbClamp(); lbApply();
+    }
+  });
+  const lbUp = (e) => {
+    if (!lb.ptrs.delete(e.pointerId)) return;
+    if (lb.ptrs.size < 2) lb.pinch = null;
+    if (e.pointerType === "touch" && e.type === "pointerup") {  // نقر مزدوج باللمس
+      const now = Date.now();
+      if (now - lb.tap < 300) { lb.s > lb.fit * 1.05 ? lbFit() : lbZoomAt(2.5, e.clientX, e.clientY); lb.tap = 0; } else lb.tap = now;
+    }
+  };
+  lbStage.addEventListener("pointerup", lbUp); lbStage.addEventListener("pointercancel", lbUp);
+  document.addEventListener("keydown", (e) => {
+    if (lbEl.hidden) return;
+    const k = e.key;
+    if (k === "Escape") closeLightbox();
+    else if (k === "+" || k === "=") lbZoomAt(1.5);
+    else if (k === "-") lbZoomAt(1 / 1.5);
+    else if (k === "0") lbFit();
+    else if (k === "ArrowRight") lbStep(-1);  // واجهة من اليمين لليسار: اليمين = الأقدم
+    else if (k === "ArrowLeft") lbStep(1);
+    else return;
+    e.preventDefault(); e.stopImmediatePropagation();  // لا يُغلق لوحة التفاصيل خلفه
+  }, true);
+  addEventListener("resize", () => { if (!lbEl.hidden) lbFit(); });
+  // تكبير صورة كاميرا من البطاقة أو الخريطة مباشرة
+  document.addEventListener("click", (e) => {
+    const z = e.target.closest("[data-zoom-cam]"); if (!z) return;
+    e.stopPropagation(); e.preventDefault();
+    const c = state.cameras.find((x) => x.id === z.dataset.zoomCam);
+    if (c?.last_snapshot) openLightbox(c, [c.last_snapshot], 0, z.dataset.ann !== "0");
+  }, true);
 
   // ---------- الكاميرات ----------
   function renderCameras() {
@@ -252,7 +393,8 @@
     $("#camGrid").innerHTML = list.map((c) => {
       const s = c.last_snapshot, r = c.risk;
       return `<article class="cam" data-cam="${esc(c.id)}">
-        <div class="img">${s ? "" : `<span class="wait">${svg("camoff")}بانتظار أول التقاط نهاري</span>`}${s ? `<img loading="lazy" src="/api/snapshots/${s.id}/image?annotated=${ann}" alt="لقطة ${esc(c.name)}">` : ""}
+        <div class="img">${s ? "" : `<span class="wait">${svg("camoff")}بانتظار أول التقاط نهاري</span>`}${s ? `<img loading="lazy" src="/api/snapshots/${s.id}/image?annotated=${ann}" alt="لقطة ${esc(c.name)}">
+          <button class="zoom-btn" type="button" data-zoom-cam="${esc(c.id)}" data-ann="${ann}" aria-label="تكبير الصورة" title="تكبير ومعاينة">${svg("zoomin")}</button>` : ""}
           ${r ? `<span class="pill ${r.level}">${LEVEL_AR[r.level]}</span>` : ""}
           <span class="live">${srcLabel(c.source_type)} · ${s ? ago(s.ts) : "—"}</span></div>
         <div class="body"><b>${esc(c.name)}</b><span class="muted">${esc(c.road)}</span>
@@ -409,7 +551,8 @@
       <div class="d-grid">
         <div class="card viewer">
           <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("image")}</span>لقطات الكاميرا عبر الزمن</h2><label class="switch"><input type="checkbox" id="vAnn" checked> العيوب</label></div>
-          <img id="vImg" alt="لقطة الطريق">
+          <div class="zoomable" id="vZoom" role="button" tabindex="0" aria-label="تكبير اللقطة ومعاينتها"><img id="vImg" alt="لقطة الطريق">
+            <span class="zoom-hint">${svg("zoomin")}اضغط للتكبير</span></div>
           <div class="ctrl"><input type="range" id="vRange" min="0" max="${Math.max(0, snaps.length - 1)}" value="${Math.max(0, snaps.length - 1)}" aria-label="الخط الزمني">
             <span class="ts" id="vTs"></span></div>
         </div>
@@ -490,6 +633,9 @@
       ts.textContent = `${fmtDT(s.ts)} · ${KIND_AR[s.kind] || s.kind} · الحالة ${fmtN(s.condition_index)}`;
     };
     range.addEventListener("input", show); ann.addEventListener("change", show); show();
+    const zoom = () => openLightbox(d, snaps, +range.value, ann.checked, (i, a) => { range.value = i; ann.checked = !!a; show(); });
+    $("#vZoom").addEventListener("click", zoom);
+    $("#vZoom").addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); zoom(); } });
 
     drawCIChart(d, rd);
 

@@ -7,6 +7,7 @@
 import base64
 import json
 import math
+import os
 import sys
 import time
 from pathlib import Path
@@ -23,6 +24,7 @@ OUT = Path(sys.argv[1])
 (OUT / "data").mkdir(parents=True, exist_ok=True)
 client = TestClient(app_mod.app)  # بلا lifespan: لا بذر ولا مجدول
 K = 8  # لقطات الخط الزمني المضمّنة لكل كاميرا
+K_HI = int(os.getenv("DARB_HI_SNAPSHOTS", "3"))  # أحدث لقطات كل كاميرا تُنشر أيضًا بدقتها الكاملة لعارض التكبير
 
 
 def get(path):
@@ -46,6 +48,18 @@ def img_uri(sid, annotated, width):
     return "data:image/jpeg;base64," + base64.b64encode(buf).decode()
 
 
+def write_hi(sid) -> bool:
+    """نسخة بالدقة الكاملة (1280) ملفًا مستقلًا: تُحمَّل فقط عند فتح عارض التكبير."""
+    s = db.one("SELECT image_path, annotated_path FROM snapshots WHERE id=?", (sid,))
+    for ann, rel in ((1, s["annotated_path"] or s["image_path"]), (0, s["image_path"])):
+        im = cv2.imread(str(config.DATA_DIR / rel))
+        if im is None:
+            return False
+        cv2.imwrite(str(OUT / "img" / f"{sid}_{ann}.jpg"), im, [cv2.IMWRITE_JPEG_QUALITY, 84])
+    return True
+
+
+(OUT / "img").mkdir(exist_ok=True)
 status = get("/api/status")
 status["static_snapshot"] = time.strftime("%Y-%m-%d %H:%M UTC", time.gmtime())
 save("status.json", status)
@@ -57,7 +71,7 @@ for r in [""] + config.REGION_KEYS:
     save(f"issues_{tag}.json", get("/api/issues" + q))
 save("alerts.json", get("/api/alerts?limit=300"))
 
-thumbs = {}
+thumbs, hi_all = {}, set()
 cams = get("/api/cameras")
 for c in cams:
     d = get(f"/api/cameras/{c['id']}")
@@ -69,12 +83,14 @@ for c in cams:
         images[f"{s['id']}:0"] = img_uri(s["id"], False, 720)
     d["_images"] = {k: v for k, v in images.items() if v}
     d["snapshots"] = [x for x in ok if f"{x['id']}:1" in d["_images"]]  # الصور الأقدم قد تكون حُذفت لتوفير المساحة
+    d["_hi"] = [x["id"] for x in d["snapshots"][:K_HI] if write_hi(x["id"])]
+    hi_all.update(d["_hi"])
     save(f"cam_{c['id']}.json", d)
     if c["last_snapshot"]:
         sid = c["last_snapshot"]["id"]
         thumbs[f"{sid}:1"] = d["_images"].get(f"{sid}:1") or img_uri(sid, True, 720)
         thumbs[f"{sid}:0"] = d["_images"].get(f"{sid}:0") or img_uri(sid, False, 720)
-save("thumbs.json", {k: v for k, v in thumbs.items() if v})
+save("thumbs.json", {**{k: v for k, v in thumbs.items() if v}, "_hi": sorted(hi_all)})
 
 # ---------- بلاطات الخريطة (OpenStreetMap) لمناطق الكاميرات فقط ----------
 def tile_xy(lat, lng, z):
