@@ -76,6 +76,9 @@ CREATE TABLE IF NOT EXISTS weather (
     tmax REAL NOT NULL,
     tmin REAL NOT NULL,
     source TEXT NOT NULL,
+    precip REAL,      -- أمطار اليوم (مم)
+    gust REAL,        -- أقوى هبّة رياح (كم/س)
+    radiation REAL,   -- الإشعاع الشمسي اليومي (MJ/m²)
     PRIMARY KEY (region, date)
 );
 -- تتبّع كل عيب عبر الزمن (مطابقة المواقع بين اللقطات)
@@ -125,6 +128,10 @@ def _migrate(c: sqlite3.Connection) -> None:
     wcols = {r[1] for r in c.execute("PRAGMA table_info(weather)")}
     if wcols and "region" not in wcols:  # ذاكرة طقس مؤقتة فقط — تُعاد بنيتها
         c.execute("DROP TABLE weather")
+    elif wcols:
+        for col in ("precip", "gust", "radiation"):
+            if col not in wcols:
+                c.execute(f"ALTER TABLE weather ADD COLUMN {col} REAL")
     c.commit()
 
 

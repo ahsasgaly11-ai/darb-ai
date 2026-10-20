@@ -295,3 +295,37 @@ def test_capture_window_and_weekly_median():
     # وسيط الأسبوع: يوم شاذ واحد (مبتل/ظل) لا يغيّر نقطة الأسبوع
     days = [{"ts": (NOW - timedelta(days=30 - d)).isoformat(), "condition_index": 40 if d == 2 else 90} for d in range(7)]
     assert all(w["condition_index"] == 90 for w in risk.weekly(days))
+
+
+def test_gulf_pavement_physics():
+    from datetime import date as _date
+    from backend import gulf
+    # الدوحة 46°م: الرصف ~68°م ويحتاج PG 76 (الدرجة المعتمدة في الخليج)؛ سنغافورة 31°م تكفيها PG 58
+    assert 66 <= gulf.pavement_max(46, 25.3) <= 70
+    assert gulf.pg_required(gulf.pavement_max(48, 25.3)) == 76
+    assert gulf.pg_required(gulf.pavement_max(31, 1.35)) == 58
+    # الغيوم/الغبار تخفض الفرق بين الرصف والهواء
+    d = _date(2026, 7, 1)
+    assert gulf.pavement_max(40, 33, radiation=10, day=d) < gulf.pavement_max(40, 33, radiation=30, day=d)
+    # الرمال: بيج داخل منطقة الطريق، والإسفلت الرمادي والعلامات الصفراء لا تُحتسب
+    img = np.full((100, 200, 3), 90, np.uint8)
+    img[60:100, :100] = (120, 180, 215)   # رمل (BGR بيج)
+    img[60:100, 100:120] = (0, 210, 240)  # علامة صفراء مشبعة
+    roi = [[0, 0.6], [1, 0.6], [1, 1], [0, 1]]
+    assert 0.45 <= gulf.sand_cover(img, roi) <= 0.55
+
+
+def test_gulf_rutting_and_events(monkeypatch):
+    from datetime import date as _date
+    from backend import gulf, weather
+    hot = [{"date": (_date(2026, 7, 31) - timedelta(days=29 - i)).isoformat(), "tmax": 46, "tmin": 32,
+            "source": "open-meteo", "precip": 30 if i == 29 else 0, "gust": 70 if i == 28 else 20} for i in range(37)]
+    monkeypatch.setattr(weather, "daily_range", lambda s, e, r: [x for x in hot if s.isoformat() <= x["date"] <= e.isoformat()])
+    cam = {"region": "phoenix", "meta": {"aadt": 150000, "heavy_vehicle_pct": 12, "binder_pg": 64}}
+    f = gulf.pavement_features(cam, _date(2026, 7, 31))
+    assert f["pavement_t7max"] > 60 and f["pg_needed_now"] == 70 and f["rutting_level"] == "high"
+    assert f["pg_deficit_grades"] >= 1
+    assert {e["kind"] for e in f["events"]} == {"flood", "wind"}
+    mild = gulf.pavement_features({"region": "phoenix", "meta": {"aadt": 20000, "heavy_vehicle_pct": 5, "binder_pg": 76}},
+                                  _date(2026, 7, 31))
+    assert mild["rutting_risk"] < f["rutting_risk"]

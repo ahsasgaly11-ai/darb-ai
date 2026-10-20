@@ -24,13 +24,16 @@ def climate(d: date, region: str) -> tuple[float, float]:
     return config.REGIONS[region]["climate"][d.month]
 
 
-def _fetch(start: date, end: date, region: str) -> dict[str, tuple[float, float]]:
+DAILY = ("temperature_2m_max", "temperature_2m_min", "precipitation_sum", "wind_gusts_10m_max", "shortwave_radiation_sum")
+
+
+def _fetch(start: date, end: date, region: str) -> dict[str, tuple]:
     r_cfg = config.REGIONS[region]
     today = date.today()
-    out: dict[str, tuple[float, float]] = {}
+    out: dict[str, tuple] = {}
     params = {
         "latitude": r_cfg["lat"], "longitude": r_cfg["lng"],
-        "daily": "temperature_2m_max,temperature_2m_min", "timezone": r_cfg["tz"],
+        "daily": ",".join(DAILY), "timezone": r_cfg["tz"],
     }
     calls = []
     # الأرشيف متأخر بضعة أيام؛ ما بعده يؤخذ من واجهة التوقعات (past_days)
@@ -45,9 +48,10 @@ def _fetch(start: date, end: date, region: str) -> dict[str, tuple[float, float]
             r = client.get(url, params=p)
             r.raise_for_status()
             daily = r.json()["daily"]
-            for d, hi, lo in zip(daily["time"], daily["temperature_2m_max"], daily["temperature_2m_min"]):
+            cols = [daily.get(k) or [None] * len(daily["time"]) for k in DAILY]
+            for d, hi, lo, pr, gu, ra in zip(daily["time"], *cols):
                 if hi is not None and lo is not None:
-                    out[d] = (float(hi), float(lo))
+                    out[d] = (float(hi), float(lo), pr, gu, ra)
     return out
 
 
@@ -63,10 +67,10 @@ def daily_range(start: date, end: date, region: str) -> list[dict]:
             with _fetch_lock:
                 fetched = _fetch(min(missing), max(missing), region)
             with db.tx() as c:
-                for d, (hi, lo) in fetched.items():
-                    c.execute("INSERT OR REPLACE INTO weather(region,date,tmax,tmin,source) VALUES (?,?,?,?,?)",
-                              (region, d, hi, lo, "open-meteo"))
-                    cached[d] = {"date": d, "tmax": hi, "tmin": lo, "source": "open-meteo"}
+                for d, (hi, lo, pr, gu, ra) in fetched.items():
+                    c.execute("INSERT OR REPLACE INTO weather(region,date,tmax,tmin,source,precip,gust,radiation) VALUES (?,?,?,?,?,?,?,?)",
+                              (region, d, hi, lo, "open-meteo", pr, gu, ra))
+                    cached[d] = {"date": d, "tmax": hi, "tmin": lo, "source": "open-meteo", "precip": pr, "gust": gu, "radiation": ra}
         except Exception as e:  # الشبكة غير متاحة — نكمل بالمناخ
             _backoff_until[region] = time.time() + 900
             log.warning("Open-Meteo unavailable for %s (%s); using climatology for 15 min", region, str(e)[:120])

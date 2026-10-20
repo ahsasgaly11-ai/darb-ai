@@ -19,8 +19,9 @@ import numpy as np
 from . import config
 
 WEIGHTS = {
-    "condition": 3.4, "trend": 2.4, "potholes": 1.6, "heat": 0.9,
+    "condition": 3.4, "trend": 2.4, "potholes": 1.6, "heat": 0.5,
     "thermal_range": 0.5, "traffic": 1.0, "age": 0.8, "incidents": 0.4,
+    "rutting": 1.0, "sand": 0.3, "events": 0.5,
 }
 INTERCEPT = -4.3
 
@@ -33,6 +34,9 @@ FACTOR_AR = {
     "traffic": "الحمل المروري والشاحنات الثقيلة",
     "age": "عمر الطبقة منذ آخر رصف/صيانة",
     "incidents": "الحوادث المرورية القريبة",
+    "rutting": "خطر التخدد (حرارة الرصف × الشاحنات × درجة الرابط)",
+    "sand": "رمال على سطح الطريق",
+    "events": "سيول أو عاصفة في الأيام الأخيرة",
 }
 
 LEVELS = [(25, "low", "منخفض"), (50, "medium", "متوسط"), (75, "high", "مرتفع"), (101, "critical", "حرج")]
@@ -107,7 +111,7 @@ def _years_since(d: str | None, at: date) -> float:
 
 
 def assess(camera: dict, history: list[dict], heat: dict, outlook: dict, incidents: int = 0,
-           at: datetime | None = None) -> dict:
+           at: datetime | None = None, gulf: dict | None = None) -> dict:
     at = at or datetime.now().astimezone()
     meta = camera.get("meta", {})
     latest = history[-1]
@@ -127,6 +131,9 @@ def assess(camera: dict, history: list[dict], heat: dict, outlook: dict, inciden
         "traffic": traffic_n,
         "age": _clip(_years_since(age_from, at.date()) / 12),
         "incidents": _clip(incidents / 5),
+        "rutting": float((gulf or {}).get("rutting_risk", 0.0)),
+        "sand": _clip(metrics.get("sand_cover", 0.0) / 0.25),
+        "events": 1.0 if (gulf or {}).get("events") else 0.0,
     }
     z = INTERCEPT + sum(WEIGHTS[k] * v for k, v in feats.items())
     prob = 1 / (1 + math.exp(-z))
@@ -162,12 +169,14 @@ def assess(camera: dict, history: list[dict], heat: dict, outlook: dict, inciden
         "factors": factors, "features": feats, "heat": heat, "outlook": outlook,
         "forecast": forecast,
         "priority": round(score * (0.7 + 0.3 * traffic_n), 1),
-        "recommendations": recommend(ci, latest, metrics, feats, slope, weeks_to, level),
+        "recommendations": recommend(ci, latest, metrics, feats, slope, weeks_to, level, gulf or {}),
+        "gulf": gulf,
         "next_inspection_days": {"critical": 1, "high": 3, "medium": 7, "low": 14}[level],
     }
 
 
-def recommend(ci, latest, metrics, feats, slope, weeks_to, level) -> list[dict]:
+def recommend(ci, latest, metrics, feats, slope, weeks_to, level, gulf=None) -> list[dict]:
+    gulf = gulf or {}
     recs = []
     thr = config.MAINTENANCE_THRESHOLD
     if ci <= thr:
@@ -183,6 +192,18 @@ def recommend(ci, latest, metrics, feats, slope, weeks_to, level) -> list[dict]:
         recs.append({"priority": "مرتفع", "text": f"يُتوقع بلوغ عتبة الصيانة خلال ~{weeks_to:.0f} أسبوع — إدراج المقطع في خطة الصيانة الوقائية القادمة."})
     if feats["heat"] > 0.5 and feats["traffic"] > 0.5:
         recs.append({"priority": "متوسط", "text": "عند إعادة الرصف: خلطة إسفلتية معدّلة بالبوليمر (PMB) مقاومة للتخدد في الحرارة العالية والأحمال الثقيلة."})
+    for ev in gulf.get("events", []):
+        recs.append({"priority": "مرتفع", "text": f"فحص بعد الحدث ({ev['date']}): {ev['text']}"})
+    if gulf.get("rutting_risk", 0) >= 0.6:
+        recs.append({"priority": "مرتفع", "text": f"خطر تخدد مرتفع: الرصف بلغ ~{gulf['pavement_t7max']:.0f}°م مع ~{gulf['trucks_per_day']:,} شاحنة/يوم — "
+                     "قياس عمق التخدد بمسطرة 3 م في مسارات العجلات، وتوجيه الشاحنات للمسار الأيمن بعيدًا عن ساعات الذروة الحرارية (12–4 م)."})
+    if gulf.get("pg_deficit_grades", 0) > 0:
+        recs.append({"priority": "مرتفع" if gulf["pg_deficit_grades"] > 1 else "متوسط",
+                     "text": f"الرابط الحالي PG {gulf['binder_pg']} أقل من المطلوب لمناخ المنطقة PG {gulf['pg_design']} "
+                             f"(حرارة الرصف التصميمية ~{gulf['pg_design_t7']:.0f}°م) — عند إعادة الرصف: رابط PG {gulf['pg_design']} أو معدّل بالبوليمر."})
+    if metrics.get("sand_cover", 0) >= 0.10:
+        recs.append({"priority": "متوسط", "text": f"رمال تغطي ~{metrics['sand_cover'] * 100:.0f}% من سطح الطريق — إزالة فورية (تقلل الاحتكاك وتسرّع البري)، "
+                     "ودراسة سياج رملي أو تشجير مصدّ في الجهة المواجهة للرياح."})
     if slope < -0.8:
         recs.append({"priority": "متوسط", "text": "التدهور متسارع — تقليص فترة التحليل لهذه الكاميرا إلى يومية حتى المعالجة."})
     if not recs:

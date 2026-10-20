@@ -128,7 +128,7 @@ def summary(region: str | None = None):
     priorities = sorted((c for c in cams if c["risk"]), key=lambda c: -(c["risk"]["priority"] or 0))
     # متوسط مؤشر الحالة أسبوعيًا (لمخطط الاتجاه العام)
     trend = db.query(f"""SELECT substr(ts,1,10) d, AVG(condition_index) ci FROM snapshots
-                        WHERE condition_index IS NOT NULL AND kind IN ('seed','weekly','manual') AND camera_id IN ({marks})
+                        WHERE condition_index IS NOT NULL AND quality='ok' AND camera_id IN ({marks})
                         GROUP BY strftime('%Y-%W', ts) ORDER BY d""", ids)
     return {
         "cameras": len(cams), "levels": levels,
@@ -140,7 +140,31 @@ def summary(region: str | None = None):
         "snapshots": db.one(f"SELECT COUNT(*) n FROM snapshots WHERE camera_id IN ({marks})", ids)["n"],
         "priorities": priorities, "network_trend": trend,
         "lifecycle": lifecycle.kpis(ids),
+        "gulf": _gulf_overview(cams),
         "seeding": state["seeding"],
+    }
+
+
+def _gulf_overview(cams: list[dict]) -> dict:
+    """ملخص الفيزياء الخليجية للشبكة: أعلى حرارة رصف، والمقاطع عالية خطر التخدد، وأحداث الطقس المتطرفة."""
+    rows = []
+    for c in cams:
+        g = ((pipeline.latest_risk(c["id"]) or {}).get("forecast") or {}).get("gulf")
+        if g:
+            rows.append((c, g))
+    if not rows:
+        return {}
+    hottest = max(rows, key=lambda x: x[1]["pavement_t7max"])
+    events = {}
+    for c, g in rows:
+        for e in g.get("events", []):
+            events.setdefault((c.get("region"), e["date"], e["kind"]), e)
+    return {
+        "max_pavement": hottest[1]["pavement_t7max"], "max_pavement_camera": hottest[0]["name"],
+        "rutting_high": sum(1 for _, g in rows if g["rutting_level"] == "high"),
+        "rutting_medium": sum(1 for _, g in rows if g["rutting_level"] == "medium"),
+        "pg_deficit": sum(1 for _, g in rows if g.get("pg_deficit_grades")),
+        "events": [{"region": k[0], **v} for k, v in sorted(events.items(), key=lambda kv: kv[0][1], reverse=True)],
     }
 
 

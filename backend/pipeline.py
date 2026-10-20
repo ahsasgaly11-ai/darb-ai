@@ -16,7 +16,7 @@ import cv2
 import httpx
 import numpy as np
 
-from . import change, config, db, incidents, lifecycle, risk, sources, vision, weather
+from . import change, config, db, gulf, incidents, lifecycle, risk, sources, vision, weather
 
 log = logging.getLogger("darb.pipeline")
 _cam_locks: dict[str, threading.Lock] = {}
@@ -266,6 +266,8 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
     if diff.get("view_changed"):
         alerts.append(add_alert(cam, ts, "view_changed", "info",
                                 "تغيّر منظر الكاميرا (دوران أو تكبير) — اعتُمدت هذه اللقطة مرجعًا جديدًا للمقارنة.", sid))
+    elif (sand := _sand_alert(cam_id, ts, result)):
+        alerts.append(add_alert(cam, ts, "sand", "warning", sand, sid))
     elif pending:
         typ, sev, msg = pending
         note = "" if sev == "info" else " (تأكّد في لقطتين متتاليتين)"
@@ -293,7 +295,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
                            "factors": assessment["factors"],
                            "forecast": {k: assessment[k] for k in ("forecast", "ci", "ci_slope", "effective_slope",
                                                                    "season_factor", "heat", "outlook", "priority",
-                                                                   "level_ar", "next_inspection_days", "features")},
+                                                                   "level_ar", "next_inspection_days", "features", "gulf")},
                            "recommendations": assessment["recommendations"]})
     try:  # دورة حياة المشكلة: قبل ← أثناء ← بعد
         lifecycle.update(cam, ts, result, assessment, alerts, add_alert)
@@ -332,8 +334,23 @@ def _sudden_alert(ref: dict, result: dict, diff: dict, confirmed: bool) -> tuple
     return None
 
 
+def _sand_alert(cam_id: str, ts: str, result: dict) -> str | None:
+    """رمال جديدة على الطريق: الغطاء الرملي تجاوز خط الأساس (وسيط آخر 5 لقطات) بوضوح ولم يُنبَّه عليه خلال يوم."""
+    now = result.get("sand_cover", 0.0)
+    prev = [json.loads(r["metrics"]).get("sand_cover") for r in db.query(
+        "SELECT metrics FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL AND ts<? ORDER BY ts DESC LIMIT 5", (cam_id, ts))]
+    prev = [p for p in prev if p is not None]
+    if len(prev) < 2 or now < 0.10 or now - float(np.median(prev)) < 0.08:
+        return None
+    if db.one("SELECT id FROM alerts WHERE camera_id=? AND type='sand' AND ts>?",
+              (cam_id, (datetime.fromisoformat(ts) - timedelta(days=1)).isoformat())):
+        return None
+    return f"رمال على الطريق: تغطي ~{now * 100:.0f}% من السطح (كانت ~{float(np.median(prev)) * 100:.0f}%) — يوصى بإزالتها لسلامة السائقين."
+
+
 def _analyze(img, roi, prev_img, use_ai=True):
     result = vision.analyze(img, roi, use_ai)
+    result["sand_cover"] = gulf.sand_cover(img, roi)
     diff = change.compare(prev_img, img, roi) if prev_img is not None else {"changed_pct": 0.0, "boxes": [], "darker_ratio": 0.0}
     if diff.get("view_changed"):
         return result, diff
@@ -357,7 +374,12 @@ def assess_camera(cam: dict, at: datetime) -> dict | None:
     heat = weather.heat_features(day, region)
     out = weather.outlook(day + timedelta(days=1), region)
     n_inc = len(incidents.near(cam)) if incidents.enabled() and at > datetime.now(timezone.utc) - timedelta(hours=1) else 0
-    return risk.assess(cam, hist, heat, out, n_inc, at.astimezone(tz(cam)))
+    try:
+        phys = gulf.pavement_features(cam, day)
+    except Exception:
+        log.exception("gulf features failed for %s", cam["id"])
+        phys = None
+    return risk.assess(cam, hist, heat, out, n_inc, at.astimezone(tz(cam)), phys)
 
 
 def check_incidents() -> int:

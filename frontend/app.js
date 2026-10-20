@@ -136,7 +136,14 @@
       kpi("مشكلات متوقعة (قبل)", fmtN(s.lifecycle.stages.predicted), "فرص صيانة وقائية", false, "clock", "warn"),
       kpi("مشكلات نشطة (أثناء)", fmtN(s.lifecycle.stages.active), `${fmtN(s.lifecycle.stages.monitoring)} قيد المراقبة بعد المعالجة`, s.lifecycle.stages.active > 0, "activity"),
       kpi("تنبيهات مفتوحة", fmtN(s.open_alerts), `${fmtN(s.alerts_7d)} خلال 7 أيام`, s.open_alerts > 0, "bell"),
+      ...(s.gulf?.max_pavement ? [
+        kpi("أعلى حرارة رصف", `${fmtN(s.gulf.max_pavement, 0)}°م`, esc(s.gulf.max_pavement_camera), s.gulf.max_pavement >= 64, "sun", "warn"),
+        kpi("خطر تخدد مرتفع", fmtN(s.gulf.rutting_high), `${fmtN(s.gulf.rutting_medium)} متوسط · ${fmtN(s.gulf.pg_deficit)} برابط أقل من المطلوب`, s.gulf.rutting_high > 0, "road", "warn"),
+      ] : []),
     ].join("");
+    const ev = s.gulf?.events || [];
+    $("#eventsNote").hidden = !ev.length;
+    $("#eventsNote").innerHTML = ev.map((e) => `<div>${svg("alert")}<span><b>${esc((state.regions.find((r) => r.key === e.region)?.name) || e.region)} · ${esc(e.date)}:</b> ${esc(e.text)}</span></div>`).join("");
 
     const max = Math.max(1, ...Object.values(s.levels));
     $("#levelBars").innerHTML = ["critical", "high", "medium", "low"].map((l) => `
@@ -539,6 +546,38 @@
     document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
   }, true);
 
+  // فيزياء الطريق الخليجية: حرارة الرصف ودرجة الرابط وخطر التخدد والرمال والأحداث المتطرفة
+  const RUT_AR = { low: "منخفض", medium: "متوسط", high: "مرتفع" };
+  function gulfCard(g, m) {
+    if (!g) return "";
+    const pos = (t) => Math.min(100, Math.max(0, ((t - 20) / 65) * 100));  // مقياس 20–85°م
+    const rutLvl = { low: "low", medium: "medium", high: "critical" }[g.rutting_level] || "low";
+    return `<div class="card mt gulf">
+      <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("sun")}</span>فيزياء الطريق الخليجية</h2>
+        <span class="muted">حرارة الرصف (نموذج SHRP + الإشعاع الشمسي) · ${g.source === "open-meteo" ? "طقس فعلي" : "متوسطات مناخية"}</span></div>
+      <div class="thermo">
+        <div class="thermo-bar"><i class="now" style="inset-inline-start:${pos(g.pavement_t7max)}%" title="أعلى 7 أيام"></i>
+          <b class="pg" style="inset-inline-start:${pos(g.binder_pg)}%">PG ${g.binder_pg}<small>الرابط الحالي</small></b>
+          <b class="pg need" style="inset-inline-start:${pos(g.pg_design)}%">PG ${g.pg_design}<small>المطلوب للمناخ</small></b></div>
+        <div class="thermo-scale"><span>20°</span><span>40°</span><span>60°</span><span>80°م</span></div>
+      </div>
+      <div class="facts g4">
+        <div class="fact"><div class="l">حرارة الرصف (متوسط أعلى 7 أيام)</div><div class="v">${fmtN(g.pavement_t7max, 1)}°م</div></div>
+        <div class="fact"><div class="l">أقصى حرارة متوقعة (7 أيام)</div><div class="v">${fmtN(g.pavement_ahead_max, 1)}°م</div></div>
+        <div class="fact"><div class="l">درجات-أيام التليّن (فوق 50°م، 30 يومًا)</div><div class="v">${fmtN(g.rut_degree_days)}</div></div>
+        <div class="fact"><div class="l">الشاحنات يوميًا (تقدير)</div><div class="v">${fmtN(g.trucks_per_day)}</div></div>
+      </div>
+      <div class="gulf-row">
+        <div class="gulf-risk"><span class="muted">خطر التخدد</span>
+          <div class="meter"><div class="bar"><i style="width:${g.rutting_risk * 100}%;background:${color(rutLvl)}"></i></div>
+          <span class="pill ${rutLvl}">${RUT_AR[g.rutting_level]} · ${fmtN(g.rutting_risk * 100)}</span></div></div>
+        <div class="gulf-risk"><span class="muted">رمال على السطح</span><b>${fmtN((m.sand_cover || 0) * 100, 1)}%</b></div>
+        <div class="gulf-risk"><span class="muted">نقص درجة الرابط</span><b>${g.pg_deficit_grades ? `${fmtN(g.pg_deficit_grades)} درجة` : "لا يوجد"}</b></div>
+      </div>
+      ${g.events?.length ? `<ul class="events">${g.events.map((e) => `<li class="${esc(e.kind)}">${esc(e.date)} · ${esc(e.text)}</li>`).join("")}</ul>` : ""}
+    </div>`;
+  }
+
   function renderDetail(d) {
     const rd = d.risk_detail, fc = rd?.forecast || {}, m = d.latest_metrics || {};
     const snaps = d.snapshots.filter((s) => s.quality === "ok").slice().reverse();
@@ -575,6 +614,7 @@
         <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("trend")}</span>مؤشر الحالة: السجل والتنبؤ</h2><span class="muted">الخط المتقطع = التنبؤ لـ12 أسبوعًا · الأحمر = عتبة الصيانة</span></div>
         <div class="chart-box"><canvas id="ciChart"></canvas></div>
       </div>
+      ${gulfCard(fc.gulf, m)}
       <div class="d-grid mt">
         <div class="card">
           <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("bars")}</span>لماذا هذا التقييم؟</h2><span class="muted">مساهمة كل عامل</span></div>
