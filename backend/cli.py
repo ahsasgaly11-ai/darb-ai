@@ -37,14 +37,15 @@ MAX_TRIES = int(os.getenv("DARB_MAX_TRIES", "3"))  # محاولات الكامي
 ATTEMPTS_FILE = "attempts.json"
 
 
-def capture_time(cam, now_utc, pipeline, sources) -> datetime | None:
+def capture_time(cam, now_utc, pipeline, sources, window=None) -> datetime | None:
     """لحظة الالتقاط: العاشرة صباحًا محليًا للمصادر ذات الأرشيف، والآن للكاميرات الحية إن كانت في النافذة (9–12)."""
     tz = pipeline.tz(cam)
     local = now_utc.astimezone(tz)
     if sources.supports_history(cam) and cam["source"].get("type") != "demo":
         target = local.replace(hour=TARGET_HOUR, minute=0, second=0, microsecond=0)
         return (target if target <= local else target - timedelta(days=1)).astimezone(timezone.utc)
-    return now_utc if WINDOW[0] <= local.hour < WINDOW[1] else None
+    start, end = window or WINDOW
+    return now_utc if start <= local.hour < end else None
 
 
 def interval_for(cam) -> float:
@@ -117,14 +118,20 @@ def save_attempts(config, attempts: dict) -> None:
     (config.DATA_DIR / ATTEMPTS_FILE).write_text(json.dumps(attempts, sort_keys=True))
 
 
-def plan_captures(cams, now, pipeline, sources, db, attempts) -> tuple[list, int]:
+def plan_captures(cams, now, pipeline, sources, db, attempts, force=False) -> tuple[list, int]:
     """الكاميرات المستحقة الآن: في نافذة منطقتها، ولم تُحلَّل بنجاح اليوم، ولم تستنفد محاولاتها.
-    كل تشغيل في النافذة فرصة جديدة: تشغيل مجدول قد يسقط، وكاميرا قد تكون متوقفة لحظتها."""
+    كل تشغيل في النافذة فرصة جديدة: تشغيل مجدول قد يسقط، وكاميرا قد تكون متوقفة لحظتها.
+    force (تحديث يدوي بعد تعديل الإعدادات): كل كاميرا حية في ضوء النهار الآن، ولو التُقطت اليوم."""
+    from . import config
     plan, skipped = [], 0
     for cam in cams:
-        at = capture_time(cam, now, pipeline, sources)
+        live_force = force and not sources.supports_history(cam)  # الأرشيف لحظته ثابتة (10:00) فلا يُكرر
+        at = capture_time(cam, now, pipeline, sources, config.DAYLIGHT_HOURS if live_force else None)
         if at is None:
-            skipped += 1  # خارج نافذة 9–12 صباحًا في منطقتها
+            skipped += 1  # خارج نافذة 9–12 صباحًا في منطقتها (أو خارج النهار في التحديث اليدوي)
+            continue
+        if live_force:
+            plan.append((cam, at))
             continue
         day = at.astimezone(pipeline.tz(cam)).replace(hour=0, minute=0, second=0, microsecond=0)
         if db.one("""SELECT id FROM snapshots WHERE camera_id=? AND ts>=? AND ts<? AND kind IN ('weekly','sentinel','seed')
@@ -210,7 +217,7 @@ def daily(args) -> int:
             log.exception("GitHub reports ingest failed")
     now = datetime.now(timezone.utc)
     attempts = load_attempts(config, now)
-    plan, skipped = plan_captures(pipeline.cameras(), now, pipeline, sources, db, attempts)
+    plan, skipped = plan_captures(pipeline.cameras(), now, pipeline, sources, db, attempts, force=getattr(args, "now", False))
     log.info("capturing %d cameras (%d frames each, %d for video), skipped %d", len(plan), FRAMES, VIDEO_FRAMES, skipped)
     for cam, at in plan:
         key = day_key(cam, at, pipeline)
@@ -270,6 +277,8 @@ def main() -> int:
         d.add_argument("--regions", help="المناطق (يتجاوز DARB_REGIONS)")
         d.add_argument("--site", help="مجلد إخراج الموقع الثابت")
         d.add_argument("--leaflet-css", default=str(ROOT / "tools" / "leaflet.css"))
+        if name == "daily":
+            d.add_argument("--now", action="store_true", help="تحديث يدوي: كل كاميرا حية في ضوء النهار الآن، ولو التُقطت اليوم")
     args = p.parse_args()
     if args.regions:
         os.environ["DARB_REGIONS"] = args.regions  # قبل استيراد config

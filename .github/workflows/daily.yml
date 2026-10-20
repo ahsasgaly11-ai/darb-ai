@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       cmd:
-        description: "daily = التقاط يومي، confirm = تأكيد الاشتباهات"
+        description: "daily = التقاط يومي، now = تحديث فوري لكل كاميرا في ضوء النهار الآن (بعد تعديل الإعدادات)، confirm = تأكيد الاشتباهات"
         type: choice
-        options: [daily, confirm]
+        options: [daily, now, confirm]
         default: daily
 
 permissions:
@@ -53,6 +53,7 @@ jobs:
         run: |
           cmd="${{ inputs.cmd }}"
           [ -z "$cmd" ] && cmd=$(python3 -m backend.cli due || echo daily)  # إن تعذّر الفحص: التشغيل الكامل أسلم
+          [ "$cmd" = now ] && cmd="daily --now"
           echo "cmd=$cmd" >> "$GITHUB_OUTPUT"
           if [ "$cmd" = none ]; then
             echo "run=false" >> "$GITHUB_OUTPUT"; echo "لا عمل الآن: كل كاميرات المناطق التي في نافذتها التُقطت اليوم، ولا اشتباه للتأكيد"

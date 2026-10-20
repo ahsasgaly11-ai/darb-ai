@@ -325,6 +325,9 @@ def test_daily_plan_retries_until_analyzed():
     db.insert("snapshots", {"camera_id": "t-retry", "ts": now.isoformat(timespec="seconds"), "kind": "sentinel",
                             "image_path": "x.jpg", "condition_index": 90.0, "metrics": {}})
     assert plan() == []                                            # حُلّلت اليوم
+    late = now + timedelta(hours=5)                                # 15:07: خارج النافذة لكن في ضوء النهار
+    assert cli.plan_captures([cam], late, P, Src, db, {})[0] == []
+    assert [c["id"] for c, _ in cli.plan_captures([cam], late, P, Src, db, {}, force=True)[0]] == ["t-retry"]
 
 
 def test_gulf_pavement_physics():
