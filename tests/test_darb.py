@@ -344,3 +344,28 @@ def test_economics_deferral_and_budget_plan():
     assert [x["camera_id"] for x in p["selected"]] == ["x"]  # الأعلى عائدًا لكل دولار أولًا
     must = economics.analyze({**cam, "id": "m", "last_snapshot": {"pothole_count": 2}}, risk_(80, 0.0))
     assert economics.plan([good, must], budget=must["cost_now"] + 1)["selected"][0]["camera_id"] == "m"  # الحفر أولًا للسلامة
+
+
+def test_assistant_server_mode(monkeypatch):
+    """وضع الخادم: يرسل السياق المضغوط إلى Claude ويعيد النص، ويتعامل مع الرفض (دون مفتاح حقيقي)."""
+    import anthropic
+    from types import SimpleNamespace
+    from backend import assistant
+    sent = {}
+
+    class FakeMessages:
+        def create(self, **kw):
+            sent.update(kw)
+            reply = sent.get("_stop", "end_turn")
+            return SimpleNamespace(stop_reason=reply, model=kw["model"],
+                                   content=[SimpleNamespace(type="text", text="أسوأ مقطع: X")])
+
+    monkeypatch.setattr(anthropic, "Anthropic", lambda: SimpleNamespace(beta=SimpleNamespace(messages=FakeMessages())))
+    ctx = assistant.context_for([{"id": "a", "name": "X", "risk": {"score": 80, "ci": 40}, "last_snapshot": {"pothole_count": 1}}],
+                                [{"camera_id": "a", "cost_now": 1000, "treatment_now": {"name": "كشط"}}], {}, {"SAR": {"rate": 3.75}}, [])
+    out = assistant.ask("ما أسوأ طريق؟", ctx)
+    assert out == {"ok": True, "answer": "أسوأ مقطع: X", "model": assistant.MODEL}
+    assert sent["fallbacks"] == "default" and "X" in sent["messages"][0]["content"] and "ما أسوأ طريق؟" in sent["messages"][0]["content"]
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_AUTH_TOKEN", raising=False)
+    assert assistant.available() is False

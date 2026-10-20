@@ -78,6 +78,7 @@
     pause: "<path d=\"M208,48V208a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8h40A8,8,0,0,1,208,48ZM96,40H56a8,8,0,0,0-8,8V208a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\" class=\"d\"/><path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>",
     play: "<path d=\"M228.23,134.69,84.15,222.81A8,8,0,0,1,72,216.12V39.88a8,8,0,0,1,12.15-6.69l144.08,88.12A7.82,7.82,0,0,1,228.23,134.69Z\" class=\"d\"/><path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>",
     expand: "<path d=\"M208,48V208H48V48Z\" class=\"d\"/><path d=\"M216,48V96a8,8,0,0,1-16,0V67.31l-42.34,42.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM98.34,146.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l42.35-42.34a8,8,0,0,0-11.32-11.32ZM208,152a8,8,0,0,0-8,8v28.69l-42.34-42.35a8,8,0,0,0-11.32,11.32L188.69,200H160a8,8,0,0,0,0,16h48a8,8,0,0,0,8-8V160A8,8,0,0,0,208,152ZM67.31,56H96a8,8,0,0,0,0-16H48a8,8,0,0,0-8,8V96a8,8,0,0,0,16,0V67.31l42.34,42.35a8,8,0,0,0,11.32-11.32Z\"/>",
+    mic: "<path d=\"M168,64v64a40,40,0,0,1-40,40h0a40,40,0,0,1-40-40V64a40,40,0,0,1,40-40h0A40,40,0,0,1,168,64Z\" class=\"d\"/><path d=\"M128,176a48.05,48.05,0,0,0,48-48V64a48,48,0,0,0-96,0v64A48.05,48.05,0,0,0,128,176ZM96,64a32,32,0,0,1,64,0v64a32,32,0,0,1-64,0Zm40,143.6V240a8,8,0,0,1-16,0V207.6A80.11,80.11,0,0,1,48,128a8,8,0,0,1,16,0,64,64,0,0,0,128,0,8,8,0,0,1,16,0A80.11,80.11,0,0,1,136,207.6Z\"/>",
     coins: "<path d=\"M240,132c0,19.88-35.82,36-80,36-19.6,0-37.56-3.17-51.47-8.44h0C146.76,156.85,176,142,176,124V96.72h0C212.52,100.06,240,114.58,240,132ZM176,84c0-19.88-35.82-36-80-36S16,64.12,16,84s35.82,36,80,36S176,103.88,176,84Z\" class=\"d\"/><path d=\"M184,89.57V84c0-25.08-37.83-44-88-44S8,58.92,8,84v40c0,20.89,26.25,37.49,64,42.46V172c0,25.08,37.83,44,88,44s88-18.92,88-44V132C248,111.3,222.58,94.68,184,89.57ZM232,132c0,13.22-30.79,28-72,28-3.73,0-7.43-.13-11.08-.37C170.49,151.77,184,139,184,124V105.74C213.87,110.19,232,122.27,232,132ZM72,150.25V126.46A183.74,183.74,0,0,0,96,128a183.74,183.74,0,0,0,24-1.54v23.79A163,163,0,0,1,96,152,163,163,0,0,1,72,150.25Zm96-40.32V124c0,8.39-12.41,17.4-32,22.87V123.5C148.91,120.37,159.84,115.71,168,109.93ZM96,56c41.21,0,72,14.78,72,28s-30.79,28-72,28S24,97.22,24,84,54.79,56,96,56ZM24,124V109.93c8.16,5.78,19.09,10.44,32,13.57v23.37C36.41,141.4,24,132.39,24,124Zm64,48v-4.17c2.63.1,5.29.17,8,.17,3.88,0,7.67-.13,11.39-.35A121.92,121.92,0,0,0,120,171.41v23.46C100.41,189.4,88,180.39,88,172Zm48,26.25V174.4a179.48,179.48,0,0,0,24,1.6,183.74,183.74,0,0,0,24-1.54v23.79a165.45,165.45,0,0,1-48,0Zm64-3.38V171.5c12.91-3.13,23.84-7.79,32-13.57V172C232,180.39,219.59,189.4,200,194.87Z\"/>",
     chat: "<path d=\"M224,56V184a8,8,0,0,1-8,8H150.93l-16,28a8,8,0,0,1-13.9,0l-16-28H40a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H216A8,8,0,0,1,224,56Z\" class=\"d\"/><path d=\"M88,104a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H96A8,8,0,0,1,88,104Zm8,40h64a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16ZM232,56V184a16,16,0,0,1-16,16H155.57l-13.68,23.94a16,16,0,0,1-27.78,0L100.43,200H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V184h65.07a8,8,0,0,1,7,4l16,28,16-28a8,8,0,0,1,7-4H216Z\"/>",
     report: "<path d=\"M240,120a40,40,0,0,1-40,40H160V80h40A40,40,0,0,1,240,120Z\" class=\"d\"/><path d=\"M248,120a48.05,48.05,0,0,0-48-48H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48.07,48.07,0,0,0,248,120ZM48,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C134.65,155,90.84,164.07,48,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z\"/>",
@@ -121,6 +122,7 @@
     safeSet("darb-tab", name);
     if (name === "map") setTimeout(initMap, 30);
     if (name === "live") renderLive();
+    if (name === "assistant") { setChatMode(); setTimeout(() => $("#chatQ").focus(), 50); }
     liveTick();
   }
   $$(".tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
@@ -553,6 +555,204 @@
     document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
   }, true);
 
+  // ---------- المساعد الهندسي ----------
+  // محرك أسئلة عربي يعمل في المتصفح على بيانات الشبكة كلها (فيعمل في الموقع الثابت المجاني بلا أي مفتاح)،
+  // ويستعين بـ Claude على الخادم إن كان مفعّلًا هناك (status.assistant_llm).
+  const norm = (s) => String(s || "").replace(/[ً-ْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي")
+    .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d)).toLowerCase();
+  const NUM_WORDS = { "واحد": 1, "اثنين": 2, "اثنان": 2, "ثلاث": 3, "ثلاثه": 3, "اربع": 4, "اربعه": 4, "خمس": 5, "خمسه": 5, "ست": 6, "سته": 6,
+    "سبع": 7, "سبعه": 7, "ثمان": 8, "ثماني": 8, "ثمانيه": 8, "تسع": 9, "تسعه": 9, "عشر": 10, "عشره": 10, "عشرين": 20 };
+  const REGION_ALIAS = { losangeles: ["لوس انجلس", "لوس انجليس", "la"], sandiego: ["سان دييجو", "سان دياغو"], singapore: ["سنغافورا"],
+    phoenix: ["فينيكس", "فونكس"], tucson: ["توكسون", "تاكسون"], yuma: [], tampa: [], madrid: [] };
+  const COUNTRY = { "اريزونا": ["phoenix", "tucson", "yuma"], "كاليفورنيا": ["losangeles", "sandiego"], "فلوريدا": ["tampa"], "اسبانيا": ["madrid"],
+    "امريكا": ["phoenix", "tucson", "yuma", "tampa", "losangeles", "sandiego"], "الولايات المتحده": ["phoenix", "tucson", "yuma", "tampa", "losangeles", "sandiego"] };
+  const GULF = ["الدوحه", "قطر", "دبي", "ابوظبي", "ابو ظبي", "الامارات", "الرياض", "جده", "السعوديه", "الدمام", "الكويت", "مسقط", "سلطنه عمان", "المنامه", "البحرين", "الشارقه", "الخليج"];
+  const CUR_WORDS = [["درهم", "AED"], ["قطري", "QAR"], ["كويتي", "KWD"], ["بحريني", "BHD"], ["عماني", "OMR"], ["دولار", "USD"], ["يورو", "EUR"], ["ريال", "SAR"]];
+  const STOP = new Set(["طريق", "شارع", "تقاطع", "عند", "جنوب", "شمال", "شرق", "غرب", "الطريق", "السريع", "قرب", "حاله", "وضع", "كيف", "ماذا", "عن", "في", "من", "الي", "على", "ما", "هي", "هو"]);
+  const chat = { data: null, at: 0, busy: false };
+
+  async function chatData() {
+    if (chat.data && Date.now() - chat.at < 300000) return chat.data;
+    const [cams, econ, summary] = await Promise.all([api("/api/cameras"), api("/api/economics").catch(() => null), api("/api/summary").catch(() => null)]);
+    chat.data = { cams, econ: econ?.items || [], summary }; chat.at = Date.now();
+    return chat.data;
+  }
+  function askCount(q) {
+    const m = q.match(/(?:^|\s)(\d{1,2})(?!\s*(?:مليون|مليار|الف|ملي|مم|%|درجه|اسبوع|اسابيع|شهر|اشهر|شهور|يوم))(?=\s|$|[؟?،,])/);
+    if (m) return Math.min(50, +m[1]);
+    for (const w of q.split(/\s+/)) if (NUM_WORDS[w]) return NUM_WORDS[w];
+    return null;
+  }
+  function askMoney(q) {
+    const m = q.match(/(\d+(?:[.,]\d+)?)\s*(مليار|مليون|الف)?/);
+    if (!m || !/ميزاني|مليون|مليار|الف|ريال|درهم|دينار|دولار|يورو|اصرف|صرف/.test(q)) return null;
+    const mult = { "مليار": 1e9, "مليون": 1e6, "الف": 1e3 }[m[2]] || 1;
+    const cur = (CUR_WORDS.find(([w]) => q.includes(w)) || [null, econ.cur])[1];
+    return { amount: parseFloat(m[1].replace(",", ".")) * mult, cur };
+  }
+  function askRegions(q) {
+    const hit = new Set();
+    for (const r of state.regions) {
+      const full = norm(r.name), city = full.replace(/\s*\(.*\)/, "");
+      if (q.includes(city) || [...(REGION_ALIAS[r.key] || [])].some((a) => q.includes(norm(a)))) hit.add(r.key);
+    }
+    for (const [w, keys] of Object.entries(COUNTRY)) if (q.includes(w)) keys.forEach((k) => hit.add(k));
+    return hit.size ? [...hit] : null;
+  }
+  const roadCodes = (s) => [...norm(s).matchAll(/\b([a-z]{1,3})\s?-?\s?(\d{1,3})\b/g)].map((m) => m[1] + m[2]);
+  function askCamera(q, cams) {
+    const words = q.split(/[\s،,؟?.]+/).filter((w) => w.length >= 3 && !STOP.has(w));
+    const codes = roadCodes(q);
+    let best = null, bestScore = 0;
+    for (const c of cams) {
+      const hay = norm(`${c.name} ${c.road}`);
+      let score = words.filter((w) => hay.includes(w)).length;
+      const cc = roadCodes(`${c.name} ${c.road}`);
+      if (codes.some((k) => cc.includes(k))) score += 1.5;
+      if (score > bestScore) { best = c; bestScore = score; }
+    }
+    return bestScore >= 2.5 ? best : null;
+  }
+  const regionLabel = (k) => (state.regions.find((r) => r.key === k)?.name || k).replace(/\s*\(.*\)/, "");
+  const camLink = (c) => `<a href="#" class="cam-link" data-cam="${esc(c.id)}">${esc(c.name)}</a> <span class="muted">(${esc(regionLabel(c.region))})</span>`;
+  const ciOf = (c) => c.risk?.ci ?? c.last_snapshot?.condition_index;
+  function camFacts(c) {
+    const r = c.risk || {}, s = c.last_snapshot || {};
+    return [ciOf(c) != null && `الحالة <b>${fmtN(ciOf(c))}</b>/100`, r.score != null && `الخطر ${fmtN(r.score)} (${LEVEL_AR[r.level]})`,
+      r.weeks_to_threshold != null && `عتبة الصيانة ${weeksText(r.weeks_to_threshold)}`, s.pothole_count ? `حفر: <b>${fmtN(s.pothole_count)}</b>` : "",
+      r.rutting >= 0.3 && `تخدد ${r.rutting >= 0.6 ? "مرتفع" : "متوسط"}`].filter(Boolean).join(" · ");
+  }
+  const list = (cams, fmt = camFacts) => `<ol class="chat-list">${cams.map((c) => `<li>${camLink(c)}<br><span class="muted">${fmt(c)}</span></li>`).join("")}</ol>`;
+
+  function answer(raw, d) {
+    const q = norm(raw);
+    const regs = askRegions(q);
+    const scope = (arr) => (regs ? arr.filter((c) => regs.includes(c.region)) : arr);
+    const where = regs ? ` في ${regs.map(regionLabel).join(" و")}` : " في الشبكة";
+    const cams = scope(d.cams), analysed = cams.filter((c) => c.risk);
+    const n = askCount(q) || 5;
+    if (/^(مرحبا|السلام|اهلا|هلا|صباح|مساء|شكرا)/.test(q.trim())) return /^شكرا/.test(q.trim()) ? "العفو! اسألني متى شئت عن أي طريق أو ميزانية." : "أهلًا بك! اسألني عن حالة أي طريق أو مدينة، أو خطر التخدد، أو أين تُصرف الميزانية. اختر سؤالًا من الأمثلة بالأسفل للبدء.";
+    const gulfCity = GULF.find((g) => q.includes(norm(g)));
+    if (gulfCity && !regs) return `لا تنشر <b>${esc(raw.match(new RegExp(gulfCity.replace(/ه$/, "."), "i"))?.[0] || "هذه المدينة")}</b> صور كاميرات مرورها للعامة بعد، فلا توجد لدينا بيانات عنها. النظام جاهز لإضافتها فور الحصول على صلاحية الوصول للكاميرات (يكفي ملف إعداد للمدينة) — والمدن الحالية الأقرب لمناخ الخليج: يوما وفينكس (صحراوي حار) وتامبا (ساحلي رطب).`;
+    const money = askMoney(q);
+    if (money && /ميزاني|اصرف|صرف|وزع|خطه/.test(q) || (money && money.amount >= 1000)) {
+      const rate = state.econ?.currencies?.[money.cur]?.rate || 1, curName = state.econ?.currencies?.[money.cur]?.name || "";
+      const items = scope(d.econ.map((e) => ({ ...e, region: e.region })));
+      const p = econPlan(items, money.amount / rate);
+      if (!items.length) return "لا توجد بيانات اقتصادية بعد لهذا النطاق.";
+      return `بميزانية <b>${fmtN(money.amount)} ${esc(curName)}</b>${where}: تُموَّل <b>${fmtN(p.sel.length)}</b> من ${fmtN(p.sel.length + p.skip.length)} مقطعًا
+        (${fmtN(p.sel.filter((x) => x.must_do).length)} إلزامية للسلامة)، والمصروف ${money_(p.spent, money.cur)}، والكلفة المتجنَّبة ${money_(p.benefit, money.cur)} (عائد ×${fmtN(p.roi, 1)}).
+        ${p.sel.length ? `<br>أولويات الخطة:<ol class="chat-list">${p.sel.slice(0, 8).map((x) => `<li><a href="#" class="cam-link" data-cam="${esc(x.camera_id)}">${esc(x.name)}</a>: ${esc(x.treatment_now.name)} · ${money_(x.cost_now, money.cur)}${x.must_do ? " · <b>إلزامي</b>" : ""}</li>`).join("")}</ol>` : ""}
+        ${p.skip.length ? `تأجيل الباقي سنة يرفع كلفته بنحو <b>${money_(p.penalty, money.cur)}</b>.` : "الميزانية تغطي الاحتياج كله."} <a href="#" data-goto="budget">افتح صفحة الميزانية</a>`;
+    }
+    const cam = askCamera(q, regs ? cams : d.cams);
+    if (cam && !/اسوا|اخطر|افضل|اكثر|ترتيب|قائمه/.test(q)) {
+      const e = d.econ.find((x) => x.camera_id === cam.id);
+      return `${camLink(cam)}<br>${camFacts(cam) || "لم يُحلَّل بعد — بانتظار أول التقاط نهاري."}
+        ${cam.risk?.pavement_t ? `<br>حرارة الرصف (أعلى 7 أيام) ${fmtN(cam.risk.pavement_t)}°م${cam.risk.pg_deficit ? ` · الرابط أقل من المطلوب بـ${fmtN(cam.risk.pg_deficit)} درجة` : ""}.` : ""}
+        ${cam.risk?.top_factor ? `<br>العامل الأبرز: ${esc(cam.risk.top_factor)}.` : ""}
+        ${e ? `<br>المعالجة الآن: <b>${esc(e.treatment_now.name)}</b> (${money_(e.cost_now)})، وإن أُجّلت سنة: ${esc(e.treatment_later.name)} (${money_(e.cost_later)}).` : ""}`;
+    }
+    if (/سيل|سيول|مطر|امطار|عاصف|رياح|غبار/.test(q)) {
+      const ev = (d.summary?.gulf?.events || []).filter((e) => !regs || regs.includes(e.region));
+      return ev.length ? `أحداث الطقس المتطرفة في الأيام الثلاثة الأخيرة:<ol class="chat-list">${ev.map((e) => `<li><b>${esc(regionLabel(e.region))} · ${esc(e.date)}</b>: ${esc(e.text)}</li>`).join("")}</ol>`
+        : `لا سيول ولا عواصف${where} في الأيام الثلاثة الأخيرة (حسب بيانات Open-Meteo). أعيد الفحص بعد أي أمطار تتجاوز 20 مم يوميًا في المناطق الجافة أو رياح فوق 60 كم/س.`;
+    }
+    if (/رمل|رمال/.test(q)) {
+      const s = analysed.filter((c) => (c.risk.sand || 0) > 0.05).sort((a, b) => b.risk.sand - a.risk.sand).slice(0, n);
+      return s.length ? `مقاطع رُصدت عليها رمال${where}:${list(s, (c) => `الغطاء الرملي ~${fmtN(c.risk.sand * 25, 0)}% من السطح`)}` : `لم تُرصد رمال على سطح الطرق${where} في آخر اللقطات.`;
+    }
+    if (/تخدد|حراره|حرار|ساخن|رابط|pg|بيتومين/.test(q)) {
+      const s = analysed.filter((c) => c.risk.rutting != null).sort((a, b) => b.risk.rutting - a.risk.rutting).slice(0, n);
+      if (!s.length) return "لم تُحسب فيزياء الرصف بعد لهذه المقاطع.";
+      const calm = s[0].risk.rutting < 0.3 ? `لا يوجد خطر تخدد مرتفع${where} حاليًا (حرارة الرصف معتدلة هذا الموسم). الأعلى نسبيًا:` : "";
+      return calm ? `${calm}${list(s.slice(0, 3), (c) => `خطر التخدد ${fmtN(c.risk.rutting * 100)}/100 · حرارة الرصف ${fmtN(c.risk.pavement_t)}°م`)}` : `أعلى المقاطع خطر تخدد${where} (حرارة الرصف × الشاحنات × درجة الرابط):${list(s, (c) => `خطر التخدد ${fmtN(c.risk.rutting * 100)}/100 · حرارة الرصف ${fmtN(c.risk.pavement_t)}°م${c.risk.pg_deficit ? ` · الرابط ناقص ${fmtN(c.risk.pg_deficit)} درجة` : ""}`)}`;
+    }
+    if (/حفر|حفره/.test(q)) {
+      const s = cams.filter((c) => c.last_snapshot?.pothole_count > 0).sort((a, b) => b.last_snapshot.pothole_count - a.last_snapshot.pothole_count);
+      return s.length ? `مقاطع فيها حفر${where} (${fmtN(s.length)}):${list(s.slice(0, n))}يوصى بردمها خلال 48 ساعة.` : `لا حفر مكتشفة${where} في آخر اللقطات.`;
+    }
+    if (/تنبيه|تنبيهات|انذار/.test(q)) {
+      const s = cams.filter((c) => c.open_alerts > 0).sort((a, b) => b.open_alerts - a.open_alerts);
+      return s.length ? `مقاطع عليها تنبيهات مفتوحة${where}:${list(s.slice(0, n), (c) => `${fmtN(c.open_alerts)} تنبيه · ${camFacts(c)}`)}<a href="#" data-goto="alerts">كل التنبيهات</a>` : `لا تنبيهات مفتوحة${where}.`;
+    }
+    if (/كلف|تكلف|سعر|يكلف|ميزاني/.test(q)) {
+      const it = scope(d.econ).filter((x) => x.treatment_now.key !== "routine" || x.must_do);
+      const now = it.reduce((a, x) => a + x.cost_now, 0), later = it.reduce((a, x) => a + x.cost_later, 0);
+      return it.length ? `كلفة معالجة ${fmtN(it.length)} مقطعًا تحتاج تدخلًا${where}: <b>${money_(now)}</b> الآن، مقابل <b>${money_(later)}</b> إن أُجّلت سنة (زيادة ${money_(later - now)}). <a href="#" data-goto="budget">وزّع ميزانية</a>` : `لا مقاطع تحتاج معالجة مدفوعة${where} حاليًا.`;
+    }
+    const wk = q.match(/خلال\s+(\d+)\s*(اسبوع|اسابيع|شهر|اشهر|شهور)/);
+    if (wk || /قبل الصيف|الصيف القادم/.test(q)) {
+      let weeks;
+      if (wk) weeks = +wk[1] * (/شهر|اشهر|شهور/.test(wk[2]) ? 4.35 : 1);
+      else { const now = new Date(), june = new Date(now.getFullYear() + (now.getMonth() >= 5 ? 1 : 0), 5, 1); weeks = (june - now) / 6048e5; }
+      const s = analysed.filter((c) => c.risk.weeks_to_threshold != null && c.risk.weeks_to_threshold <= weeks).sort((a, b) => a.risk.weeks_to_threshold - b.risk.weeks_to_threshold);
+      return s.length ? `مقاطع يُتوقع أن تبلغ عتبة الصيانة خلال ~${fmtN(weeks)} أسبوع${where} (${fmtN(s.length)}):${list(s.slice(0, n))}`
+        : `لا يُتوقع أن يبلغ أي مقطع عتبة الصيانة خلال ~${fmtN(weeks)} أسبوع${where} بالمعدلات الحالية.`;
+    }
+    if (/افضل|احسن|اجود|سليم/.test(q)) {
+      const s = analysed.slice().sort((a, b) => (ciOf(b) ?? 0) - (ciOf(a) ?? 0)).slice(0, n);
+      return s.length ? `أفضل ${fmtN(s.length)} مقاطع حالةً${where}:${list(s)}` : "لا مقاطع محلَّلة بعد.";
+    }
+    if (/اسوا|اخطر|خطر|اولوي|صيانه|تدخل|متدهور|سيئ/.test(q)) {
+      const byCi = /اسوا|سيئ|متدهور/.test(q) && !/خطر/.test(q);
+      const s = analysed.slice().sort((a, b) => byCi ? (ciOf(a) ?? 100) - (ciOf(b) ?? 100) : (b.risk.priority ?? 0) - (a.risk.priority ?? 0)).slice(0, n);
+      return s.length ? `${byCi ? "أسوأ" : "أعلى"} ${fmtN(s.length)} مقاطع ${byCi ? "حالةً" : "أولويةً (الخطر × الأهمية المرورية)"}${where}:${list(s)}` : `لا مقاطع محلَّلة بعد${where} — بانتظار أول التقاط نهاري.`;
+    }
+    if (/كم|عدد|ملخص|احصا|نظره|حاله الشبكه|الوضع/.test(q)) {
+      const lv = { low: 0, medium: 0, high: 0, critical: 0 }; analysed.forEach((c) => lv[c.risk.level]++);
+      const cis = analysed.map(ciOf).filter((v) => v != null);
+      return `${where.trim()}: <b>${fmtN(cams.length)}</b> كاميرا (${fmtN(analysed.length)} محلَّلة)، متوسط الحالة <b>${fmtN(cis.reduce((a, b) => a + b, 0) / (cis.length || 1), 1)}</b>/100.
+        مستويات الخطر: ${fmtN(lv.critical)} حرج · ${fmtN(lv.high)} مرتفع · ${fmtN(lv.medium)} متوسط · ${fmtN(lv.low)} منخفض.
+        ${regs ? "" : `<br>${state.regions.map((r) => `${esc(regionLabel(r.key))} ${fmtN(d.cams.filter((c) => c.region === r.key).length)}`).join(" · ")}`}`;
+    }
+    return null;
+  }
+  const money_ = (usd, cur) => money(usd, cur);
+  const SUGGEST = ["ما أسوأ 5 طرق في الشبكة؟", "أين خطر التخدد مرتفع؟", "بميزانية 5 ملايين ريال أين أصرف؟", "ما الطرق التي تحتاج صيانة قبل الصيف؟",
+    "هل توجد حفر في فينكس؟", "كم تكلفة معالجة طرق مدريد؟", "هل حدثت سيول أو عواصف؟", "ما حالة الشبكة في كاليفورنيا؟"];
+  function chatPush(who, html) {
+    const log = $("#chatLog");
+    log.insertAdjacentHTML("beforeend", `<div class="msg ${who}"><div class="bubble">${html}</div></div>`);
+    log.scrollTop = log.scrollHeight;
+  }
+  async function chatAsk(q) {
+    q = q.trim(); if (!q || chat.busy) return;
+    chat.busy = true; chatPush("me", esc(q)); $("#chatQ").value = "";
+    chatPush("bot typing", "<span></span><span></span><span></span>");
+    let html = null;
+    try {
+      const d = await chatData();
+      if (state.status?.assistant_llm) {  // وضع الخادم: Claude يجيب من البيانات نفسها
+        const r = await api("/api/ask", { method: "POST", body: JSON.stringify({ q }) }).catch(() => null);
+        if (r?.ok) html = esc(r.answer).replace(/\n/g, "<br>") + `<div class="via">${svg("sparkle")}Claude</div>`;
+      }
+      html = html || answer(q, d) || `لم أفهم السؤال تمامًا. جرّب مثلًا: «ما أسوأ 5 طرق في فينكس؟» أو «أين خطر التخدد مرتفع؟» أو «بميزانية 10 ملايين درهم أين أصرف؟» أو اكتب اسم طريق مثل «I-405».`;
+    } catch { html = "تعذّر تحميل البيانات الآن، حاول مجددًا."; }
+    $("#chatLog .typing")?.remove();
+    chatPush("bot", html); chat.busy = false;
+  }
+  $("#chatForm").addEventListener("submit", (e) => { e.preventDefault(); chatAsk($("#chatQ").value); });
+  $("#chatSugg").innerHTML = SUGGEST.map((s) => `<button type="button" class="chip-btn">${esc(s)}</button>`).join("");
+  $("#chatSugg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) chatAsk(b.textContent); });
+  $("#chatLog").addEventListener("click", (e) => { if (e.target.closest("a[href='#']")) e.preventDefault(); });
+  chatPush("bot", `مرحبًا، أنا مساعد دَرْب. اسألني بالعربية عن حالة أي طريق أو مدينة، أو خطر التخدد وحرارة الرصف، أو أين تُصرف ميزانية الصيانة.`);
+  // سؤال صوتي بالعربية (Web Speech API: كروم وسفاري وإيدج)
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (SR) {
+    const mic = $("#chatMic"); mic.hidden = false;
+    let rec = null;
+    mic.addEventListener("click", () => {
+      if (rec) { rec.stop(); return; }
+      rec = new SR(); rec.lang = "ar-SA"; rec.interimResults = true;
+      mic.classList.add("on");
+      rec.onresult = (e) => { const t = [...e.results].map((r) => r[0].transcript).join(""); $("#chatQ").value = t; if (e.results[e.results.length - 1].isFinal) chatAsk(t); };
+      rec.onend = rec.onerror = () => { mic.classList.remove("on"); rec = null; };
+      rec.start();
+    });
+  }
+  const setChatMode = () => { $("#chatMode").textContent = state.status?.assistant_llm ? "مدعوم بـ Claude على الخادم، مع محرك عربي مدمج احتياطيًا." : "يعمل محليًا في متصفحك على بيانات الشبكة كلها، دون إرسال أسئلتك لأي جهة."; };
+
   // ---------- الميزانية والقرار الاقتصادي ----------
   // الخطة تُحسب في المتصفح (تعمل في الموقع الثابت): الإلزامي للسلامة أولًا ثم الأعلى عائدًا لكل وحدة نقدية
   const econ = { cur: safeGet("darb-cur") || "SAR", budget: null };
@@ -813,6 +1013,7 @@
     const pill = $("#statusPill");
     try {
       const s = await api("/api/status");
+      state.status = s;
       window.__thr = s.maintenance_threshold;
       $("#asOf").textContent = s.static_snapshot ? `بيانات حتى ${s.static_snapshot}` : `آخر تحديث ${dtf.format(new Date())}`;
       if (!state.regions.length) {

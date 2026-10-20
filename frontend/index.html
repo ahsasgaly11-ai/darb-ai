@@ -33,6 +33,7 @@
       <button role="tab" data-tab="dashboard" class="active"><span data-icon="grid"></span><em>نظرة عامة</em></button>
       <button role="tab" data-tab="map"><span data-icon="map"></span><em>الخريطة</em></button>
       <button role="tab" data-tab="lifecycle"><span data-icon="cycle"></span><em>دورة حياة المشكلات</em><b id="issueBadge" class="badge soft" hidden></b></button>
+      <button role="tab" data-tab="assistant"><span data-icon="chat"></span><em>المساعد الهندسي</em></button>
       <button role="tab" data-tab="budget"><span data-icon="coins"></span><em>الميزانية والقرار</em></button>
       <button role="tab" data-tab="cameras"><span data-icon="camera"></span><em>الكاميرات</em></button>
       <button role="tab" data-tab="live"><span data-icon="live"></span><em>البث المباشر</em><b class="badge live-dot">مباشر</b></button>
@@ -147,6 +148,21 @@
         <label class="switch"><input type="checkbox" id="annToggle" checked> إظهار العيوب المكتشفة</label>
       </div>
       <div id="camGrid" class="cam-grid"></div>
+    </section>
+
+    <!-- المساعد الهندسي -->
+    <section id="tab-assistant" class="tab">
+      <div class="block-h"><span class="ico3d" data-icon="chat"></span><div><h2>المساعد الهندسي</h2><p>اسأل بالعربية عن أي طريق أو مدينة أو ميزانية، كتابةً أو صوتًا</p></div></div>
+      <div class="card chat">
+        <div class="chat-log" id="chatLog" aria-live="polite"></div>
+        <div class="chat-sugg" id="chatSugg"></div>
+        <form class="chat-in" id="chatForm">
+          <button class="icon-btn mic" type="button" id="chatMic" hidden aria-label="سؤال صوتي" title="اسأل بصوتك"><span data-icon="mic"></span></button>
+          <input id="chatQ" type="text" autocomplete="off" placeholder="مثال: ما أسوأ 5 طرق في لوس أنجلوس؟" aria-label="سؤالك">
+          <button class="btn" type="submit"><span data-icon="send"></span>اسأل</button>
+        </form>
+        <p class="muted chat-mode" id="chatMode"></p>
+      </div>
     </section>
 
     <!-- الميزانية والقرار الاقتصادي -->

@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import ai, config, db, economics, incidents, lifecycle, pipeline, scheduler, sources, vision
+from . import ai, assistant, config, db, economics, incidents, lifecycle, pipeline, scheduler, sources, vision
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("darb.app")
@@ -87,7 +87,11 @@ def _camera_summary(cam: dict) -> dict:
         "risk": r and {"score": r["score"], "level": r["level"], "level_ar": r["forecast"].get("level_ar"),
                        "prob_90d": r["prob_90d"], "weeks_to_threshold": r["weeks_to_threshold"],
                        "priority": r["forecast"].get("priority"), "top_factor": r["factors"][0]["label"] if r["factors"] else None,
-                       "slope": r["forecast"].get("ci_slope"), "ci": r["forecast"].get("ci")},
+                       "slope": r["forecast"].get("ci_slope"), "ci": r["forecast"].get("ci"),
+                       "rutting": (r["forecast"].get("gulf") or {}).get("rutting_risk"),
+                       "pavement_t": (r["forecast"].get("gulf") or {}).get("pavement_t7max"),
+                       "pg_deficit": (r["forecast"].get("gulf") or {}).get("pg_deficit_grades"),
+                       "sand": (r["forecast"].get("features") or {}).get("sand")},
     }
 
 
@@ -98,6 +102,7 @@ def status():
             "schedule": {"weekly": f"{config.WEEKLY_DAY} {config.WEEKLY_HOUR:02d}:00 (التوقيت المحلي لكل منطقة)",
                          "sentinel_hours": config.SENTINEL_HOURS},
             "maintenance_threshold": config.MAINTENANCE_THRESHOLD,
+            "assistant_llm": assistant.available(),
             "regions": [{"key": k, "name": config.REGIONS[k]["name_ar"], "tz": config.REGIONS[k]["tz"],
                          "climate": config.REGIONS[k].get("climate_ar", ""), "kind": config.REGIONS[k].get("climate_kind", ""),
                          "cameras": db.one("SELECT COUNT(*) n FROM cameras WHERE region=? AND enabled=1", (k,))["n"],
@@ -143,6 +148,22 @@ def summary(region: str | None = None):
         "gulf": _gulf_overview(cams),
         "seeding": state["seeding"],
     }
+
+
+class AskIn(BaseModel):
+    q: str = Field(min_length=2, max_length=500)
+
+
+@app.post("/api/ask")
+def ask(body: AskIn):
+    """المساعد العربي عبر Claude (وضع الخادم فقط). لا يحتاج رمز المشرف: قراءة فقط."""
+    if not assistant.available():
+        raise HTTPException(503, "المساعد الذكي غير مفعّل على هذا الخادم (ANTHROPIC_API_KEY)")
+    cams = _region_cams(None)
+    econ = economics_view(None)
+    ctx = assistant.context_for(cams, econ["items"], _gulf_overview(cams), econ["currencies"],
+                                [{"key": k, "name": config.REGIONS[k]["name_ar"]} for k in config.REGION_KEYS])
+    return assistant.ask(body.q, ctx)
 
 
 @app.get("/api/economics")

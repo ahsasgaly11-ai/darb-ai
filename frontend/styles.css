@@ -435,6 +435,31 @@ form.maint input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(
 .live-card .frame { border-radius: 12px; }
 .live-hint { margin: 10px 0 0; }
 
+/* ---- المساعد الهندسي ---- */
+.chat { display: flex; flex-direction: column; gap: 12px; max-width: 980px; }
+.chat-log { display: flex; flex-direction: column; gap: 10px; min-height: 320px; max-height: 60vh; overflow-y: auto; padding: 4px; }
+.msg { display: flex; }
+.msg.me { justify-content: flex-start; }
+.msg.bot { justify-content: flex-end; }
+.bubble { max-width: 85%; padding: 12px 16px; border-radius: 16px; line-height: 1.8; font-size: .97rem; }
+.msg.me .bubble { background: linear-gradient(135deg, var(--brand), var(--brand-deep)); color: #fff; border-end-start-radius: 4px; }
+.msg.bot .bubble { background: var(--surface-2); border: 1px solid var(--line); border-end-end-radius: 4px; }
+.msg.typing .bubble { display: flex; gap: 5px; padding: 16px 18px; }
+.msg.typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); animation: pulse 1s infinite; }
+.msg.typing span:nth-child(2) { animation-delay: .2s; } .msg.typing span:nth-child(3) { animation-delay: .4s; }
+.chat-list { margin: 8px 0; padding-inline-start: 22px; display: grid; gap: 6px; }
+.cam-link { color: var(--brand); font-weight: 600; text-decoration: none; }
+.cam-link:hover { text-decoration: underline; }
+.bubble a[data-goto] { color: var(--brand); font-weight: 600; }
+.via { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; font-size: .75rem; color: var(--muted); }
+.via svg { width: 14px; height: 14px; color: var(--marking); }
+.chat-sugg { display: flex; flex-wrap: wrap; gap: 8px; }
+.chat-in { display: flex; gap: 8px; align-items: center; }
+.chat-in input { flex: 1; min-width: 0; padding: 13px 16px; border-radius: 14px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-size: 1rem; }
+.chat-in input:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+.chat-in .mic.on { background: var(--critical); color: #fff; border-color: var(--critical); animation: pulse 1.2s infinite; }
+.chat-mode { margin: 0; font-size: .82rem; }
+
 /* ---- الميزانية ---- */
 .budget-ctl { display: grid; gap: 14px; }
 .bc-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
@@ -577,6 +602,8 @@ body.lb-open { overflow: hidden; }
   .frame .fs { opacity: 1; }
   .facts.g4, .gulf-row { grid-template-columns: 1fr 1fr; }
   .econ-cmp { grid-template-columns: 1fr; }
+  .bubble { max-width: 95%; }
+  .chat-log { max-height: 55vh; }
   .ec-arrow { transform: rotate(-90deg); }
   .bc-input input { width: 150px; }
   .cam .zoom-btn { opacity: 1; }
