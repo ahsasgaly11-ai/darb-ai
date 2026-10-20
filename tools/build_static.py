@@ -66,9 +66,9 @@ body = body.replace('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.j
                     '<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>')
 import os
 if os.getenv("DARB_SITE_MODE") == "auto":
-    note = ('<div class="snapnote"><div><b>يُحدَّث آليًا كل يوم</b>: صورة واحدة من كل كاميرا حقيقية '
+    note = ('<div class="snapnote"><div><b>يُحدَّث آليًا كل يوم</b>: التقاط من كل كاميرا حقيقية (5 إطارات) '
             'في ثماني مدن (سنغافورة؛ مدريد؛ فينكس وتوسان ويوما؛ تامبا؛ لوس أنجلوس وسان دييغو) من جهاتها الرسمية، يحلّلها الذكاء الاصطناعي '
-            'ظهر كل يوم بالتوقيت المحلي.</div></div>')
+            'كل يوم بين 9 و12 صباحًا بالتوقيت المحلي، مع تأكيد أي حدث مفاجئ بعد ساعة.</div></div>')
 else:
     note = ('<div class="snapnote"><div><b>نسخة عرض للقراءة فقط</b> من بيانات كاميرات حقيقية: '
             'سنغافورة (6 أشهر من أرشيف هيئة النقل البري LTA) وفينكس، أريزونا (وزارة النقل ADOT). '

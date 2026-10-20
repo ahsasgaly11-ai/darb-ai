@@ -171,17 +171,26 @@ STILL_TYPES = (*BASE_511, "madrid")  # صور ثابتة متجددة: تُجم�
 
 
 def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
-    """صور منصات 511 تتجدد كل ~1–2 دقيقة: نأخذ الإطارات المختلفة فقط على مدى بضع دقائق."""
+    """صور منصات 511 ومدريد تتجدد كل ~1–3 دقائق: نأخذ الإطارات المختلفة فقط على مدى بضع دقائق
+    (5 إطارات مختلفة تكفي للوسيط الزمني؛ المهلة تتسع لها مع تجدد بطيء)."""
     url = cctv_url({"type": "az511", **src})
     label = "مدريد" if src.get("type") == "madrid" else "AZ511"
     headers = {"User-Agent": config.USER_AGENT}
-    frames, seen, same = [], set(), 0
-    deadline = time.time() + max(60.0, n * interval + 30)
+    frames, seen, same, errors = [], set(), 0, 0
+    deadline = time.time() + (max(60.0, n * 75.0) if interval else 30.0)
     with httpx.Client(timeout=30, headers=headers, follow_redirects=True) as client:
-        # تتوقف الدفعة إذا لم تتجدد الصورة 3 مرات متتالية (بعض الكاميرات تتجدد ببطء خاصة ليلًا)
-        while len(frames) < n and time.time() < deadline and not (frames and same >= 3):
+        # تتوقف الدفعة إذا لم تتجدد الصورة دقيقتين ونصفًا تقريبًا (بعض الكاميرات تتجدد ببطء)
+        while len(frames) < n and time.time() < deadline and not (frames and same * max(interval, 1) >= 150):
             r = client.get(url, params={"t": int(time.time())})
-            r.raise_for_status()
+            if r.status_code >= 400:
+                # رفض عابر من الخادم (يحدث أحيانًا): نكتفي بما وصل، أو نعيد المحاولة مرتين قبل اعتبار الكاميرا متعطلة
+                errors += 1
+                if frames:
+                    break
+                if errors >= 3:
+                    r.raise_for_status()
+                time.sleep(10)
+                continue
             if "png" in r.headers.get("content-type", "") or len(r.content) < 20000:
                 # صورة بديلة «No live camera feed» — الكاميرا متوقفة
                 raise CaptureError(f"الكاميرا غير متصلة حاليًا ({label}: صورة بديلة)")

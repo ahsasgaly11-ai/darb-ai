@@ -1,13 +1,21 @@
-# دَرْب AI — تشغيل مجاني يومي: صورة واحدة من كل كاميرا ← تحليل بالذكاء الاصطناعي ← نشر الموقع على GitHub Pages
-# يعمل ظهرًا بالتوقيت المحلي لكل منطقة (الإضاءة الأفضل). البيانات تُحفظ في فرع darb-data.
+# دَرْب AI — تشغيل مجاني: التقاط يومي لكل كاميرا (5 إطارات) ← تحليل بالذكاء الاصطناعي ← نشر الموقع على GitHub Pages
+# كل منطقة تُلتقط مرة يوميًا بين 9 و12 صباحًا بتوقيتها (ضوء جيد قبل تموّج الهواء من حرارة الأسفلت)،
+# وأي اشتباه بحدث مفاجئ يُعاد التقاطه بعد ساعة قبل التنبيه. البيانات تُحفظ في فرع darb-data.
 name: DARB AI — daily analysis
 
 on:
   schedule:
-    - cron: "7 4 * * *"    # 12:07 بتوقيت سنغافورة
-    - cron: "7 11 * * *"   # 13:07 صيفًا / 12:07 شتاءً بتوقيت مدريد
-    - cron: "7 19 * * *"   # 12:07 بتوقيت أريزونا (MST)، وظهر كاليفورنيا تقريبًا، وعصر تامبا
-  workflow_dispatch: {}
+    # الالتقاط اليومي: كل تشغيل يلتقط المناطق التي تقع الآن في نافذة 9–12 صباحًا
+    - cron: "7 2,8,14,17 * * *"   # 10:07 سنغافورة | 10:07 (صيفًا) مدريد | 10:07 تامبا | 10:07 أريزونا وكاليفورنيا
+    # التأكيد بعد ساعة: يعمل فقط إن وُجد اشتباه معلّق، وإلا ينتهي خلال ثوانٍ
+    - cron: "17 3,9,15,18 * * *"
+  workflow_dispatch:
+    inputs:
+      cmd:
+        description: "daily = التقاط يومي، confirm = تأكيد الاشتباهات"
+        type: choice
+        options: [daily, confirm]
+        default: daily
 
 permissions:
   contents: write   # حفظ البيانات في فرع darb-data
@@ -22,6 +30,8 @@ jobs:
   analyze:
     runs-on: ubuntu-24.04  # مثبّت: ubuntu-latest ينتقل إلى Ubuntu 26
     timeout-minutes: 90
+    outputs:
+      run: ${{ steps.work.outputs.run }}
     env:
       DARB_REGIONS: singapore,phoenix,tucson,yuma,tampa,losangeles,sandiego,madrid
       DARB_DATA_DIR: ${{ github.workspace }}/darb-state
@@ -36,30 +46,49 @@ jobs:
             || mkdir -p darb-state
           rm -rf darb-state/.git
 
-      - uses: actions/setup-python@v6
+      - name: Decide what to run
+        id: work
+        run: |
+          cmd="${{ inputs.cmd }}"
+          if [ "${{ github.event.schedule }}" = "17 3,9,15,18 * * *" ]; then cmd=confirm; fi
+          [ -z "$cmd" ] && cmd=daily
+          echo "cmd=$cmd" >> "$GITHUB_OUTPUT"
+          if [ "$cmd" = confirm ] && ! grep -q '"' darb-state/pending_confirm.json 2>/dev/null; then
+            echo "run=false" >> "$GITHUB_OUTPUT"; echo "لا اشتباهات معلّقة — لا شيء للتأكيد"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.work.outputs.run == 'true'
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
           cache-dependency-path: requirements-ai.txt
 
       - name: Install (PyTorch CPU + AI)
+        if: steps.work.outputs.run == 'true'
         run: |
           pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
           pip install -r requirements-ai.txt
 
       - name: Cache AI models
+        if: steps.work.outputs.run == 'true'
         uses: actions/cache@v5
         with:
           path: models
           key: darb-models-v1
 
       - name: Download models
+        if: steps.work.outputs.run == 'true'
         run: python -m backend.models
 
-      - name: Capture one image per camera + analyze + build site
-        run: python -m backend.cli daily --site "${{ github.workspace }}/site"
+      - name: Capture (5 frames per camera) + analyze + build site
+        if: steps.work.outputs.run == 'true'
+        run: python -m backend.cli ${{ steps.work.outputs.cmd }} --site "${{ github.workspace }}/site"
 
       - name: Save data (single-commit snapshot, keeps the repo small)
+        if: steps.work.outputs.run == 'true'
         working-directory: darb-state
         run: |
           git init -q -b darb-data
@@ -69,12 +98,14 @@ jobs:
           git commit -q -m "DARB AI data $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" darb-data
 
-      - uses: actions/upload-pages-artifact@v5
+      - if: steps.work.outputs.run == 'true'
+        uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
   deploy:
     needs: analyze
+    if: needs.analyze.outputs.run == 'true'
     runs-on: ubuntu-24.04  # مثبّت: ubuntu-latest ينتقل إلى Ubuntu 26
     environment:
       name: github-pages

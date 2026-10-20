@@ -107,7 +107,7 @@ DAYLIGHT_HOURS = tuple(int(x) for x in os.getenv("DARB_DAYLIGHT_HOURS", "7,18").
 # عدد الإطارات في كل التقاط والفاصل بينها (ثوانٍ) — الوسيط الزمني يزيل المركبات من الصورة
 BURST_FRAMES = int(os.getenv("DARB_BURST_FRAMES", "7"))
 BURST_INTERVAL = float(os.getenv("DARB_BURST_INTERVAL", "4"))
-SENTINEL_BURST_FRAMES = int(os.getenv("DARB_SENTINEL_BURST_FRAMES", "3"))
+SENTINEL_BURST_FRAMES = int(os.getenv("DARB_SENTINEL_BURST_FRAMES", "5"))
 
 # كشف التغيّر المفاجئ
 SUDDEN_CHANGE_PCT = float(os.getenv("DARB_SUDDEN_CHANGE_PCT", "1.2"))

@@ -567,7 +567,7 @@
       $("#sysInfo").innerHTML = [
         `محرك الكشف: ${s.ai_models.length ? "ذكاء اصطناعي — " + s.ai_models.map(esc).join(" + ") : "رؤية حاسوبية كلاسيكية"}`,
         `الجدول الأسبوعي: ${esc(s.schedule.weekly)}`,
-        `الفحص السريع: يوميًا ظهرًا (نهارًا فقط)`,
+        `الالتقاط: يوميًا بين 9 و12 صباحًا محليًا (5 إطارات)، والتأكيد بعد ساعة`,
         `بيانات الطقس: ${s.weather ? "Open-Meteo" : "متوسطات مناخية"}`,
         `عتبة الصيانة: ${fmtN(s.maintenance_threshold)}`,
       ].map((t) => `<span class="chip">${t}</span>`).join("");

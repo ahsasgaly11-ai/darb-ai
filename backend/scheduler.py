@@ -43,8 +43,9 @@ def start() -> BackgroundScheduler:
                        args=["weekly", region], id=f"weekly-{region}", max_instances=1, coalesce=True,
                        misfire_grace_time=6 * 3600)
     if config.SENTINEL_HOURS >= 24:
-        for region in config.REGION_KEYS:  # الفحص اليومي ظهرًا بالتوقيت المحلي — الإضاءة أفضل للتحليل
-            _sched.add_job(_run_all, CronTrigger(hour=12, minute=0, timezone=config.tz_of(region)),
+        for region in config.REGION_KEYS:  # الفحص اليومي في موعد الالتقاط الأسبوعي نفسه (ثبات الإضاءة) بقية أيام الأسبوع
+            _sched.add_job(_run_all, CronTrigger(day_of_week="tue-sun" if config.WEEKLY_DAY == "mon" else "*",
+                                                 hour=config.WEEKLY_HOUR, minute=0, timezone=config.tz_of(region)),
                            args=["sentinel", region], id=f"sentinel-{region}", max_instances=1, coalesce=True)
     elif config.SENTINEL_HOURS > 0:
         _sched.add_job(_run_all, IntervalTrigger(hours=config.SENTINEL_HOURS), args=["sentinel"], id="sentinel",

@@ -144,13 +144,15 @@ def load_image(rel: str) -> np.ndarray | None:
 
 
 def run_capture(cam_id: str, kind: str = "manual", at: datetime | None = None,
-                n_frames: int | None = None, interval: float | None = None) -> dict:
+                n_frames: int | None = None, interval: float | None = None, frames=None) -> dict:
+    """frames: إطارات التُقطت مسبقًا (التشغيل اليومي يلتقط كل الكاميرات بالتوازي ثم يحلّلها بالتتابع)،
+    أو استثناء الالتقاط إن فشل."""
     lock = _cam_locks.setdefault(cam_id, threading.Lock())
     with lock:
-        return _run_capture(cam_id, kind, at, n_frames, interval)
+        return _run_capture(cam_id, kind, at, n_frames, interval, frames)
 
 
-def _run_capture(cam_id, kind, at, n_frames, interval) -> dict:
+def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
     cam = get_camera(cam_id)
     if cam is None:
         raise KeyError(cam_id)
@@ -160,7 +162,10 @@ def _run_capture(cam_id, kind, at, n_frames, interval) -> dict:
         n_frames = config.SENTINEL_BURST_FRAMES if kind == "sentinel" else config.BURST_FRAMES
 
     try:
-        frames = sources.capture(cam, at, n_frames, interval)
+        if isinstance(frames, Exception):
+            raise frames
+        if not frames:
+            frames = sources.capture(cam, at, n_frames, interval)
     except Exception as e:
         log.warning("capture failed for %s: %s", cam_id, e)
         recent = db.one("SELECT id FROM alerts WHERE camera_id=? AND type='capture_failed' AND ts>?",
@@ -294,7 +299,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval) -> dict:
         lifecycle.update(cam, ts, result, assessment, alerts, add_alert)
     except Exception:
         log.exception("lifecycle update failed for %s", cam_id)
-    return {"ok": True, "snapshot_id": sid, "condition_index": result["condition_index"],
+    return {"ok": True, "snapshot_id": sid, "condition_index": result["condition_index"], "suspect": bool(suspect),
             "risk": assessment and {k: assessment[k] for k in ("score", "level", "level_ar")}, "alerts": alerts}
 
 

@@ -42,19 +42,29 @@ def _clip(x: float) -> float:
     return float(min(1.0, max(0.0, x)))
 
 
-TREND_KINDS = ("seed", "weekly", "manual")
+def weekly(history: list[dict]) -> list[dict]:
+    """نقطة واحدة لكل أسبوع: وسيط مؤشر الحالة لكل لقطات الأسبوع (اليومية والأسبوعية).
+    وسيط 5–7 أيام أثبت من لقطة واحدة: يوم مبتل أو ظل أو مركبة متوقفة لا يغيّر النتيجة.
+    الأسبوع الجاري يدخل بما التُقط فيه حتى الآن، فإذا تكرر عيب في أغلب أيامه ظهر أثره فورًا."""
+    groups: dict[tuple, list[dict]] = {}
+    for h in sorted(history, key=lambda h: h["ts"]):
+        if h.get("condition_index") is None:
+            continue
+        y, w, _ = _ts(h["ts"]).isocalendar()
+        groups.setdefault((y, w), []).append(h)
+    return [{**g[-1], "condition_index": float(np.median([x["condition_index"] for x in g])), "samples": len(g)}
+            for _, g in sorted(groups.items())]
 
 
 def smooth(history: list[dict], window: int = 3) -> list[dict]:
-    """سلسلة الاتجاه: اللقطات الأسبوعية فقط (الفحوص اليومية للتنبيه)، مع وسيط متحرك لإخماد القفزات
-    المنفردة (ظل، مركبة متوقفة، أرض مبتلة). العيب الحقيقي يبقى في اللقطات المتتالية فيظهر في الوسيط."""
-    trend = [h for h in history if h.get("kind") in TREND_KINDS] or history
-    # فحوص الأيام السبعة الأخيرة تدخل السلسلة أيضًا: بعد الوسيط لا يؤثر منها إلا ما تكرر في لقطتين
-    # متتاليتين على الأقل (حفرة مفاجئة بقيت)، فيتغيّر التقييم فورًا بدل انتظار اللقطة الأسبوعية التالية
-    if history:
-        week_ago = (_ts(history[-1]["ts"]) - timedelta(days=7)).isoformat()
-        recent = [h for h in history if h.get("kind") == "sentinel" and h["ts"] >= week_ago]
-        trend = sorted(trend + recent, key=lambda h: h["ts"])
+    """سلسلة الاتجاه: الأسابيع المكتملة نقطة واحدة لكل أسبوع (وسيط أيامه)، والأيام السبعة الأخيرة نقاط يومية،
+    ثم وسيط متحرك لثلاث نقاط. أسبوع أو يوم شاذ منفرد يُخمد، والتغيّر الذي يتكرر يومين متتاليين (حفرة مفاجئة
+    بقيت) يظهر فورًا بدل انتظار نهاية الأسبوع."""
+    pts = sorted((h for h in history if h.get("condition_index") is not None), key=lambda h: h["ts"])
+    if not pts:
+        return []
+    week_ago = (_ts(pts[-1]["ts"]) - timedelta(days=7)).isoformat()
+    trend = weekly([h for h in pts if h["ts"] < week_ago]) + [h for h in pts if h["ts"] >= week_ago]
     # إعادة رصف/إصلاح = قفزة كبيرة للأعلى: تبدأ السلسلة من بعدها، فلا تؤثر الحالة القديمة على التنبؤ
     for i in range(len(trend) - 1, 0, -1):
         if trend[i]["condition_index"] - trend[i - 1]["condition_index"] >= 15:

@@ -241,6 +241,7 @@ def test_defect_tracking_across_captures():
 
 def test_az511_offline_placeholder(monkeypatch):
     class R:
+        status_code = 200
         headers = {"content-type": "image/png"}
         content = b"x" * 15000
         def raise_for_status(self):
@@ -273,3 +274,24 @@ def test_live_sources():
     hls = {"type": "caltrans", "url": "https://wzmedia.dot.ca.gov/D7/CCTV-178.stream/playlist.m3u8"}
     assert _live(hls) == {"kind": "hls", "url": hls["url"], "refresh": 0}
     assert _live({"type": "hls", "url": "https://x/a.m3u8"}) is None
+
+
+def test_capture_window_and_weekly_median():
+    from zoneinfo import ZoneInfo
+    from backend import cli
+
+    class P:
+        tz = staticmethod(lambda cam: ZoneInfo("America/Phoenix"))
+
+    class Src:
+        supports_history = staticmethod(lambda cam: cam["source"]["type"] == "datagovsg")
+
+    live = {"source": {"type": "az511"}}
+    at = lambda h: datetime(2026, 10, 20, h, 7, tzinfo=ZoneInfo("America/Phoenix")).astimezone(timezone.utc)
+    assert cli.capture_time(live, at(10), P, Src) == at(10)       # داخل نافذة 9–12
+    assert cli.capture_time(live, at(13), P, Src) is None          # خارجها
+    arch = {"source": {"type": "datagovsg"}}
+    assert cli.capture_time(arch, at(15), P, Src).astimezone(ZoneInfo("America/Phoenix")).hour == 10
+    # وسيط الأسبوع: يوم شاذ واحد (مبتل/ظل) لا يغيّر نقطة الأسبوع
+    days = [{"ts": (NOW - timedelta(days=30 - d)).isoformat(), "condition_index": 40 if d == 2 else 90} for d in range(7)]
+    assert all(w["condition_index"] == 90 for w in risk.weekly(days))
