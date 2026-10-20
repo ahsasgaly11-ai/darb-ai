@@ -5,40 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>دَرْب AI</title>
   <meta name="description" content="نظام ذكاء اصطناعي للتنبؤ بمخاطر الطرق وتحسين الصيانة الوقائية في دول الخليج">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b5f6b'/%3E%3Cpath d='M22 54 L29 10 M42 54 L35 10' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 46v4M32 34v5M32 22v5M32 12v3' stroke='%23f4c26b' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a3fae'/%3E%3Cpath d='M22 54 L29 10 M42 54 L35 10' stroke='%23fff' stroke-width='5' stroke-linecap='round'/%3E%3Cpath d='M32 46v4M32 34v5M32 22v5M32 12v3' stroke='%23f5b100' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Kufi+Arabic:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@300;400;500;600;700&family=Alexandria:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-row">
+<div class="shell">
+  <aside class="side">
+    <div class="side-top">
       <div class="brand">
         <div class="logo" aria-hidden="true">
-          <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="14"/><path class="edge" d="M22 54 L29 10 M42 54 L35 10"/><path class="lane" d="M32 46v4M32 34v5M32 22v5M32 12v3"/></svg>
+          <svg viewBox="0 0 64 64"><rect width="64" height="64" rx="16"/><path class="edge" d="M22 54 L29 10 M42 54 L35 10"/><path class="lane" d="M32 46v4M32 34v5M32 22v5M32 12v3"/></svg>
         </div>
         <div>
           <h1>دَرْب <span class="tag">AI</span></h1>
-          <p>منصة التنبؤ بمخاطر الطرق والصيانة الوقائية · <span id="regionName">…</span></p>
+          <p>ذكاء الطرق الوقائي</p>
         </div>
       </div>
-      <div class="top-actions">
-        <div class="regionbar" id="regionBar" role="tablist" aria-label="المنطقة"></div>
-        <div class="status" id="statusPill" title="حالة النظام"><i></i><span>جارٍ الاتصال…</span></div>
-        <button class="icon-btn" id="themeBtn" type="button" aria-label="الوضع الليلي" title="الوضع الليلي">
-          <span data-icon="moon"></span>
-        </button>
+      <div class="side-tools">
+        <button class="icon-btn" id="themeBtn" type="button" aria-label="الوضع الليلي" title="الوضع الليلي"><span data-icon="moon"></span></button>
       </div>
     </div>
+    <span class="nav-label">القائمة</span>
     <nav class="tabs" role="tablist">
-      <button role="tab" data-tab="dashboard" class="active"><span data-icon="grid"></span>نظرة عامة</button>
-      <button role="tab" data-tab="map"><span data-icon="map"></span>الخريطة</button>
-      <button role="tab" data-tab="lifecycle"><span data-icon="cycle"></span>دورة حياة المشكلات <b id="issueBadge" class="badge soft" hidden></b></button>
-      <button role="tab" data-tab="cameras"><span data-icon="camera"></span>الكاميرات</button>
-      <button role="tab" data-tab="alerts"><span data-icon="bell"></span>التنبيهات <b id="alertBadge" class="badge" hidden></b></button>
-      <button role="tab" data-tab="method"><span data-icon="book"></span>المنهجية</button>
+      <button role="tab" data-tab="dashboard" class="active"><span data-icon="grid"></span><em>نظرة عامة</em></button>
+      <button role="tab" data-tab="map"><span data-icon="map"></span><em>الخريطة</em></button>
+      <button role="tab" data-tab="lifecycle"><span data-icon="cycle"></span><em>دورة حياة المشكلات</em><b id="issueBadge" class="badge soft" hidden></b></button>
+      <button role="tab" data-tab="cameras"><span data-icon="camera"></span><em>الكاميرات</em></button>
+      <button role="tab" data-tab="alerts"><span data-icon="bell"></span><em>التنبيهات</em><b id="alertBadge" class="badge" hidden></b></button>
+      <button role="tab" data-tab="method"><span data-icon="book"></span><em>المنهجية</em></button>
     </nav>
+    <div class="side-foot">
+      <div class="status" id="statusPill" title="حالة النظام"><i></i><span>جارٍ الاتصال…</span></div>
+      <p class="side-note"><span data-icon="brain"></span>تحليل بنموذجَي YOLO مدرّبين على عيوب الطرق</p>
+    </div>
+  </aside>
+
+  <div class="content">
+  <header class="pagebar">
+    <div class="pagebar-t">
+      <span class="crumb"><span data-icon="road"></span>منصة التنبؤ بمخاطر الطرق والصيانة الوقائية</span>
+      <b id="regionName">…</b>
+    </div>
+    <div class="regionbar" id="regionBar" role="tablist" aria-label="المنطقة"></div>
   </header>
 
   <main>
@@ -47,13 +58,14 @@
       <div class="hero">
         <div class="hero-text">
           <span class="eyebrow"><span data-icon="activity"></span>مراقبة آلية لحالة الرصف</span>
-          <h2>نظرة عامة على الشبكة</h2>
-          <p>كاميرات المرور تُحلَّل بالذكاء الاصطناعي أسبوعيًا: تنبؤ بالمشكلة قبل حدوثها، ورصد فوري أثناء وقوعها، ومتابعة بعد إصلاحها.</p>
+          <h2>اكتشف تدهور الطريق <span class="hl">قبل</span> أن يصبح حفرة</h2>
+          <p>صورة يومية من كاميرات المرور يحلّلها الذكاء الاصطناعي، فيتنبأ بالمشكلة قبل وقوعها، ويرصدها لحظة حدوثها، ويتابعها حتى بعد إصلاحها.</p>
+          <div class="hero-steps"><span><i class="s1"></i>قبل · تنبؤ</span><span><i class="s2"></i>أثناء · رصد</span><span><i class="s3"></i>بعد · متابعة</span></div>
           <span class="asof" id="asOf"></span>
         </div>
         <div class="road3d" aria-hidden="true"><div class="plane"><i></i></div><div class="horizon"></div></div>
       </div>
-      <div id="seedingNote" class="note" hidden>⏳ يُبنى الآن السجل التاريخي للكاميرات (لقطات أسبوعية لستة أشهر). تتحدّث اللوحة تلقائيًا.</div>
+      <div id="seedingNote" class="note" hidden> يُبنى الآن السجل التاريخي للكاميرات (لقطات أسبوعية لستة أشهر). تتحدّث اللوحة تلقائيًا.</div>
       <section class="block">
         <div class="block-h"><span class="ico3d " data-icon="gauge"></span><div><h2>المؤشرات الرئيسية</h2><p>حالة الشبكة الآن ومراحل المشكلات</p></div></div>
         <div class="kpis" id="kpis"></div>
@@ -78,7 +90,7 @@
       <div class="card">
         <div class="card-h">
           <h2 class="t"><span class="ico-sm" data-icon="wrench"></span>قائمة الأولويات</h2>
-          <div class="actions"><a class="btn ghost" href="/api/export/priorities.csv">⬇ تصدير CSV</a></div>
+          <div class="actions"><a class="btn ghost" href="/api/export/priorities.csv"><span data-icon="download"></span>تصدير CSV</a></div>
         </div>
         <div class="table-wrap">
           <table class="prio">
@@ -178,6 +190,8 @@
   </main>
 
   <footer class="foot" id="attribution" hidden></footer>
+  </div>
+</div>
 
   <!-- تفاصيل الكاميرا -->
   <div class="drawer" id="drawer" aria-hidden="true">
@@ -185,7 +199,7 @@
     <aside class="drawer-panel" role="dialog" aria-modal="true" aria-labelledby="dTitle">
       <header class="drawer-h">
         <div><h2 id="dTitle"></h2><p id="dRoad" class="muted"></p></div>
-        <button class="icon-btn" data-close aria-label="إغلاق">✕</button>
+        <button class="icon-btn" data-close aria-label="إغلاق"><span data-icon="close"></span></button>
       </header>
       <div class="drawer-body" id="dBody"></div>
     </aside>
