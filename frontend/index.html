@@ -33,6 +33,7 @@
       <button role="tab" data-tab="dashboard" class="active"><span data-icon="grid"></span><em>نظرة عامة</em></button>
       <button role="tab" data-tab="map"><span data-icon="map"></span><em>الخريطة</em></button>
       <button role="tab" data-tab="lifecycle"><span data-icon="cycle"></span><em>دورة حياة المشكلات</em><b id="issueBadge" class="badge soft" hidden></b></button>
+      <button role="tab" data-tab="budget"><span data-icon="coins"></span><em>الميزانية والقرار</em></button>
       <button role="tab" data-tab="cameras"><span data-icon="camera"></span><em>الكاميرات</em></button>
       <button role="tab" data-tab="live"><span data-icon="live"></span><em>البث المباشر</em><b class="badge live-dot">مباشر</b></button>
       <button role="tab" data-tab="alerts"><span data-icon="bell"></span><em>التنبيهات</em><b id="alertBadge" class="badge" hidden></b></button>
@@ -146,6 +147,30 @@
         <label class="switch"><input type="checkbox" id="annToggle" checked> إظهار العيوب المكتشفة</label>
       </div>
       <div id="camGrid" class="cam-grid"></div>
+    </section>
+
+    <!-- الميزانية والقرار الاقتصادي -->
+    <section id="tab-budget" class="tab">
+      <div class="block-h"><span class="ico3d ok" data-icon="coins"></span><div><h2>الميزانية والقرار الاقتصادي</h2><p>أين تُصرف ميزانية الصيانة لأعلى عائد؟ وكم يكلّف التأجيل سنة؟</p></div></div>
+      <div class="card budget-ctl">
+        <div class="bc-row">
+          <label class="bc-field"><span>الميزانية المتاحة</span>
+            <div class="bc-input"><input id="budgetIn" type="number" min="0" step="1000" inputmode="numeric"><select id="curSel" aria-label="العملة"></select></div></label>
+          <div class="bc-presets" id="budgetPresets"></div>
+        </div>
+        <input id="budgetRange" type="range" min="0" step="1" aria-label="الميزانية">
+        <p class="muted bc-need" id="budgetNeed"></p>
+      </div>
+      <div class="kpis" id="budgetKpis"></div>
+      <div class="card mt">
+        <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="check"></span>الخطة المقترحة</h2><span class="muted">الإلزامي للسلامة أولًا (حفر أو دون العتبة)، ثم الأعلى عائدًا لكل وحدة نقدية</span></div>
+        <div class="table-wrap"><table class="prio"><thead><tr><th>#</th><th>المقطع</th><th>المعالجة الآن</th><th>الكلفة الآن</th><th>إن أُجّل سنة</th><th>الوفر بالتدخل الآن</th><th>العائد لكل وحدة</th></tr></thead><tbody id="planBody"></tbody></table></div>
+      </div>
+      <div class="card mt">
+        <div class="card-h"><h2 class="t"><span class="ico-sm" data-icon="clock"></span>خارج الميزانية: كلفة الانتظار</h2><span class="muted">ما سيحتاجه كل مقطع بعد سنة إن لم يُموَّل الآن</span></div>
+        <div class="table-wrap"><table class="prio"><thead><tr><th>المقطع</th><th>الحالة الآن ← بعد سنة</th><th>المعالجة الآن</th><th>المعالجة بعد سنة</th><th>زيادة الكلفة</th></tr></thead><tbody id="unfundedBody"></tbody></table></div>
+      </div>
+      <p class="muted method-note">الأسعار تقديرية من متوسطات دولية لعقود الصيانة (تُستبدل بأسعار الجهة المالكة)، ومساحة المقطع = 500 م × عدد المسارات × 3.65 م، وتضخم المقاولات 4% سنويًا. كلفة المستخدمين تقدير مبسّط لزيادة استهلاك المركبات مع خشونة السطح (نهج HDM-4). أسعار الصرف تقريبية.</p>
     </section>
 
     <!-- البث المباشر -->

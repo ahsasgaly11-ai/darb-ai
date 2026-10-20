@@ -69,6 +69,7 @@ for r in [""] + config.REGION_KEYS:
     save(f"summary_{tag}.json", get("/api/summary" + q))
     save(f"cameras_{tag}.json", get("/api/cameras" + q))
     save(f"issues_{tag}.json", get("/api/issues" + q))
+    save(f"economics_{tag}.json", get("/api/economics" + q))
 save("alerts.json", get("/api/alerts?limit=300"))
 
 thumbs, hi_all = {}, set()

@@ -78,6 +78,13 @@
     pause: "<path d=\"M208,48V208a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8h40A8,8,0,0,1,208,48ZM96,40H56a8,8,0,0,0-8,8V208a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\" class=\"d\"/><path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>",
     play: "<path d=\"M228.23,134.69,84.15,222.81A8,8,0,0,1,72,216.12V39.88a8,8,0,0,1,12.15-6.69l144.08,88.12A7.82,7.82,0,0,1,228.23,134.69Z\" class=\"d\"/><path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>",
     expand: "<path d=\"M208,48V208H48V48Z\" class=\"d\"/><path d=\"M216,48V96a8,8,0,0,1-16,0V67.31l-42.34,42.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM98.34,146.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l42.35-42.34a8,8,0,0,0-11.32-11.32ZM208,152a8,8,0,0,0-8,8v28.69l-42.34-42.35a8,8,0,0,0-11.32,11.32L188.69,200H160a8,8,0,0,0,0,16h48a8,8,0,0,0,8-8V160A8,8,0,0,0,208,152ZM67.31,56H96a8,8,0,0,0,0-16H48a8,8,0,0,0-8,8V96a8,8,0,0,0,16,0V67.31l42.34,42.35a8,8,0,0,0,11.32-11.32Z\"/>",
+    coins: "<path d=\"M240,132c0,19.88-35.82,36-80,36-19.6,0-37.56-3.17-51.47-8.44h0C146.76,156.85,176,142,176,124V96.72h0C212.52,100.06,240,114.58,240,132ZM176,84c0-19.88-35.82-36-80-36S16,64.12,16,84s35.82,36,80,36S176,103.88,176,84Z\" class=\"d\"/><path d=\"M184,89.57V84c0-25.08-37.83-44-88-44S8,58.92,8,84v40c0,20.89,26.25,37.49,64,42.46V172c0,25.08,37.83,44,88,44s88-18.92,88-44V132C248,111.3,222.58,94.68,184,89.57ZM232,132c0,13.22-30.79,28-72,28-3.73,0-7.43-.13-11.08-.37C170.49,151.77,184,139,184,124V105.74C213.87,110.19,232,122.27,232,132ZM72,150.25V126.46A183.74,183.74,0,0,0,96,128a183.74,183.74,0,0,0,24-1.54v23.79A163,163,0,0,1,96,152,163,163,0,0,1,72,150.25Zm96-40.32V124c0,8.39-12.41,17.4-32,22.87V123.5C148.91,120.37,159.84,115.71,168,109.93ZM96,56c41.21,0,72,14.78,72,28s-30.79,28-72,28S24,97.22,24,84,54.79,56,96,56ZM24,124V109.93c8.16,5.78,19.09,10.44,32,13.57v23.37C36.41,141.4,24,132.39,24,124Zm64,48v-4.17c2.63.1,5.29.17,8,.17,3.88,0,7.67-.13,11.39-.35A121.92,121.92,0,0,0,120,171.41v23.46C100.41,189.4,88,180.39,88,172Zm48,26.25V174.4a179.48,179.48,0,0,0,24,1.6,183.74,183.74,0,0,0,24-1.54v23.79a165.45,165.45,0,0,1-48,0Zm64-3.38V171.5c12.91-3.13,23.84-7.79,32-13.57V172C232,180.39,219.59,189.4,200,194.87Z\"/>",
+    chat: "<path d=\"M224,56V184a8,8,0,0,1-8,8H150.93l-16,28a8,8,0,0,1-13.9,0l-16-28H40a8,8,0,0,1-8-8V56a8,8,0,0,1,8-8H216A8,8,0,0,1,224,56Z\" class=\"d\"/><path d=\"M88,104a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H96A8,8,0,0,1,88,104Zm8,40h64a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16ZM232,56V184a16,16,0,0,1-16,16H155.57l-13.68,23.94a16,16,0,0,1-27.78,0L100.43,200H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V184h65.07a8,8,0,0,1,7,4l16,28,16-28a8,8,0,0,1,7-4H216Z\"/>",
+    report: "<path d=\"M240,120a40,40,0,0,1-40,40H160V80h40A40,40,0,0,1,240,120Z\" class=\"d\"/><path d=\"M248,120a48.05,48.05,0,0,0-48-48H160.2c-2.91-.17-53.62-3.74-101.91-44.24A16,16,0,0,0,32,40V200a16,16,0,0,0,26.29,12.25c37.77-31.68,77-40.76,93.71-43.3v31.72A16,16,0,0,0,159.12,214l11,7.33A16,16,0,0,0,194.5,212l11.77-44.36A48.07,48.07,0,0,0,248,120ZM48,199.93V40h0c42.81,35.91,86.63,45,104,47.24v65.48C134.65,155,90.84,164.07,48,199.93Zm131,8,0,.11-11-7.33V168h21.6ZM200,152H168V88h32a32,32,0,1,1,0,64Z\"/>",
+    phone: "<path d=\"M192,56V200H64V56Z\" class=\"d\"/><path d=\"M176,16H80A24,24,0,0,0,56,40V216a24,24,0,0,0,24,24h96a24,24,0,0,0,24-24V40A24,24,0,0,0,176,16ZM72,64H184V192H72Zm8-32h96a8,8,0,0,1,8,8v8H72V40A8,8,0,0,1,80,32Zm96,192H80a8,8,0,0,1-8-8v-8H184v8A8,8,0,0,1,176,224Z\"/>",
+    send: "<path d=\"M223.69,42.18l-58.22,192a8,8,0,0,1-14.92,1.25L108,148,20.58,105.45a8,8,0,0,1,1.25-14.92l192-58.22A8,8,0,0,1,223.69,42.18Z\" class=\"d\"/><path d=\"M227.32,28.68a16,16,0,0,0-15.66-4.08l-.15,0L19.57,82.84a16,16,0,0,0-2.49,29.8L102,154l41.3,84.87A15.86,15.86,0,0,0,157.74,248q.69,0,1.38-.06a15.88,15.88,0,0,0,14-11.51l58.2-191.94c0-.05,0-.1,0-.15A16,16,0,0,0,227.32,28.68ZM157.83,231.85l-.05.14,0-.07-40.06-82.3,48-48a8,8,0,0,0-11.31-11.31l-48,48L24.08,98.25l-.07,0,.14,0L216,40Z\"/>",
+    pin: "<path d=\"M128,24a80,80,0,0,0-80,80c0,72,80,128,80,128s80-56,80-128A80,80,0,0,0,128,24Zm0,112a32,32,0,1,1,32-32A32,32,0,0,1,128,136Z\" class=\"d\"/><path d=\"M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z\"/>",
+    sparkle: "<path d=\"M194.82,151.43l-55.09,20.3-20.3,55.09a7.92,7.92,0,0,1-14.86,0l-20.3-55.09-55.09-20.3a7.92,7.92,0,0,1,0-14.86l55.09-20.3,20.3-55.09a7.92,7.92,0,0,1,14.86,0l20.3,55.09,55.09,20.3A7.92,7.92,0,0,1,194.82,151.43Z\" class=\"d\"/><path d=\"M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z\"/>",
     zoomin: "<path d=\"M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z\" class=\"d\"/><path d=\"M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Zm112,0a8,8,0,0,1-8,8H120v24a8,8,0,0,1-16,0V120H80a8,8,0,0,1,0-16h24V80a8,8,0,0,1,16,0v24h24A8,8,0,0,1,152,112Z\"/>",
     zoomout: "<path d=\"M192,112a80,80,0,1,1-80-80A80,80,0,0,1,192,112Z\" class=\"d\"/><path d=\"M229.66,218.34,179.6,168.28a88.21,88.21,0,1,0-11.32,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Zm112,0a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h64A8,8,0,0,1,152,112Z\"/>",
     fit: "<path d=\"M208,64V192a16,16,0,0,1-16,16H64a16,16,0,0,1-16-16V64A16,16,0,0,1,64,48H192A16,16,0,0,1,208,64Z\" class=\"d\"/><path d=\"M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\"/>",
@@ -546,6 +553,72 @@
     document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
   }, true);
 
+  // ---------- الميزانية والقرار الاقتصادي ----------
+  // الخطة تُحسب في المتصفح (تعمل في الموقع الثابت): الإلزامي للسلامة أولًا ثم الأعلى عائدًا لكل وحدة نقدية
+  const econ = { cur: safeGet("darb-cur") || "SAR", budget: null };
+  const money = (usd, cur = econ.cur) => {
+    const c = state.econ?.currencies?.[cur] || { rate: 1, name: "دولار" }, v = usd * c.rate;
+    const t = Math.abs(v) >= 1e6 ? `${fmtN(v / 1e6, 1)} مليون` : Math.abs(v) >= 1e4 ? `${fmtN(v / 1e3, 0)} ألف` : fmtN(v);
+    return `${t} ${c.name}`;
+  };
+  function econPlan(items, budget) {
+    const order = items.filter((x) => x.treatment_now.key !== "routine" || x.must_do)
+      .sort((a, b) => (b.must_do - a.must_do) || (b.ratio - a.ratio) || ((b.risk_score || 0) - (a.risk_score || 0)));
+    const sel = [], skip = []; let left = budget;
+    for (const x of order) (x.cost_now <= left ? (sel.push(x), left -= x.cost_now) : skip.push(x));
+    const spent = budget - left, benefit = sel.reduce((n, x) => n + x.benefit, 0);
+    return { sel, skip, spent, left, benefit, roi: spent ? benefit / spent : 0, penalty: skip.reduce((n, x) => n + x.cost_later - x.cost_now, 0) };
+  }
+  function renderBudget() {
+    const e = state.econ; if (!e || !$("#budgetIn")) return;
+    const sel = $("#curSel");
+    if (!sel.options.length) sel.innerHTML = Object.entries(e.currencies).map(([k, v]) => `<option value="${k}">${esc(v.name)}</option>`).join("");
+    sel.value = econ.cur;
+    const rate = e.currencies[econ.cur]?.rate || 1;
+    const need = e.items.filter((x) => x.treatment_now.key !== "routine" || x.must_do).reduce((n, x) => n + x.cost_now, 0);
+    if (econ.budget == null) econ.budget = Math.round(need * 0.4);
+    const r = $("#budgetRange"); r.max = Math.max(1, Math.round(need * 1.2 * rate)); r.value = Math.round(econ.budget * rate);
+    if (document.activeElement !== $("#budgetIn")) $("#budgetIn").value = Math.round(econ.budget * rate);
+    $("#budgetNeed").textContent = `الاحتياج الكامل للشبكة الآن: ${money(need)} · لو أُجّل كله سنة: ${money(e.items.filter((x) => x.treatment_now.key !== "routine" || x.must_do).reduce((n, x) => n + x.cost_later, 0))}`;
+    $("#budgetPresets").innerHTML = [0.25, 0.5, 1].map((f) => `<button type="button" class="chip-btn" data-bud="${Math.round(need * f)}">${f === 1 ? "الاحتياج كاملًا" : `${f * 100}% من الاحتياج`}</button>`).join("");
+    const p = econPlan(e.items, econ.budget);
+    $("#budgetKpis").innerHTML = [
+      kpi("مقاطع ممولة", `${fmtN(p.sel.length)} / ${fmtN(p.sel.length + p.skip.length)}`, `${fmtN(p.sel.filter((x) => x.must_do).length)} إلزامية للسلامة`, false, "check", "ok"),
+      kpi("المصروف", money(p.spent), `المتبقي ${money(p.left)}`, false, "coins"),
+      kpi("الكلفة المتجنَّبة", money(p.benefit), "وفر التأجيل + كلفة المستخدمين السنوية", false, "trend", "ok"),
+      kpi("العائد لكل وحدة نقدية", `×${fmtN(p.roi, 1)}`, "كل وحدة نقدية تُصرف الآن توفّر هذا القدر", false, "gauge", "warn"),
+      kpi("كلفة الانتظار", money(p.penalty), "زيادة كلفة المقاطع غير الممولة بعد سنة", p.penalty > 0, "clock"),
+    ].join("");
+    const row = (x, i) => `<tr data-cam="${esc(x.camera_id)}"><td><span class="rank">${fmtN(i + 1)}</span></td>
+      <td class="name"><b>${esc(x.name)}</b><span>${x.must_do ? '<em class="must">إلزامي للسلامة</em> · ' : ""}الحالة ${fmtN(x.ci)} · ${fmtN(x.area_m2)} م²</span></td>
+      <td><b>${esc(x.treatment_now.name)}</b><span class="muted sub">${esc(x.treatment_now.desc)}</span></td>
+      <td class="num"><b>${money(x.cost_now)}</b></td>
+      <td><span class="muted">${esc(x.treatment_later.name)}</span><br><span class="num">${money(x.cost_later)}</span></td>
+      <td class="num good">${money(x.deferral_saving)}</td><td class="num"><b>×${fmtN(x.ratio, 1)}</b></td></tr>`;
+    $("#planBody").innerHTML = p.sel.map(row).join("") || `<tr><td colspan="7" class="empty">الميزانية لا تكفي أي معالجة — ارفعها أو اختر إحدى النسب أعلاه</td></tr>`;
+    $("#unfundedBody").innerHTML = p.skip.map((x) => `<tr data-cam="${esc(x.camera_id)}"><td class="name"><b>${esc(x.name)}</b><span>${esc(x.road)}</span></td>
+      <td class="num">${fmtN(x.ci)} ← <b class="${x.ci_in_12m < x.ci - 5 ? "bad" : ""}">${fmtN(x.ci_in_12m)}</b></td>
+      <td>${esc(x.treatment_now.name)} · ${money(x.cost_now)}</td><td>${esc(x.treatment_later.name)} · ${money(x.cost_later)}</td>
+      <td class="num bad">+${money(x.cost_later - x.cost_now)}</td></tr>`).join("") || `<tr><td colspan="5" class="empty">كل المقاطع ممولة</td></tr>`;
+  }
+  const setBudget = (localVal) => { econ.budget = Math.max(0, +localVal || 0) / (state.econ?.currencies?.[econ.cur]?.rate || 1); renderBudget(); };
+  $("#budgetIn").addEventListener("input", (e) => setBudget(e.target.value));
+  $("#budgetRange").addEventListener("input", (e) => { $("#budgetIn").value = e.target.value; setBudget(e.target.value); });
+  $("#curSel").addEventListener("change", (e) => { econ.cur = e.target.value; safeSet("darb-cur", econ.cur); renderBudget(); });
+  $("#budgetPresets").addEventListener("click", (e) => { const b = e.target.closest("[data-bud]"); if (b) { econ.budget = +b.dataset.bud; renderBudget(); } });
+  function econCard(id) {
+    const x = state.econ?.items.find((i) => i.camera_id === id); if (!x) return "";
+    return `<div class="card mt">
+      <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("coins")}</span>القرار الاقتصادي لهذا المقطع</h2><span class="muted">${fmtN(x.area_m2)} م² · ${fmtN(x.lanes)} مسارات</span></div>
+      <div class="econ-cmp">
+        <div class="ec now"><span class="muted">التدخل الآن</span><b>${esc(x.treatment_now.name)}</b><span>${esc(x.treatment_now.desc)}</span><strong>${money(x.cost_now)}</strong></div>
+        <div class="ec-arrow">${svg("next")}</div>
+        <div class="ec later"><span class="muted">إن أُجّل سنة (الحالة ${fmtN(x.ci)} ← ${fmtN(x.ci_in_12m)})</span><b>${esc(x.treatment_later.name)}</b><span>${esc(x.treatment_later.desc)}</span><strong>${money(x.cost_later)}</strong></div>
+      </div>
+      <p class="econ-verdict">${x.deferral_saving > 0 ? `التدخل الآن يوفّر <b>${money(x.deferral_saving)}</b>${x.user_cost_year ? ` + نحو <b>${money(x.user_cost_year)}</b> سنويًا على مستخدمي الطريق` : ""}.` : "لا وفر يُذكر من التدخل المبكر — الحالة مستقرة، والمراقبة تكفي حاليًا."}</p>
+    </div>`;
+  }
+
   // فيزياء الطريق الخليجية: حرارة الرصف ودرجة الرابط وخطر التخدد والرمال والأحداث المتطرفة
   const RUT_AR = { low: "منخفض", medium: "متوسط", high: "مرتفع" };
   function gulfCard(g, m) {
@@ -615,6 +688,7 @@
         <div class="chart-box"><canvas id="ciChart"></canvas></div>
       </div>
       ${gulfCard(fc.gulf, m)}
+      ${econCard(d.id)}
       <div class="d-grid mt">
         <div class="card">
           <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("bars")}</span>لماذا هذا التقييم؟</h2><span class="muted">مساهمة كل عامل</span></div>
@@ -768,8 +842,10 @@
     renderAlerts();
   }
   async function refresh() {
-    const [summary, cams, issues] = await Promise.all([api(rq("/api/summary")), api(rq("/api/cameras")), api(rq("/api/issues"))]);
-    state.summary = summary; state.cameras = cams; state.issues = issues;
+    const [summary, cams, issues, econ] = await Promise.all([api(rq("/api/summary")), api(rq("/api/cameras")), api(rq("/api/issues")),
+      api(rq("/api/economics")).catch(() => null)]);
+    state.summary = summary; state.cameras = cams; state.issues = issues; state.econ = econ;
+    renderBudget();
     renderSummary(summary); renderCameras(); renderMarkers(); renderLifecycle(summary.lifecycle, issues);
     if ($("#tab-live").classList.contains("active")) renderLive();
     await loadAlerts();

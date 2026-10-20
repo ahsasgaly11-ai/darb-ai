@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import ai, config, db, incidents, lifecycle, pipeline, scheduler, sources, vision
+from . import ai, config, db, economics, incidents, lifecycle, pipeline, scheduler, sources, vision
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("darb.app")
@@ -143,6 +143,19 @@ def summary(region: str | None = None):
         "gulf": _gulf_overview(cams),
         "seeding": state["seeding"],
     }
+
+
+@app.get("/api/economics")
+def economics_view(region: str | None = None, budget: float | None = None):
+    """اقتصاديات كل مقطع (بالدولار) + خطة توزيع ميزانية إن أُعطيت. الواجهة تعيد حساب الخطة محليًا عند تغيير الميزانية."""
+    items = [e for c in _region_cams(region) if (e := economics.analyze(c, pipeline.latest_risk(c["id"])))]
+    out = {"currencies": {k: {"rate": v[0], "name": v[1]} for k, v in economics.CURRENCIES.items()},
+           "treatments": [{"key": t[1], "name": t[2], "desc": t[3], "usd_m2": t[4], "min_ci": t[0]} for t in economics.TREATMENTS],
+           "items": items, "totals": {"cost_now": sum(i["cost_now"] for i in items), "cost_later": sum(i["cost_later"] for i in items),
+                                       "deferral_saving": sum(i["deferral_saving"] for i in items), "user_cost_year": sum(i["user_cost_year"] for i in items)}}
+    if budget is not None:
+        out["plan"] = economics.plan(items, budget)
+    return out
 
 
 def _gulf_overview(cams: list[dict]) -> dict:

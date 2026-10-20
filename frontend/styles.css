@@ -435,21 +435,52 @@ form.maint input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(
 .live-card .frame { border-radius: 12px; }
 .live-hint { margin: 10px 0 0; }
 
+/* ---- الميزانية ---- */
+.budget-ctl { display: grid; gap: 14px; }
+.bc-row { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: space-between; }
+.bc-field { display: grid; gap: 6px; font-weight: 600; }
+.bc-input { display: flex; border: 1px solid var(--line-strong); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.bc-input input { border: 0; padding: 10px 14px; font: inherit; font-size: 1.25rem; font-family: var(--display); width: 220px; background: transparent; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bc-input select { border: 0; border-inline-start: 1px solid var(--line); background: var(--surface-2); color: var(--ink); font: inherit; padding: 0 12px; }
+.bc-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+.chip-btn { border: 1px solid var(--line); background: var(--surface-2); border-radius: 99px; padding: 6px 14px; font-size: .88rem; color: var(--ink-2); }
+.chip-btn:hover { border-color: var(--brand); color: var(--brand); }
+#budgetRange { width: 100%; accent-color: var(--brand); }
+.bc-need { margin: 0; }
+.prio .sub { display: block; font-size: .78rem; }
+.prio td.good { color: var(--low); font-weight: 600; }
+.prio .bad, .prio td.bad { color: var(--critical); font-weight: 600; }
+.prio em.must { font-style: normal; color: var(--critical); font-weight: 600; }
+.method-note { margin-top: 14px; font-size: .84rem; }
+.econ-cmp { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+.ec { border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; display: grid; gap: 4px; background: var(--surface-2); }
+.ec b { font-family: var(--display); font-size: 1.05rem; }
+.ec span:not(.muted) { font-size: .85rem; color: var(--ink-2); }
+.ec strong { font-size: 1.25rem; font-family: var(--display); margin-top: 6px; }
+.ec.now { border-color: color-mix(in srgb, var(--low) 40%, var(--line)); background: color-mix(in srgb, var(--low) 6%, var(--surface)); }
+.ec.now strong { color: var(--low); }
+.ec.later { border-color: color-mix(in srgb, var(--critical) 35%, var(--line)); background: color-mix(in srgb, var(--critical) 5%, var(--surface)); }
+.ec.later strong { color: var(--critical); }
+.ec-arrow { display: grid; place-items: center; color: var(--muted); }
+.ec-arrow svg { width: 28px; height: 28px; }
+.econ-verdict { margin: 12px 0 0; }
+
 /* ---- فيزياء الطريق الخليجية ---- */
 .events-note { background: color-mix(in srgb, var(--high) 9%, var(--surface)); border-color: color-mix(in srgb, var(--high) 35%, transparent); display: grid; gap: 6px; }
 .events-note div { display: flex; gap: 8px; align-items: flex-start; }
 .events-note svg { color: var(--high); width: 20px; height: 20px; flex: none; margin-top: 2px; }
-.thermo { margin: 6px 0 18px; }
+.thermo { margin: 6px 0 18px; padding-bottom: 40px; position: relative; }
+.thermo .thermo-scale { position: absolute; bottom: 0; left: 0; right: 0; opacity: .8; }
 .thermo-bar { position: relative; height: 14px; border-radius: 99px; margin: 34px 6px 6px; direction: ltr;
   background: linear-gradient(90deg, #3b82f6 0%, #22c55e 30%, #facc15 55%, #f97316 75%, #dc2626 100%); }
 .thermo-bar .now { position: absolute; top: -6px; width: 6px; height: 26px; margin-left: -3px; border-radius: 3px; background: var(--ink); box-shadow: 0 0 0 3px var(--surface); }
 .thermo-bar .pg { position: absolute; bottom: 20px; transform: translateX(-50%); font-size: .74rem; font-weight: 700; color: var(--ink-2); white-space: nowrap; text-align: center; line-height: 1.2; }
 .thermo-bar .pg small { display: block; font-weight: 500; color: var(--muted); font-size: .68rem; }
 .thermo-bar .pg::after { content: ""; display: block; width: 2px; height: 8px; margin: 2px auto 0; background: var(--ink-2); }
-.thermo-bar .pg.need { bottom: auto; top: 20px; color: var(--critical); }
+.thermo-bar .pg.need { bottom: auto; top: 18px; color: var(--critical); background: var(--surface); padding: 0 4px; z-index: 1; }
 .thermo-bar .pg.need::after { display: none; }
 .thermo-bar .pg.need::before { content: ""; display: block; width: 2px; height: 8px; margin: 0 auto 2px; background: var(--critical); }
-.thermo-scale { display: flex; justify-content: space-between; direction: ltr; font-size: .72rem; color: var(--muted); margin: 24px 6px 0; }
+.thermo-scale { display: flex; justify-content: space-between; direction: ltr; font-size: .72rem; color: var(--muted); margin: 6px 6px 0; }
 .facts.g4 { grid-template-columns: repeat(4, 1fr); }
 .gulf-row { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 10px; margin-top: 12px; }
 .gulf-risk { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
@@ -545,6 +576,9 @@ body.lb-open { overflow: hidden; }
   .live-grid { grid-template-columns: 1fr; }
   .frame .fs { opacity: 1; }
   .facts.g4, .gulf-row { grid-template-columns: 1fr 1fr; }
+  .econ-cmp { grid-template-columns: 1fr; }
+  .ec-arrow { transform: rotate(-90deg); }
+  .bc-input input { width: 150px; }
   .cam .zoom-btn { opacity: 1; }
   .lb-bar { bottom: 12px; gap: 4px; padding: 6px 8px; max-width: calc(100% - 16px); overflow-x: auto; }
   .lb-btn { width: 38px; height: 38px; }

@@ -329,3 +329,18 @@ def test_gulf_rutting_and_events(monkeypatch):
     mild = gulf.pavement_features({"region": "phoenix", "meta": {"aadt": 20000, "heavy_vehicle_pct": 5, "binder_pg": 76}},
                                   _date(2026, 7, 31))
     assert mild["rutting_risk"] < f["rutting_risk"]
+
+
+def test_economics_deferral_and_budget_plan():
+    from backend import economics
+    cam = {"id": "x", "name": "x", "meta": {"aadt": 120000, "segment_length_m": 500}, "last_snapshot": {"pothole_count": 0}}
+    risk_ = lambda ci, slope: {"score": 40, "level": "medium", "forecast": {"ci": ci, "effective_slope": slope}}
+    good = economics.analyze(cam, risk_(78, -0.4))      # وقائي الآن، وبعد سنة يحتاج كشطًا (≈57)
+    assert good["treatment_now"]["key"] == "preventive" and good["treatment_later"]["key"] == "thin_overlay"
+    assert good["deferral_saving"] > good["cost_now"]   # التأجيل يضاعف الكلفة
+    bad = economics.analyze({**cam, "id": "y"}, risk_(45, -0.2))
+    stable = economics.analyze({**cam, "id": "z"}, risk_(80, 0.0))
+    p = economics.plan([good, bad, stable], budget=good["cost_now"] + 1)
+    assert [x["camera_id"] for x in p["selected"]] == ["x"]  # الأعلى عائدًا لكل دولار أولًا
+    must = economics.analyze({**cam, "id": "m", "last_snapshot": {"pothole_count": 2}}, risk_(80, 0.0))
+    assert economics.plan([good, must], budget=must["cost_now"] + 1)["selected"][0]["camera_id"] == "m"  # الحفر أولًا للسلامة
