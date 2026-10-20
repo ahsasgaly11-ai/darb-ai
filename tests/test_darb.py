@@ -402,3 +402,20 @@ def test_field_reports_roughness_and_github_parse():
     assert p == {"lat": 25.2854, "lng": 51.531, "kind": "pothole", "image_url": "https://github.com/user-attachments/assets/abc.jpg",
                  "note": "أمام المدرسة", "ref": "7", "ts": "2026-10-20T10:00:00Z"}
     assert field.parse_issue({**issue, "title": "سؤال عام"}) is None
+
+
+def test_first_analysis_below_threshold_raises_alert():
+    """مقطع يُحلَّل أول مرة وهو دون العتبة أصلًا: تُفتح مشكلة نشطة ومعها تنبيه حرج (لا عبور سابق للعتبة)."""
+    from backend import lifecycle
+    cam = {"id": "thr-cam", "name": "مقطع متدهور", "road": "X", "lat": 1.31, "lng": 103.81, "source": {"type": "demo"}, "meta": {}}
+    _add(cam)
+    sent = []
+    add = lambda c, ts, typ, sev, msg, sid=None: sent.append((typ, sev)) or {"type": typ, "severity": sev, "message": msg}
+    result = {"detections": [], "repairs": [], "condition_index": 42.0, "pothole_count": 0}
+    lifecycle.update(cam, NOW.isoformat(), result, {"ci": 42.0, "weeks_to_threshold": 0.0, "ci_slope": 0.0}, [], add)
+    assert ("threshold", "critical") in sent
+    assert db.one("SELECT stage FROM issues WHERE camera_id='thr-cam'")["stage"] == "active"
+    # تشغيل لاحق لا يكرر التنبيه، والتعويض لا يضيف تنبيهًا لمشكلة لها تنبيه
+    sent.clear()
+    lifecycle.update(cam, (NOW + timedelta(days=1)).isoformat(), result, {"ci": 41.0, "weeks_to_threshold": 0.0, "ci_slope": 0.0}, [], add)
+    assert sent == []

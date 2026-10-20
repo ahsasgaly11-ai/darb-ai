@@ -225,10 +225,16 @@ def update(cam: dict, ts: str, result: dict, assessment: dict | None, alerts: li
             i.update(stage="active", detected_ts=ts, worst_ci=ci, severity="critical")
             i["title"] = "تدهور الرصف: دون عتبة الصيانة (تحقق التنبؤ)"
             _event(i, ts, "active", f"تحقق التنبؤ — سبقه النظام بـ {lead:.0f} أسبوع")
+            if not any(a["type"] == "threshold" for a in alerts):
+                add_alert(cam, ts, "threshold", "critical",
+                          f"تحقق التنبؤ: مؤشر الحالة {ci:.0f} أصبح دون عتبة الصيانة ({thr:.0f}) — سبقه النظام بـ{lead:.0f} أسبوع.")
             changes.append(("predicted->active", i["id"]))
         elif not by_kind("deterioration", ("active",)):
             i = _new(cam_id, "deterioration", "active", "critical", "تدهور الرصف: دون عتبة الصيانة", ts,
                      detected_ts=ts, baseline_ci=ci, worst_ci=ci, last_ci=ci, note="رُصد دون تنبؤ سابق")
+            if not any(a["type"] == "threshold" for a in alerts):  # أول تحليل للمقطع وهو دون العتبة أصلًا: لا «عبور» يُطلق التنبيه
+                add_alert(cam, ts, "threshold", "critical",
+                          f"مؤشر الحالة {ci:.0f} دون عتبة الصيانة ({thr:.0f}) — يوصى بفحص ميداني وصيانة تصحيحية.")
             issues.append(i)
             changes.append(("active", i["id"]))
 

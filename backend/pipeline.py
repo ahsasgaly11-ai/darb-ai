@@ -367,6 +367,20 @@ def store_risk(cam_id: str, ts: str, a: dict) -> None:
                        "recommendations": a["recommendations"]})
 
 
+def backfill_issue_alerts() -> int:
+    """مشكلات نشطة بلا تنبيه (فُتحت قبل إصلاح تنبيه «أول تحليل دون العتبة»): يُضاف تنبيهها مرة واحدة."""
+    n = 0
+    for i in db.query("SELECT * FROM issues WHERE stage='active' AND kind='deterioration'"):
+        if db.one("SELECT id FROM alerts WHERE camera_id=? AND type='threshold' AND ts>=?", (i["camera_id"], i["detected_ts"])):
+            continue
+        cam = get_camera(i["camera_id"])
+        if cam:
+            add_alert(cam, i["detected_ts"], "threshold", "critical",
+                      f"مؤشر الحالة {i['last_ci']:.0f} دون عتبة الصيانة ({config.MAINTENANCE_THRESHOLD:.0f}) — يوصى بفحص ميداني وصيانة تصحيحية.")
+            n += 1
+    return n
+
+
 def refresh_risk(max_age: timedelta = timedelta(hours=20)) -> int:
     """تحديث يومي لتقييم المقاطع التي لم تُلتقط اليوم: الطقس وحرارة الرصف وخطر التخدد تتغير ولو لم تتغير الصورة."""
     now = datetime.now(timezone.utc)
