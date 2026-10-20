@@ -67,7 +67,7 @@ body = body.replace('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.j
 import os
 if os.getenv("DARB_SITE_MODE") == "auto":
     note = ('<div class="snapnote"><div><b>يُحدَّث آليًا كل يوم</b>: صورة واحدة من كل كاميرا حقيقية '
-            '(سنغافورة — هيئة النقل البري LTA، وفينكس، أريزونا — وزارة النقل ADOT) يحلّلها الذكاء الاصطناعي '
+            'في خمس مدن (سنغافورة — هيئة النقل البري LTA؛ فينكس وتوسان ويوما، أريزونا — وزارة النقل ADOT؛ تامبا، فلوريدا — وزارة النقل FDOT) يحلّلها الذكاء الاصطناعي '
             'ظهر كل يوم بالتوقيت المحلي.</div></div>')
 else:
     note = ('<div class="snapnote"><div><b>نسخة عرض للقراءة فقط</b> من بيانات كاميرات حقيقية: '

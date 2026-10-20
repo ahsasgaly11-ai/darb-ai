@@ -1,0 +1,141 @@
+{
+  "_comment": "كاميرات حقيقية من وزارة النقل في أريزونا (ADOT) عبر AZ511 في توسان — صور 1920×1080. roi = منطقة الطريق (نِسَب) — غير محددة بعد: يُستخدم الافتراضي حتى تُضبط على صور النهار. الحمل المروري وتاريخ الرصف تقديرات تقريبية للتجربة.",
+  "cameras": [
+    {
+      "id": "tu-i10-congress",
+      "name": "I-10 — شارع كونغرس (وسط توسان)",
+      "road": "I-10 WB 258.40 @Congress St",
+      "lat": 32.221043,
+      "lng": -110.979382,
+      "source": {
+        "type": "az511",
+        "image_id": 883,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 160000,
+        "heavy_vehicle_pct": 11,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "tu-i10-grant",
+      "name": "I-10 — طريق غرانت",
+      "road": "I-10 EB 256.20 @Grant Rd",
+      "lat": 32.250289,
+      "lng": -110.991828,
+      "source": {
+        "type": "az511",
+        "image_id": 881,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 150000,
+        "heavy_vehicle_pct": 11,
+        "surface_date": "2010-01-01"
+      }
+    },
+    {
+      "id": "tu-i10-prince",
+      "name": "I-10 — طريق برنس",
+      "road": "I-10 EB 254.30 @Prince Rd",
+      "lat": 32.272246,
+      "lng": -111.01212,
+      "source": {
+        "type": "az511",
+        "image_id": 878,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 140000,
+        "heavy_vehicle_pct": 12,
+        "surface_date": "2012-01-01"
+      }
+    },
+    {
+      "id": "tu-i10-i19",
+      "name": "I-10 — تقاطع I-19",
+      "road": "I-10 WB 260.10 @I-19",
+      "lat": 32.191749,
+      "lng": -110.975056,
+      "source": {
+        "type": "az511",
+        "image_id": 885,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 155000,
+        "heavy_vehicle_pct": 12,
+        "surface_date": "2015-01-01"
+      }
+    },
+    {
+      "id": "tu-i10-park",
+      "name": "I-10 — بارك أفنيو",
+      "road": "I-10 WB 261.70 @Park Ave",
+      "lat": 32.183686,
+      "lng": -110.956435,
+      "source": {
+        "type": "az511",
+        "image_id": 888,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 130000,
+        "heavy_vehicle_pct": 14,
+        "surface_date": "2011-01-01"
+      }
+    },
+    {
+      "id": "tu-i10-country-club",
+      "name": "I-10 — طريق كنتري كلوب",
+      "road": "I-10 WB 263.80 @Country Club Rd",
+      "lat": 32.167105,
+      "lng": -110.92643,
+      "source": {
+        "type": "az511",
+        "image_id": 890,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 115000,
+        "heavy_vehicle_pct": 15,
+        "surface_date": "2009-01-01"
+      }
+    },
+    {
+      "id": "tu-i10-houghton",
+      "name": "I-10 — طريق هوتون (شرق توسان)",
+      "road": "I-10 WB 275.48 @Houghton Road",
+      "lat": 32.061991,
+      "lng": -110.774066,
+      "source": {
+        "type": "az511",
+        "image_id": 1260,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 60000,
+        "heavy_vehicle_pct": 20,
+        "surface_date": "2013-01-01"
+      }
+    },
+    {
+      "id": "tu-i19-pima-mine",
+      "name": "I-19 — طريق بيما ماين (جنوب توسان)",
+      "road": "I-19 NA 49.67 @Pima Mine Rd",
+      "lat": 32.001503,
+      "lng": -110.992279,
+      "source": {
+        "type": "az511",
+        "image_id": 1442,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 35000,
+        "heavy_vehicle_pct": 14,
+        "surface_date": "2016-01-01"
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "_comment": "كاميرات حقيقية من وزارة النقل في أريزونا (ADOT) عبر AZ511 في يوما — من أشد المدن حرارة في أمريكا، صور 1920×1080. roi = منطقة الطريق (نِسَب) — غير محددة بعد: يُستخدم الافتراضي حتى تُضبط على صور النهار. الحمل المروري وتاريخ الرصف تقديرات تقريبية للتجربة.",
+  "cameras": [
+    {
+      "id": "yu-i8-fortuna",
+      "name": "I-8 — طريق فورتونا",
+      "road": "I-8 EB 11.20 @Fortuna Road",
+      "lat": 32.670411,
+      "lng": -114.462137,
+      "source": {
+        "type": "az511",
+        "image_id": 1490,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 28000,
+        "heavy_vehicle_pct": 22,
+        "surface_date": "2012-01-01"
+      }
+    },
+    {
+      "id": "yu-i8-foothills",
+      "name": "I-8 — فوتهيلز",
+      "road": "I-8 NB 14.20 @Foothills",
+      "lat": 32.671509,
+      "lng": -114.409599,
+      "source": {
+        "type": "az511",
+        "image_id": 799,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 24000,
+        "heavy_vehicle_pct": 24,
+        "surface_date": "2010-01-01"
+      }
+    }
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "_comment": "كاميرات حقيقية من وزارة النقل في فلوريدا (FDOT) عبر FL511 في تامبا على ساحل خليج المكسيك — اختيرت كاميرات 1920×1080 فقط. roi = منطقة الطريق (نِسَب) — غير محددة بعد: يُستخدم الافتراضي حتى تُضبط على صور النهار. الحمل المروري وتاريخ الرصف تقديرات تقريبية للتجربة.",
+  "cameras": [
+    {
+      "id": "ta-i275-ashley",
+      "name": "I-275 — شارع آشلي (وسط تامبا)",
+      "road": "I-275 SB at Ashley Dr",
+      "lat": 27.95689,
+      "lng": -82.46269,
+      "source": {
+        "type": "fl511",
+        "image_id": 4303,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 190000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2016-01-01"
+      }
+    },
+    {
+      "id": "ta-i275-i4",
+      "name": "I-275 — تقاطع I-4 (مالفنكشن جنكشن)",
+      "road": "I-275 SB at I-4",
+      "lat": 27.96464,
+      "lng": -82.45341,
+      "source": {
+        "type": "fl511",
+        "image_id": 4304,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 210000,
+        "heavy_vehicle_pct": 7,
+        "surface_date": "2019-01-01"
+      }
+    },
+    {
+      "id": "ta-i275-mlk",
+      "name": "I-275 — شارع مارتن لوثر كينغ",
+      "road": "I-275 at M L K Jr Blvd",
+      "lat": 27.98185,
+      "lng": -82.45401,
+      "source": {
+        "type": "fl511",
+        "image_id": 2315,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 180000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "ta-i4-i275",
+      "name": "I-4 — عند I-275",
+      "road": "I-4 at I-275",
+      "lat": 27.96498,
+      "lng": -82.450428,
+      "source": {
+        "type": "fl511",
+        "image_id": 2695,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 170000,
+        "heavy_vehicle_pct": 8,
+        "surface_date": "2017-01-01"
+      }
+    },
+    {
+      "id": "ta-i4-selmon",
+      "name": "I-4 — وصلة سلمون السريعة",
+      "road": "I-4 EBM at Selmon Connector ramp",
+      "lat": 27.964729,
+      "lng": -82.428684,
+      "source": {
+        "type": "fl511",
+        "image_id": 2242,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 120000,
+        "heavy_vehicle_pct": 12,
+        "surface_date": "2014-01-01"
+      }
+    },
+    {
+      "id": "ta-i275-sligh",
+      "name": "I-275 — شارع سلاي",
+      "road": "I-275 at Sligh Ave",
+      "lat": 28.01037,
+      "lng": -82.45357,
+      "source": {
+        "type": "fl511",
+        "image_id": 2318,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 160000,
+        "heavy_vehicle_pct": 6,
+        "surface_date": "2012-01-01"
+      }
+    },
+    {
+      "id": "ta-selmon-19th",
+      "name": "طريق سلمون السريع (SR-618) — الشارع 19",
+      "road": "SR 618 at 19th St",
+      "lat": 27.955559,
+      "lng": -82.438209,
+      "source": {
+        "type": "fl511",
+        "image_id": 2238,
+        "burst_interval": 20
+      },
+      "meta": {
+        "aadt": 70000,
+        "heavy_vehicle_pct": 8,
+        "surface_date": "2015-01-01"
+      }
+    }
+  ]
+}

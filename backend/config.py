@@ -25,9 +25,33 @@ REGIONS = {
                     11: (24.0, 11.5), 12: (19.0, 7.0)},
         "attribution": "Camera images: Arizona Department of Transportation (ADOT) via AZ511",
     },
+    "tucson": {
+        # صحراء سونورا على ارتفاع أعلى قليلًا من فينكس: صيف 38–40°م ومدى حراري يومي كبير جدًا (يصل إلى 17°م)
+        "name_ar": "توسان (أريزونا)", "cameras": "cameras.tucson.json", "tz": "America/Phoenix", "lat": 32.22, "lng": -110.97,
+        "climate": {1: (19.6, 4.3), 2: (21.3, 5.6), 3: (24.8, 8.3), 4: (28.9, 11.7), 5: (34.2, 16.6),
+                    6: (38.9, 21.9), 7: (38.3, 24.7), 8: (37.3, 24.1), 9: (35.6, 21.3), 10: (30.3, 14.8),
+                    11: (23.9, 8.3), 12: (18.9, 4.4)},
+        "attribution": "Camera images: Arizona Department of Transportation (ADOT) via AZ511",
+    },
+    "yuma": {
+        # من أشد المدن حرارة وجفافًا وشمسًا في أمريكا الشمالية: صيف 42°م — الأقرب لحرارة الرياض والكويت
+        "name_ar": "يوما (أريزونا)", "cameras": "cameras.yuma.json", "tz": "America/Phoenix", "lat": 32.69, "lng": -114.62,
+        "climate": {1: (21.4, 7.6), 2: (23.6, 9.3), 3: (27.0, 12.1), 4: (30.9, 15.4), 5: (35.4, 19.6),
+                    6: (40.1, 23.9), 7: (41.9, 28.4), 8: (41.6, 28.3), 9: (39.1, 24.6), 10: (33.1, 17.8),
+                    11: (26.1, 11.2), 12: (20.8, 7.0)},
+        "attribution": "Camera images: Arizona Department of Transportation (ADOT) via AZ511",
+    },
+    "tampa": {
+        # ساحل خليج المكسيك: حار رطب وأمطار صيفية غزيرة — يشبه رطوبة الساحل الخليجي (الدمام، الدوحة، دبي)
+        "name_ar": "تامبا (فلوريدا)", "cameras": "cameras.tampa.json", "tz": "America/New_York", "lat": 27.95, "lng": -82.46,
+        "climate": {1: (21.6, 11.7), 2: (23.0, 13.1), 3: (25.2, 15.2), 4: (27.8, 17.9), 5: (30.9, 21.5),
+                    6: (32.2, 24.2), 7: (32.6, 24.8), 8: (32.7, 24.8), 9: (31.9, 24.1), 10: (29.4, 20.6),
+                    11: (25.9, 16.0), 12: (22.8, 13.4)},
+        "attribution": "Camera images: Florida Department of Transportation (FDOT) via FL511",
+    },
 }
 # المناطق المفعّلة (DARB_REGION القديم ما زال مدعومًا لمنطقة واحدة)
-REGION_KEYS = [r.strip() for r in os.getenv("DARB_REGIONS", os.getenv("DARB_REGION", "singapore,phoenix")).split(",") if r.strip()]
+REGION_KEYS = [r.strip() for r in os.getenv("DARB_REGIONS", os.getenv("DARB_REGION", "singapore,phoenix,tucson,yuma,tampa")).split(",") if r.strip()]
 for _r in REGION_KEYS:
     if _r not in REGIONS:
         raise ValueError(f"منطقة غير معروفة: {_r} — المتاح: {', '.join(REGIONS)}")

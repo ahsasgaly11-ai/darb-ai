@@ -269,3 +269,4 @@ def test_live_sources():
     assert _live({"type": "mjpeg", "url": "http://x/s", "live": True}) is None
     assert _live({"type": "mjpeg", "url": "https://x/s", "live": True})["kind"] == "mjpeg"
     assert _live({"type": "demo"}) is None
+    assert _live({"type": "fl511", "image_id": 4303})["url"] == "https://fl511.com/map/Cctv/4303"

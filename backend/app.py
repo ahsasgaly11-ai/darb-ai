@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from . import ai, config, db, incidents, lifecycle, pipeline, scheduler, vision
+from . import ai, config, db, incidents, lifecycle, pipeline, scheduler, sources, vision
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 log = logging.getLogger("darb.app")
@@ -61,8 +61,8 @@ def _live(src: dict) -> dict | None:
     t = src.get("type")
     if t == "datagovsg":
         return {"kind": "datagovsg", "camera_id": str(src["camera_id"]), "refresh": 60}
-    if t == "az511":
-        return {"kind": "image", "url": f"https://az511.gov/map/Cctv/{src['image_id']}", "refresh": 30}
+    if t in sources.BASE_511:
+        return {"kind": "image", "url": sources.cctv_url(src), "refresh": 30}
     # الروابط المضافة يدويًا قد تحمل رموز دخول: لا تُكشف إلا إذا صرّح بها الإعداد ("live": true)
     if t in ("snapshot", "mjpeg") and src.get("live") and str(src.get("url", "")).startswith("https://"):
         return {"kind": "mjpeg" if t == "mjpeg" else "image", "url": src["url"], "refresh": 30}
@@ -250,9 +250,9 @@ class CameraIn(BaseModel):
 @app.post("/api/cameras", dependencies=[Depends(admin)])
 def add_camera(cam: CameraIn):
     typ = cam.source.get("type")
-    if typ not in ("snapshot", "mjpeg", "rtsp", "hls", "demo", "datagovsg", "az511"):
+    if typ not in ("snapshot", "mjpeg", "rtsp", "hls", "demo", "datagovsg", "az511", "fl511"):
         raise HTTPException(400, "نوع مصدر غير مدعوم")
-    if typ not in ("demo", "datagovsg", "az511") and not re.match(r"^(https?|rtsp)://", str(cam.source.get("url", ""))):
+    if typ not in ("demo", "datagovsg", "az511", "fl511") and not re.match(r"^(https?|rtsp)://", str(cam.source.get("url", ""))):
         raise HTTPException(400, "رابط المصدر غير صالح")
     import json
     with db.tx() as c:

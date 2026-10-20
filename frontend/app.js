@@ -24,7 +24,7 @@
     if (m < 1440) return `قبل ${fmtN(m / 60)} ساعة`;
     return `قبل ${fmtN(m / 1440)} يوم`;
   };
-  const SRC_AR = { demo: "محاكاة", datagovsg: "كاميرا حقيقية · سنغافورة LTA", az511: "كاميرا حقيقية · أريزونا ADOT" };
+  const SRC_AR = { demo: "محاكاة", datagovsg: "كاميرا حقيقية · سنغافورة LTA", az511: "كاميرا حقيقية · أريزونا ADOT", fl511: "كاميرا حقيقية · فلوريدا FDOT" };
   const ISSUE_KIND_AR = { deterioration: "تدهور الرصف", pothole: "حفرة", sudden: "تغيّر مفاجئ", cracking: "تشققات" };
   const srcLabel = (t) => SRC_AR[t] || "كاميرا حية";
   const weeksText = (w) => (w == null ? "مستقر" : w === 0 ? "تجاوزها" : w > 52 ? "أكثر من سنة" : `~${fmtN(w)} أسبوع`);
@@ -320,7 +320,7 @@
     if (!f) { msg.textContent = "البث غير متاح الآن"; el.classList.add("off"); return; }
     const tz = regionTz(c);
     const fmt = new Intl.DateTimeFormat("ar-AE", { timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit" });
-    const stamp = () => { clock.textContent = `${f.ts ? "التُقطت" : "حُدّثت"} ${fmt.format(f.ts ? new Date(f.ts) : new Date())} بتوقيت ${c.region === "phoenix" ? "فينكس" : c.region === "singapore" ? "سنغافورة" : "المنطقة"}`; };
+    const stamp = () => { clock.textContent = `${f.ts ? "التُقطت" : "حُدّثت"} ${fmt.format(f.ts ? new Date(f.ts) : new Date())} بتوقيت ${(state.regions.find((r) => r.key === c.region)?.name || "المنطقة").replace(/\s*\(.*\)/, "")}`; };
     if (el.dataset.src === f.src) { if (!f.ts) stamp(); return; }
     const pre = new Image();
     pre.onload = () => { img.src = f.src; el.dataset.src = f.src; el.classList.add("on"); el.classList.remove("off"); stamp(); };

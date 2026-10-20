@@ -7,6 +7,7 @@
   rtsp      كاميرا IP عبر RTSP (يتطلب OpenCV مع FFmpeg).
   hls       بث مباشر m3u8 (يتطلب OpenCV مع FFmpeg).
   az511     كاميرات وزارة النقل في أريزونا (ADOT) عبر AZ511 — صور 1920×1080 تتجدد كل دقيقة تقريبًا.
+  fl511     كاميرات وزارة النقل في فلوريدا (FDOT) عبر FL511 — المنصة نفسها (اختيرت كاميرات 1920×1080 فقط).
   datagovsg كاميرات هيئة النقل البري في سنغافورة (LTA) عبر data.gov.sg — مفتوحة المصدر
             برخصة Singapore Open Data Licence، وتحتفظ بالصور السابقة فيمكن بناء سجل تاريخي فعلي.
 
@@ -152,10 +153,17 @@ def _datagovsg(src: dict, at: datetime, n: int) -> list[np.ndarray]:
     return [f if f.shape[:2] == (h, w) else cv2.resize(f, (w, h)) for f in frames]
 
 
+# منصات 511 المتطابقة (الرابط /map/Cctv/{image_id})
+BASE_511 = {"az511": "https://az511.gov", "fl511": "https://fl511.com"}
+
+
+def cctv_url(src: dict) -> str:
+    return f"{src.get('base', BASE_511[src['type']])}/map/Cctv/{src['image_id']}"
+
+
 def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
-    """صور AZ511 تتجدد كل ~1–2 دقيقة: نأخذ الإطارات المختلفة فقط على مدى بضع دقائق."""
-    base = src.get("base", "https://az511.gov")
-    url = f"{base}/map/Cctv/{src['image_id']}"
+    """صور منصات 511 تتجدد كل ~1–2 دقيقة: نأخذ الإطارات المختلفة فقط على مدى بضع دقائق."""
+    url = cctv_url({"type": "az511", **src})
     headers = {"User-Agent": config.USER_AGENT}
     frames, seen, same = [], set(), 0
     deadline = time.time() + max(60.0, n * interval + 30)
@@ -196,7 +204,7 @@ def capture(camera: dict, at: datetime, n: int | None = None, interval: float | 
         return synthetic.capture_frames(src, camera.get("meta", {}), at, n)
     if kind == "datagovsg":
         return _datagovsg(src, at, n)
-    if kind == "az511":
+    if kind in BASE_511:
         return _az511(src, n, src.get("burst_interval", 20.0) if interval else 0)
     if kind == "snapshot":
         return _snapshot(src, n, interval)
