@@ -652,7 +652,12 @@ body.lb-open { overflow: hidden; }
   .bubble { max-width: 95%; }
   .rough-live { grid-template-columns: 130px 1fr; }
   .rep-list { grid-template-columns: 1fr; }
-  .chat-log { max-height: 55vh; }
+  .chat-log { max-height: 52vh; max-height: 52dvh; min-height: 240px; }
+  /* الاقتراحات صف واحد يمرّ أفقيًا بدل ثمانية أسطر تدفع الإجابات خارج الشاشة */
+  .chat-sugg { flex-wrap: nowrap; overflow-x: auto; margin-inline: -22px; padding: 2px 22px 6px; scrollbar-width: none; }
+  .chat-sugg::-webkit-scrollbar { display: none; }
+  .chat-sugg .chip-btn { flex: none; white-space: nowrap; }
+  .chat-in input { font-size: 16px; }  /* 16px يمنع سفاري الآيفون من تكبير الصفحة عند الكتابة */
   .ec-arrow { transform: rotate(-90deg); }
   .bc-input input { width: 150px; }
   .cam .zoom-btn { opacity: 1; }

@@ -718,10 +718,17 @@
     for (const w of q.split(/\s+/)) if (NUM_WORDS[w]) return NUM_WORDS[w];
     return null;
   }
+  // المبالغ: «5 ملايين»، «2.5 مليون»، «خمسة ملايين»، «مليار»، «300 ألف»، «عشرة آلاف» (بعد التطبيع: الف/الاف)
+  const MULT = [[/مليارات|مليار/, 1e9], [/ملايين|مليون/, 1e6], [/الاف|الف/, 1e3]];
   function askMoney(q) {
-    const m = q.match(/(\d+(?:[.,]\d+)?)\s*(مليار|مليون|الف)?/);
-    if (!m || !/ميزاني|مليون|مليار|الف|ريال|درهم|دينار|دولار|يورو|اصرف|صرف/.test(q)) return null;
-    const mult = { "مليار": 1e9, "مليون": 1e6, "الف": 1e3 }[m[2]] || 1;
+    if (!/ميزاني|مليون|ملايين|مليار|الف|الاف|ريال|درهم|دينار|دولار|يورو|اصرف|صرف/.test(q)) return null;
+    let m = q.match(/(\d+(?:[.,]\d+)?)\s*(مليارات|مليار|ملايين|مليون|الاف|الف)?/);
+    if (!m) {  // رقم بالكلمات قبل المضاعف، أو المضاعف وحده («بميزانية مليون»)
+      const w = q.match(/(?:^|\s)([\u0600-\u06FF]+)?\s*(مليارات|مليار|ملايين|مليون|الاف|الف)/);
+      if (!w) return null;
+      m = [w[0], String(NUM_WORDS[w[1]] || 1), w[2]];
+    }
+    const mult = (MULT.find(([re]) => re.test(m[2] || "")) || [, 1])[1];
     const cur = (CUR_WORDS.find(([w]) => q.includes(w)) || [null, econ.cur])[1];
     return { amount: parseFloat(m[1].replace(",", ".")) * mult, cur };
   }
@@ -738,15 +745,21 @@
   function askCamera(q, cams) {
     const words = q.split(/[\s،,؟?.]+/).filter((w) => w.length >= 3 && !STOP.has(w));
     const codes = roadCodes(q);
-    let best = null, bestScore = 0;
+    let best = null, bestScore = 0, second = 0;
+    const scored = [];
     for (const c of cams) {
       const hay = norm(`${c.name} ${c.road}`);
-      let score = words.filter((w) => hay.includes(w)).length;
+      // الكلمات اللاتينية (AYE، BKE، Congress…) أدق من العربية العامة فتُوزن أعلى
+      let score = words.reduce((n, w) => n + (hay.includes(w) ? (/^[a-z]/.test(w) ? 1.5 : 1) : 0), 0);
       const cc = roadCodes(`${c.name} ${c.road}`);
       if (codes.some((k) => cc.includes(k))) score += 1.5;
-      if (score > bestScore) { best = c; bestScore = score; }
+      if (score > bestScore) { second = bestScore; best = c; bestScore = score; } else if (score > second) second = score;
+      scored.push([c, score]);
     }
-    return bestScore >= 2.5 ? best : null;
+    // أكثر من مقطع على الطريق نفسه (مثل «BKE»): تُعاد كلها لتُعرض قائمةً
+    if (bestScore >= 1.5 && bestScore === second) return scored.filter(([, sc]) => sc === bestScore).map(([c]) => c);
+    // تطابق قوي، أو تطابق متوسط يخص مقطعًا واحدًا بوضوح (مثل «AYE»)
+    return bestScore >= 2.5 || (bestScore >= 1.5 && bestScore > second) ? best : null;
   }
   const regionLabel = (k) => (state.regions.find((r) => r.key === k)?.name || k).replace(/\s*\(.*\)/, "");
   const camLink = (c) => `<a href="#" class="cam-link" data-cam="${esc(c.id)}">${esc(c.name)}</a> <span class="muted">(${esc(regionLabel(c.region))})</span>`;
@@ -767,7 +780,8 @@
     const cams = scope(d.cams), analysed = cams.filter((c) => c.risk);
     const n = askCount(q) || 5;
     if (/^(مرحبا|السلام|اهلا|هلا|صباح|مساء|شكرا)/.test(q.trim())) return /^شكرا/.test(q.trim()) ? "العفو! اسألني متى شئت عن أي طريق أو ميزانية." : "أهلًا بك! اسألني عن حالة أي طريق أو مدينة، أو خطر التخدد، أو أين تُصرف الميزانية. اختر سؤالًا من الأمثلة بالأسفل للبدء.";
-    const gulfCity = GULF.find((g) => q.includes(norm(g)));
+    // كلمة كاملة (مع حروف الجر الملتصقة): «ريال قطري» ليس سؤالًا عن قطر
+    const gulfCity = GULF.find((g) => new RegExp(`(^|[\\s،,؟?])(?:في|ب|ل|و|ال)?${norm(g)}(?=$|[\\s،,؟?.])`).test(q));
     if (gulfCity && !regs) return `لا تنشر <b>${esc(raw.match(new RegExp(gulfCity.replace(/ه$/, "."), "i"))?.[0] || "هذه المدينة")}</b> صور كاميرات مرورها للعامة بعد، فلا توجد لدينا بيانات عنها. النظام جاهز لإضافتها فور الحصول على صلاحية الوصول للكاميرات (يكفي ملف إعداد للمدينة) — والمدن الحالية الأقرب لمناخ الخليج: يوما وفينكس (صحراوي حار) وتامبا (ساحلي رطب).`;
     const money = askMoney(q);
     if (money && /ميزاني|اصرف|صرف|وزع|خطه/.test(q) || (money && money.amount >= 1000)) {
@@ -781,7 +795,9 @@
         ${p.skip.length ? `تأجيل الباقي سنة يرفع كلفته بنحو <b>${money_(p.penalty, money.cur)}</b>.` : "الميزانية تغطي الاحتياج كله."} <a href="#" data-goto="budget">افتح صفحة الميزانية</a>`;
     }
     const cam = askCamera(q, regs ? cams : d.cams);
-    if (cam && !/اسوا|اخطر|افضل|اكثر|ترتيب|قائمه/.test(q)) {
+    if (Array.isArray(cam) && !/اسوا|اخطر|افضل|اكثر|ترتيب|قائمه/.test(q))
+      return `${fmtN(cam.length)} مقاطع تطابق سؤالك:${list(cam.slice(0, 10), (c) => camFacts(c) || "لم يُحلَّل بعد — بانتظار أول التقاط نهاري")}اضغط اسم المقطع لتفاصيله.`;
+    if (cam && !Array.isArray(cam) && !/اسوا|اخطر|افضل|اكثر|ترتيب|قائمه/.test(q)) {
       const e = d.econ.find((x) => x.camera_id === cam.id);
       return `${camLink(cam)}<br>${camFacts(cam) || "لم يُحلَّل بعد — بانتظار أول التقاط نهاري."}
         ${cam.risk?.pavement_t ? `<br>حرارة الرصف (أعلى 7 أيام) ${fmtN(cam.risk.pavement_t)}°م${cam.risk.pg_deficit ? ` · الرابط أقل من المطلوب بـ${fmtN(cam.risk.pg_deficit)} درجة` : ""}.` : ""}
@@ -849,7 +865,9 @@
   function chatPush(who, html) {
     const log = $("#chatLog");
     log.insertAdjacentHTML("beforeend", `<div class="msg ${who}"><div class="bubble">${html}</div></div>`);
-    log.scrollTop = log.scrollHeight;
+    // بداية الإجابة الطويلة تبقى ظاهرة (لا نقفز إلى آخرها)
+    const last = log.lastElementChild;
+    log.scrollTop = who.startsWith("bot") && last.offsetHeight > log.clientHeight ? last.offsetTop - log.offsetTop - 8 : log.scrollHeight;
   }
   async function chatAsk(q) {
     q = q.trim(); if (!q || chat.busy) return;
@@ -866,6 +884,7 @@
     } catch { html = "تعذّر تحميل البيانات الآن، حاول مجددًا."; }
     $("#chatLog .typing")?.remove();
     chatPush("bot", html); chat.busy = false;
+    if (innerWidth < 720) $("#chatForm").scrollIntoView({ block: "end", behavior: "smooth" });  // الجوال: الإجابة فوق، وحقل السؤال ظاهر
   }
   $("#chatForm").addEventListener("submit", (e) => { e.preventDefault(); chatAsk($("#chatQ").value); });
   $("#chatSugg").innerHTML = SUGGEST.map((s) => `<button type="button" class="chip-btn">${esc(s)}</button>`).join("");
@@ -886,6 +905,9 @@
       rec.start();
     });
   }
+  // الجوال: تلميح أقصر يتسع للحقل (الطويل يُقص)
+  const chatHint = () => { $("#chatQ").placeholder = innerWidth < 600 ? "اكتب سؤالك هنا…" : "مثال: ما أسوأ 5 طرق في لوس أنجلوس؟"; };
+  chatHint(); addEventListener("resize", chatHint);
   const setChatMode = () => { $("#chatMode").textContent = state.status?.assistant_llm ? "مدعوم بـ Claude على الخادم، مع محرك عربي مدمج احتياطيًا." : "يعمل محليًا في متصفحك على بيانات الشبكة كلها، دون إرسال أسئلتك لأي جهة."; };
 
   // ---------- الميزانية والقرار الاقتصادي ----------
@@ -1217,7 +1239,7 @@
     // «كل المناطق» باختصار بدل سرد أسماء المدن الثماني (كانت تملأ أربعة أسطر على الجوال)
     $("#regionName").textContent = state.region ? active.map((r) => r.name).join(" · ") : `كل المناطق · ${fmtN(state.regions.length)} مدن في ${fmtN(new Set(state.regions.map((r) => (r.name.match(/\((.*)\)/) || [, r.name])[1])).size)} دول وولايات`;
     const foot = $("#attribution");
-    const attr = active.map((r) => r.attribution).filter(Boolean);
+    const attr = [...new Set(active.map((r) => r.attribution).filter(Boolean))];  // مدن أريزونا الثلاث مصدرها واحد
     foot.hidden = !attr.length; foot.textContent = attr.join(" — ");
   }
   $("#regionBar").addEventListener("click", (e) => {
