@@ -229,6 +229,7 @@ def daily(args) -> int:
     save_pending(config, load_pending(config) + suspects)
     log.info("risk refreshed for %d cameras (weather/pavement physics)", pipeline.refresh_risk())
     log.info("alerts backfilled for %d active issues", pipeline.backfill_issue_alerts())
+    log.info("alerts no longer valid under current rules: %d", pipeline.revalidate_alerts())
     log.info("captured=%d skipped=%d failed=%d suspects=%d pruned_images=%d", done, skipped, failed, len(suspects), prune_images(config, db))
     build_site(args)
     return 0

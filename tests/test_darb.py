@@ -350,6 +350,13 @@ def test_roi_follows_ptz_camera():
         cv2.rectangle(other, tuple(int(v) for v in rng.uniform(0, 1200, 2)), tuple(int(v) for v in rng.uniform(0, 1280, 2)),
                       tuple(int(v) for v in rng.integers(0, 255, 3)), 2)
     assert pipeline.roi_for_view(cam, other)[1] == "lost"
+    # التنبيه «الكاميرا حُرّكت» فقط إذا تكرر في يومين
+    _add(cam)
+    today = datetime(2026, 10, 22, 17, tzinfo=timezone.utc)
+    assert not pipeline._view_lost_persists(cam, today.isoformat())
+    db.insert("snapshots", {"camera_id": "t-ptz", "ts": (today - timedelta(days=1)).isoformat(), "kind": "sentinel",
+                            "image_path": "x.jpg", "quality": "view_lost", "metrics": {}})
+    assert pipeline._view_lost_persists(cam, today.isoformat())
 
 
 def test_gulf_pavement_physics():
