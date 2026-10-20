@@ -258,3 +258,14 @@ def test_az511_offline_placeholder(monkeypatch):
     monkeypatch.setattr(sources.httpx, "Client", C)
     with pytest.raises(sources.CaptureError):
         sources.capture({"source": {"type": "az511", "image_id": 1}}, NOW, 3, 0)
+
+
+def test_live_sources():
+    from backend.app import _live
+    assert _live({"type": "az511", "image_id": 741})["url"] == "https://az511.gov/map/Cctv/741"
+    assert _live({"type": "datagovsg", "camera_id": 2704}) == {"kind": "datagovsg", "camera_id": "2704", "refresh": 60}
+    # روابط يدوية لا تُكشف إلا بتصريح، وبـ https فقط
+    assert _live({"type": "snapshot", "url": "https://x/cam.jpg?token=s"}) is None
+    assert _live({"type": "mjpeg", "url": "http://x/s", "live": True}) is None
+    assert _live({"type": "mjpeg", "url": "https://x/s", "live": True})["kind"] == "mjpeg"
+    assert _live({"type": "demo"}) is None

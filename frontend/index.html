@@ -34,6 +34,7 @@
       <button role="tab" data-tab="map"><span data-icon="map"></span><em>الخريطة</em></button>
       <button role="tab" data-tab="lifecycle"><span data-icon="cycle"></span><em>دورة حياة المشكلات</em><b id="issueBadge" class="badge soft" hidden></b></button>
       <button role="tab" data-tab="cameras"><span data-icon="camera"></span><em>الكاميرات</em></button>
+      <button role="tab" data-tab="live"><span data-icon="live"></span><em>البث المباشر</em><b class="badge live-dot">مباشر</b></button>
       <button role="tab" data-tab="alerts"><span data-icon="bell"></span><em>التنبيهات</em><b id="alertBadge" class="badge" hidden></b></button>
       <button role="tab" data-tab="method"><span data-icon="book"></span><em>المنهجية</em></button>
     </nav>
@@ -144,6 +145,17 @@
         <label class="switch"><input type="checkbox" id="annToggle" checked> إظهار العيوب المكتشفة</label>
       </div>
       <div id="camGrid" class="cam-grid"></div>
+    </section>
+
+    <!-- البث المباشر -->
+    <section id="tab-live" class="tab">
+      <div class="block-h"><span class="ico3d crit" data-icon="live"></span><div><h2>البث المباشر</h2><p>صورة حية من كل كاميرا تتجدّد تلقائيًا من مصدرها الرسمي — <b id="liveCount">0</b> كاميرا</p></div></div>
+      <div class="toolbar">
+        <span class="onair" id="liveState">مباشر</span>
+        <span class="muted">الكاميرات المفتوحة تنشر إطارًا جديدًا كل 30–60 ثانية تقريبًا (وليس فيديو متصلًا)، ويُعرض كما هو دون تحليل.</span>
+        <button class="btn ghost" id="livePause" type="button"><span data-icon="pause"></span>إيقاف مؤقت</button>
+      </div>
+      <div id="liveGrid" class="live-grid"></div>
     </section>
 
     <!-- التنبيهات -->

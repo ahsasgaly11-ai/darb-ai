@@ -74,6 +74,10 @@
     brain: "<path d=\"M240,124a48,48,0,0,1-32,45.27h0V176a40,40,0,0,1-80,0,40,40,0,0,1-80,0v-6.73h0a48,48,0,0,1,0-90.54V72a40,40,0,0,1,80,0,40,40,0,0,1,80,0v6.73A48,48,0,0,1,240,124Z\" class=\"d\"/><path d=\"M248,124a56.11,56.11,0,0,0-32-50.61V72a48,48,0,0,0-88-26.49A48,48,0,0,0,40,72v1.39a56,56,0,0,0,0,101.2V176a48,48,0,0,0,88,26.49A48,48,0,0,0,216,176v-1.41A56.09,56.09,0,0,0,248,124ZM88,208a32,32,0,0,1-31.81-28.56A55.87,55.87,0,0,0,64,180h8a8,8,0,0,0,0-16H64A40,40,0,0,1,50.67,86.27,8,8,0,0,0,56,78.73V72a32,32,0,0,1,64,0v68.26A47.8,47.8,0,0,0,88,128a8,8,0,0,0,0,16,32,32,0,0,1,0,64Zm104-44h-8a8,8,0,0,0,0,16h8a55.87,55.87,0,0,0,7.81-.56A32,32,0,1,1,168,144a8,8,0,0,0,0-16,47.8,47.8,0,0,0-32,12.26V72a32,32,0,0,1,64,0v6.73a8,8,0,0,0,5.33,7.54A40,40,0,0,1,192,164Zm16-52a8,8,0,0,1-8,8h-4a36,36,0,0,1-36-36V80a8,8,0,0,1,16,0v4a20,20,0,0,0,20,20h4A8,8,0,0,1,208,112ZM60,120H56a8,8,0,0,1,0-16h4A20,20,0,0,0,80,84V80a8,8,0,0,1,16,0v4A36,36,0,0,1,60,120Z\"/>",
     download: "<path d=\"M216,48V208H40V48A16,16,0,0,1,56,32H200A16,16,0,0,1,216,48Z\" class=\"d\"/><path d=\"M224,144v64a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V144a8,8,0,0,1,16,0v56H208V144a8,8,0,0,1,16,0Zm-101.66,5.66a8,8,0,0,0,11.32,0l40-40a8,8,0,0,0-11.32-11.32L136,124.69V32a8,8,0,0,0-16,0v92.69L93.66,98.34a8,8,0,0,0-11.32,11.32Z\"/>",
     close: "<path d=\"M216,56V200a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40H200A16,16,0,0,1,216,56Z\" class=\"d\"/><path d=\"M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z\"/>",
+    live: "<path d=\"M160,128a32,32,0,1,1-32-32A32,32,0,0,1,160,128Z\" class=\"d\"/><path d=\"M128,88a40,40,0,1,0,40,40A40,40,0,0,0,128,88Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,152Zm73.71,7.14a80,80,0,0,1-14.08,22.2,8,8,0,0,1-11.92-10.67,63.95,63.95,0,0,0,0-85.33,8,8,0,1,1,11.92-10.67,80.08,80.08,0,0,1,14.08,84.47ZM69,103.09a64,64,0,0,0,11.26,67.58,8,8,0,0,1-11.92,10.67,79.93,79.93,0,0,1,0-106.67A8,8,0,1,1,80.29,85.34,63.77,63.77,0,0,0,69,103.09ZM248,128a119.58,119.58,0,0,1-34.29,84,8,8,0,1,1-11.42-11.2,103.9,103.9,0,0,0,0-145.56A8,8,0,1,1,213.71,44,119.58,119.58,0,0,1,248,128ZM53.71,200.78A8,8,0,1,1,42.29,212a119.87,119.87,0,0,1,0-168,8,8,0,1,1,11.42,11.2,103.9,103.9,0,0,0,0,145.56Z\"/>",
+    pause: "<path d=\"M208,48V208a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V48a8,8,0,0,1,8-8h40A8,8,0,0,1,208,48ZM96,40H56a8,8,0,0,0-8,8V208a8,8,0,0,0,8,8H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\" class=\"d\"/><path d=\"M200,32H160a16,16,0,0,0-16,16V208a16,16,0,0,0,16,16h40a16,16,0,0,0,16-16V48A16,16,0,0,0,200,32Zm0,176H160V48h40ZM96,32H56A16,16,0,0,0,40,48V208a16,16,0,0,0,16,16H96a16,16,0,0,0,16-16V48A16,16,0,0,0,96,32Zm0,176H56V48H96Z\"/>",
+    play: "<path d=\"M228.23,134.69,84.15,222.81A8,8,0,0,1,72,216.12V39.88a8,8,0,0,1,12.15-6.69l144.08,88.12A7.82,7.82,0,0,1,228.23,134.69Z\" class=\"d\"/><path d=\"M232.4,114.49,88.32,26.35a16,16,0,0,0-16.2-.3A15.86,15.86,0,0,0,64,39.87V216.13A15.94,15.94,0,0,0,80,232a16.07,16.07,0,0,0,8.36-2.35L232.4,141.51a15.81,15.81,0,0,0,0-27ZM80,215.94V40l143.83,88Z\"/>",
+    expand: "<path d=\"M208,48V208H48V48Z\" class=\"d\"/><path d=\"M216,48V96a8,8,0,0,1-16,0V67.31l-42.34,42.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM98.34,146.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l42.35-42.34a8,8,0,0,0-11.32-11.32ZM208,152a8,8,0,0,0-8,8v28.69l-42.34-42.35a8,8,0,0,0-11.32,11.32L188.69,200H160a8,8,0,0,0,0,16h48a8,8,0,0,0,8-8V160A8,8,0,0,0,208,152ZM67.31,56H96a8,8,0,0,0,0-16H48a8,8,0,0,0-8,8V96a8,8,0,0,0,16,0V67.31l42.34,42.35a8,8,0,0,0,11.32-11.32Z\"/>",
   };
   const svg = (name) => `<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">${ICONS[name] || ""}</svg>`;
   function hydrateIcons(root = document) {
@@ -104,6 +108,8 @@
     $$(".tab").forEach((t) => t.classList.toggle("active", t.id === `tab-${name}`));
     safeSet("darb-tab", name);
     if (name === "map") setTimeout(initMap, 30);
+    if (name === "live") renderLive();
+    liveTick();
   }
   $$(".tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
   document.addEventListener("click", (e) => {
@@ -284,11 +290,83 @@
       <text x="60" y="66" text-anchor="middle" font-size="26" font-weight="700" fill="${css("--ink")}">${Math.round(score)}</text></svg>`;
   }
 
+  // ---------- البث المباشر ----------
+  // المصادر المفتوحة تنشر إطارًا ثابتًا يتجدّد (لا فيديو متصل): المتصفح يجلبه من الجهة المالكة مباشرة ويبدّله عند تغيّره
+  const live = { sg: null, sgAt: 0, paused: false, timer: null, cams: {} };
+  async function sgIndex() {
+    if (live.sg && Date.now() - live.sgAt < 45000) return live.sg;
+    try {
+      const j = await (await fetch("https://api.data.gov.sg/v1/transport/traffic-images")).json();
+      live.sg = Object.fromEntries((j.items?.[0]?.cameras || []).map((c) => [c.camera_id, c])); live.sgAt = Date.now();
+    } catch { live.sg = live.sg || {}; }
+    return live.sg;
+  }
+  async function liveFrame(c) {
+    const L = c.live;
+    if (L.kind === "datagovsg") { const x = (await sgIndex())[L.camera_id]; return x ? { src: x.image, ts: x.timestamp } : null; }
+    if (L.kind === "mjpeg") return { src: L.url };
+    return { src: L.url + (L.url.includes("?") ? "&" : "?") + "t=" + Math.floor(Date.now() / 15000) };
+  }
+  const regionTz = (c) => state.regions.find((r) => r.key === c.region)?.tz;
+  function liveFrameHTML(c) {
+    live.cams[c.id] = c;
+    return `<div class="frame" data-live="${esc(c.id)}"><img alt="بث مباشر — ${esc(c.name)}"><span class="loading">جارٍ الاتصال بالكاميرا…</span>
+      <span class="clock"></span><button class="fs" type="button" data-fs aria-label="ملء الشاشة" title="ملء الشاشة">${svg("expand")}</button></div>`;
+  }
+  async function updateFrame(el) {
+    const c = live.cams[el.dataset.live]; if (!c) return;
+    const f = await liveFrame(c).catch(() => null);
+    const img = el.querySelector("img"), msg = el.querySelector(".loading"), clock = el.querySelector(".clock");
+    if (!f) { msg.textContent = "البث غير متاح الآن"; el.classList.add("off"); return; }
+    const tz = regionTz(c);
+    const fmt = new Intl.DateTimeFormat("ar-AE", { timeZone: tz, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    const stamp = () => { clock.textContent = `${f.ts ? "التُقطت" : "حُدّثت"} ${fmt.format(f.ts ? new Date(f.ts) : new Date())} بتوقيت ${c.region === "phoenix" ? "فينكس" : c.region === "singapore" ? "سنغافورة" : "المنطقة"}`; };
+    if (el.dataset.src === f.src) { if (!f.ts) stamp(); return; }
+    const pre = new Image();
+    pre.onload = () => { img.src = f.src; el.dataset.src = f.src; el.classList.add("on"); el.classList.remove("off"); stamp(); };
+    pre.onerror = () => { if (!el.dataset.src) { msg.textContent = "البث غير متاح الآن"; el.classList.add("off"); } };
+    pre.src = f.src;
+  }
+  function liveTick() {
+    clearTimeout(live.timer);
+    if (!live.paused) $$("[data-live]").filter((el) => el.offsetParent).forEach(updateFrame);
+    live.timer = setTimeout(liveTick, 15000);
+  }
+  function renderLive() {
+    // المناطق التي يسود فيها النهار الآن أولًا
+    const hour = (c) => +new Intl.DateTimeFormat("en-US", { timeZone: regionTz(c) || "UTC", hour: "numeric", hourCycle: "h23" }).format(new Date());
+    const day = (c) => { const h = hour(c); return h >= 7 && h < 18; };
+    const list = state.cameras.filter((c) => c.live).sort((a, b) => day(b) - day(a));
+    $("#liveCount").textContent = fmtN(list.length);
+    $("#liveGrid").innerHTML = list.map((c) => `<article class="live-tile">${liveFrameHTML(c)}
+      <div class="body"><div><b>${esc(c.name)}</b><span class="muted">${esc(c.road)}</span></div>
+        <button class="btn ghost sm" type="button" data-cam="${esc(c.id)}">التحليل والتفاصيل</button></div></article>`).join("")
+      || `<div class="empty">لا توجد كاميرات ببث مباشر في هذه المنطقة</div>`;
+    liveTick();
+  }
+  $("#livePause").addEventListener("click", (e) => {
+    live.paused = !live.paused;
+    const b = e.currentTarget; b.innerHTML = live.paused ? `${svg("play")}استئناف البث` : `${svg("pause")}إيقاف مؤقت`;
+    $("#liveState").textContent = live.paused ? "متوقف مؤقتًا" : "مباشر";
+    $("#liveState").classList.toggle("paused", live.paused);
+    if (!live.paused) liveTick();
+  });
+  document.addEventListener("click", (e) => {
+    const fs = e.target.closest("[data-fs]"); if (!fs) return;
+    e.stopPropagation();
+    const f = fs.closest(".frame");
+    document.fullscreenElement ? document.exitFullscreen() : f.requestFullscreen?.();
+  }, true);
+
   function renderDetail(d) {
     const rd = d.risk_detail, fc = rd?.forecast || {}, m = d.latest_metrics || {};
     const snaps = d.snapshots.filter((s) => s.quality === "ok").slice().reverse();
     const lvl = rd?.level || "low";
     $("#dBody").innerHTML = `
+      ${d.live ? `<div class="card live-card">
+        <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("live")}</span>البث المباشر من الكاميرا</h2></div>
+        ${liveFrameHTML(d)}
+        <p class="muted live-hint">الصورة تأتي مباشرة من ${esc(srcLabel(d.source_type))} وتتحدّث تلقائيًا كل ${fmtN(d.live.refresh)} ثانية تقريبًا. قد تظهر ليلية حسب التوقيت المحلي للمنطقة.</p></div>` : ""}
       <div class="d-grid">
         <div class="card viewer">
           <div class="card-h"><h2 class="t"><span class="ico-sm">${svg("image")}</span>لقطات الكاميرا عبر الزمن</h2><label class="switch"><input type="checkbox" id="vAnn" checked> العيوب</label></div>
@@ -365,6 +443,7 @@
       </div>`;
 
     // عارض اللقطات
+    liveTick();
     const img = $("#vImg"), range = $("#vRange"), ts = $("#vTs"), ann = $("#vAnn");
     const show = () => {
       const s = snaps[+range.value]; if (!s) return;
@@ -467,6 +546,7 @@
     const [summary, cams, issues] = await Promise.all([api(rq("/api/summary")), api(rq("/api/cameras")), api(rq("/api/issues"))]);
     state.summary = summary; state.cameras = cams; state.issues = issues;
     renderSummary(summary); renderCameras(); renderMarkers(); renderLifecycle(summary.lifecycle, issues);
+    if ($("#tab-live").classList.contains("active")) renderLive();
     await loadAlerts();
     return summary;
   }

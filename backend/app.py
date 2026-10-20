@@ -56,6 +56,19 @@ def admin(x_admin_token: str = Header(default="")):
         raise HTTPException(401, "رمز المشرف غير صحيح")
 
 
+def _live(src: dict) -> dict | None:
+    """مصدر البث المباشر الذي يعرضه المتصفح مباشرة من الجهة المالكة (دون المرور بالخادم)."""
+    t = src.get("type")
+    if t == "datagovsg":
+        return {"kind": "datagovsg", "camera_id": str(src["camera_id"]), "refresh": 60}
+    if t == "az511":
+        return {"kind": "image", "url": f"https://az511.gov/map/Cctv/{src['image_id']}", "refresh": 30}
+    # الروابط المضافة يدويًا قد تحمل رموز دخول: لا تُكشف إلا إذا صرّح بها الإعداد ("live": true)
+    if t in ("snapshot", "mjpeg") and src.get("live") and str(src.get("url", "")).startswith("https://"):
+        return {"kind": "mjpeg" if t == "mjpeg" else "image", "url": src["url"], "refresh": 30}
+    return None
+
+
 def _camera_summary(cam: dict) -> dict:
     last = db.one("""SELECT id,ts,kind,condition_index,pothole_count,crack_density,changed_pct
                      FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL ORDER BY ts DESC LIMIT 1""", (cam["id"],))
@@ -65,7 +78,7 @@ def _camera_summary(cam: dict) -> dict:
         "id": cam["id"], "name": cam["name"], "road": cam["road"], "lat": cam["lat"], "lng": cam["lng"],
         "region": cam.get("region", ""),
         "open_issues": db.one("SELECT COUNT(*) n FROM issues WHERE camera_id=? AND stage IN ('predicted','active')", (cam["id"],))["n"],
-        "source_type": cam["source"].get("type"), "meta": cam["meta"], "enabled": bool(cam["enabled"]),
+        "source_type": cam["source"].get("type"), "live": _live(cam["source"]), "meta": cam["meta"], "enabled": bool(cam["enabled"]),
         "last_snapshot": last, "open_alerts": open_alerts,
         "risk": r and {"score": r["score"], "level": r["level"], "level_ar": r["forecast"].get("level_ar"),
                        "prob_90d": r["prob_90d"], "weeks_to_threshold": r["weeks_to_threshold"],
