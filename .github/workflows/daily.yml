@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   analyze:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # مثبّت: ubuntu-latest ينتقل إلى Ubuntu 26
     timeout-minutes: 90
     env:
       DARB_REGIONS: singapore,phoenix
@@ -27,7 +27,7 @@ jobs:
       DARB_SEED_FRAMES: "3"
       DARB_SITE_MODE: auto
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Restore saved data (darb-data branch)
         run: |
@@ -35,7 +35,7 @@ jobs:
             || mkdir -p darb-state
           rm -rf darb-state/.git
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -47,7 +47,7 @@ jobs:
           pip install -r requirements-ai.txt
 
       - name: Cache AI models
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: models
           key: darb-models-v1
@@ -68,16 +68,16 @@ jobs:
           git commit -q -m "DARB AI data $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" darb-data
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: site
 
   deploy:
     needs: analyze
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04  # مثبّت: ubuntu-latest ينتقل إلى Ubuntu 26
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
