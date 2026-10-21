@@ -364,13 +364,15 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
     ref = (db.one("SELECT * FROM snapshots WHERE id=?", (prev_metrics["suspect_ref"],))
            if prev_metrics.get("suspect_ref") and prev_suspect != "scene_change" else None)
     ref_img = load_image(ref["image_path"]) if ref else None
-    if ref is not None and ref_img is not None:
+    # المقارنة بلقطة سابقة تصح فقط بالمنطقة نفسها: إذا حُرّكت الكاميرا ونُقلت المنطقة فهبوط المؤشر أو «التغيّر»
+    # قد يكون من اختلاف ما تشمله المنطقة (فواصل خرسانية، ظل جسر) لا من الطريق
+    if ref is not None and ref_img is not None and _area_of(cam, json.loads(ref["metrics"])) == roi:
         diff_ref = change.compare(ref_img, img, roi)
         cand = _sudden_alert(ref, result, diff_ref, True)
         # التأكيد يصحّ لنفس نوع الحدث فقط: اشتباه بتغيّر لا يؤكّد حفرة ظهرت لأول مرة الآن
         if cand and cand[0] == prev_suspect:
             pending, diff = cand, diff_ref
-    if pending is None and prev and not diff.get("view_changed"):
+    if pending is None and prev and not diff.get("view_changed") and _area_of(cam, prev_metrics) == roi:
         cand = _sudden_alert(prev, result, diff, confirmed)
         if cand and cand[1] != "info":
             suspect = {"suspect": cand[0], "suspect_ref": prev["id"]}
@@ -378,8 +380,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
             pending = cand
 
     annotated_path = _save(vision.annotate(img, result, roi, diff["boxes"]), base.with_name(base.name + "_ann.jpg"))
-    metrics = {**result, "change": diff, "quality": q, "confirmed": confirmed, "view": view, **(suspect or {}),
-               **({"roi": roi} if view == "moved" else {})}
+    metrics = {**result, "change": diff, "quality": q, "confirmed": confirmed, "view": view, "roi": roi, **(suspect or {})}
     sid = db.insert("snapshots", {
         "camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path, "annotated_path": annotated_path,
         "condition_index": result["condition_index"], "crack_density": result["crack_density"],
@@ -463,15 +464,26 @@ def _view_lost_persists(cam: dict, ts: str) -> bool:
     return bool(last and last["quality"] == "view_lost")
 
 
+def _area_of(cam: dict, metrics: dict) -> list:
+    """منطقة الطريق التي حُلّلت بها لقطة (اللقطات الأقدم من حفظ المنطقة حُلّلت بالأساسية)."""
+    return metrics.get("roi") or sources.default_roi(cam)
+
+
 def revalidate_alerts() -> int:
     """يعيد فحص التنبيهات المفتوحة بالقواعد الحالية ويُقرّ ما لم يعد صحيحًا: «الكاميرا حُرّكت» إذا عادت الكاميرا
     (لقطة سليمة أحدث) أو لم يتكرر في يومين، و«الرمال» إذا لم يعد يتجاوز خط أساس الساعة نفسها."""
     n = 0
-    for a in db.query("SELECT * FROM alerts WHERE ack=0 AND type IN ('view_lost','sand')"):
+    for a in db.query("SELECT * FROM alerts WHERE ack=0 AND type IN ('view_lost','sand','sudden_change','new_pothole')"):
         cam = get_camera(a["camera_id"])
         if cam is None:
             continue
-        if a["type"] == "view_lost":
+        if a["type"] in ("sudden_change", "new_pothole"):
+            # التغيّر قيس بين لقطتين بمنطقتين مختلفتين (كاميرا حُرّكت)
+            snap = db.one("SELECT ts, metrics FROM snapshots WHERE id=?", (a["snapshot_id"],)) if a["snapshot_id"] else None
+            before = snap and db.one("""SELECT metrics FROM snapshots WHERE camera_id=? AND ts<? AND condition_index IS NOT NULL
+                                        ORDER BY ts DESC LIMIT 1""", (cam["id"], snap["ts"]))
+            stale = bool(snap and before and _area_of(cam, json.loads(snap["metrics"])) != _area_of(cam, json.loads(before["metrics"])))
+        elif a["type"] == "view_lost":
             back = db.one("SELECT id FROM snapshots WHERE camera_id=? AND ts>? AND condition_index IS NOT NULL", (cam["id"], a["ts"]))
             stale = back or not _view_lost_persists(cam, a["ts"])
         else:
