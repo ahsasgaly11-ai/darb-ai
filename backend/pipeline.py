@@ -200,12 +200,34 @@ def roi_for_view(cam: dict, img: np.ndarray, at: datetime | None = None) -> tupl
     if np.abs(moved - pts).max() < 0.03 * w:
         return roi, "same"  # اهتزاز أو فرق محاذاة بسيط: المنطقة كما هي
     full = abs(cv2.contourArea(moved))
-    inside = np.zeros((h, w), np.uint8)
-    cv2.fillPoly(inside, [np.round(moved).astype(np.int32)], 1)
+    clipped = _clip_to_frame(moved, w, h)
+    inside = abs(cv2.contourArea(np.float32(clipped))) if len(clipped) >= 3 else 0.0
     area0 = abs(cv2.contourArea(pts))
-    if not (0.2 * area0 < full < 5 * area0) or inside.sum() < 0.6 * full or inside.sum() < 0.01 * w * h:
-        return views[0], "lost"  # المنطقة خرجت من الإطار أو تحويل غير معقول
-    return [[round(min(1.0, max(0.0, float(x) / w)), 4), round(min(1.0, max(0.0, float(y) / h)), 4)] for x, y in moved], "moved"
+    if not (0.2 * area0 < full < 5 * area0) or inside < 0.4 * full or inside < 0.03 * w * h:
+        return views[0], "lost"  # المنطقة خرجت من الإطار في أغلبها أو تحويل غير معقول
+    # الكاميرا كبّرت أو دارت فخرج جزء من المنطقة: يُحلَّل الجزء الظاهر فقط
+    return [[round(float(x) / w, 4), round(float(y) / h, 4)] for x, y in clipped], "moved"
+
+
+def _clip_to_frame(poly: np.ndarray, w: int, h: int) -> list[tuple[float, float]]:
+    """قص مضلع بحدود الإطار (Sutherland–Hodgman)."""
+    out = [tuple(p) for p in poly]
+    for inside, cut in ((lambda p: p[0] >= 0, lambda a, b: (0.0, a[1] + (b[1] - a[1]) * (0 - a[0]) / (b[0] - a[0]))),
+                        (lambda p: p[0] <= w, lambda a, b: (float(w), a[1] + (b[1] - a[1]) * (w - a[0]) / (b[0] - a[0]))),
+                        (lambda p: p[1] >= 0, lambda a, b: (a[0] + (b[0] - a[0]) * (0 - a[1]) / (b[1] - a[1]), 0.0)),
+                        (lambda p: p[1] <= h, lambda a, b: (a[0] + (b[0] - a[0]) * (h - a[1]) / (b[1] - a[1]), float(h)))):
+        src, out = out, []
+        for i, cur in enumerate(src):
+            prev = src[i - 1]
+            if inside(cur):
+                if not inside(prev):
+                    out.append(cut(prev, cur))
+                out.append(cur)
+            elif inside(prev):
+                out.append(cut(prev, cur))
+        if not out:
+            break
+    return out
 
 
 def remember_view(cam: dict, img: np.ndarray, roi: list[list[float]], at: datetime | None = None) -> None:

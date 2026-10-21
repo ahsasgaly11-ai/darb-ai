@@ -14,7 +14,7 @@ from .vision import _normalize, roi_mask
 
 _sift = cv2.SIFT_create(6000)
 _clahe = cv2.createCLAHE(2.0, (8, 8))
-MIN_INLIERS = 40
+MIN_INLIERS = 25  # أقل من ذلك قد يكون تطابقًا عرضيًا؛ والكاميرات التي تحرّكت فعلًا بقيت مرفوضة حتى 20 في الاختبار
 
 
 def _scene_mask(h: int, w: int) -> np.ndarray:
