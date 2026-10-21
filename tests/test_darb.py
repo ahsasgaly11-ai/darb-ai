@@ -293,8 +293,8 @@ def test_capture_window_and_weekly_median():
 
     live = {"source": {"type": "az511"}}
     at = lambda h: datetime(2026, 10, 20, h, 7, tzinfo=ZoneInfo("America/Phoenix")).astimezone(timezone.utc)
-    assert cli.capture_time(live, at(10), P, Src) == at(10)       # داخل نافذة 9–12
-    assert cli.capture_time(live, at(13), P, Src) is None          # خارجها
+    assert cli.capture_time(live, at(10), P, Src) == at(10)       # داخل نافذة النهار 8–16
+    assert cli.capture_time(live, at(17), P, Src) is None          # خارجها
     arch = {"source": {"type": "datagovsg"}}
     assert cli.capture_time(arch, at(15), P, Src).astimezone(ZoneInfo("America/Phoenix")).hour == 10
     # وسيط الأسبوع: يوم شاذ واحد (مبتل/ظل) لا يغيّر نقطة الأسبوع
@@ -303,7 +303,7 @@ def test_capture_window_and_weekly_median():
 
 
 def test_daily_plan_retries_until_analyzed():
-    """كل تشغيل في نافذة 9–12 فرصة جديدة: اللقطة المزدحمة تُعاد، والمتعطلة تُترك بعد 3 محاولات، والمحلَّلة لا تُكرر."""
+    """كل تشغيل في نافذة النهار فرصة جديدة: اللقطة المزدحمة تُعاد، والمتعطلة تُترك بعد 3 محاولات، والمحلَّلة لا تُكرر."""
     from zoneinfo import ZoneInfo
     from backend import cli
 
@@ -325,7 +325,7 @@ def test_daily_plan_retries_until_analyzed():
     db.insert("snapshots", {"camera_id": "t-retry", "ts": now.isoformat(timespec="seconds"), "kind": "sentinel",
                             "image_path": "x.jpg", "condition_index": 90.0, "metrics": {}})
     assert plan() == []                                            # حُلّلت اليوم
-    late = now + timedelta(hours=5)                                # 15:07: خارج النافذة لكن في ضوء النهار
+    late = now + timedelta(hours=7)                                # 17:07: خارج النافذة لكن في ضوء النهار
     assert cli.plan_captures([cam], late, P, Src, db, {})[0] == []
     assert [c["id"] for c, _ in cli.plan_captures([cam], late, P, Src, db, {}, force=True)[0]] == ["t-retry"]
 

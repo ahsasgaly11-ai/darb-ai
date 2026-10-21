@@ -141,16 +141,38 @@ def _roi_key(roi) -> str:
     return hashlib.sha1(json.dumps(roi).encode()).hexdigest()[:8]
 
 
-def _view_files(cam: dict) -> tuple[str, Path, Path]:
+def _period(cam: dict, at: datetime | None) -> int:
+    """فترة اليوم (كل 3 ساعات محليًا): لكل فترة مرجع متجدد، فظلال الصباح لا تُقارن بظلال العصر."""
+    return (at or datetime.now(timezone.utc)).astimezone(tz(cam)).hour // 3
+
+
+def _view_files(cam: dict, at: datetime | None = None) -> tuple[str, Path, Path]:
     d = config.DATA_DIR / "roi_ref"
-    return _roi_key(camera_views(cam)), d / f"{cam['id']}.jpg", d / f"{cam['id']}.json"
+    p = _period(cam, at)
+    return _roi_key(camera_views(cam)), d / f"{cam['id']}-t{p}.jpg", d / f"{cam['id']}-t{p}.json"
+
+
+def _rolling_refs(cam: dict, key: str, at: datetime | None) -> list[tuple[Path, list]]:
+    """المراجع المتجددة للكاميرا: فترة اليوم الحالية أولًا، ثم بقية الفترات (والمرجع القديم بلا فترة)."""
+    d, cur = config.DATA_DIR / "roi_ref", _period(cam, at)
+    out = []
+    for meta_p in sorted(d.glob(f"{cam['id']}*.json"), key=lambda q: q.stem != f"{cam['id']}-t{cur}"):
+        if meta_p.stem != cam["id"] and not meta_p.stem.startswith(f"{cam['id']}-t"):
+            continue  # كاميرا أخرى يبدأ اسمها بالاسم نفسه
+        try:
+            meta = json.loads(meta_p.read_text())
+        except (OSError, ValueError):
+            continue
+        if meta.get("key") == key and meta_p.with_suffix(".jpg").exists():
+            out.append((meta_p.with_suffix(".jpg"), meta["roi"]))
+    return out
 
 
 def drawn_ref(cam: dict, roi) -> Path:
     return config.ROOT / "config" / "roi_ref" / f"{cam['id']}-{_roi_key(roi)}.jpg"
 
 
-def roi_for_view(cam: dict, img: np.ndarray) -> tuple[list[list[float]], str]:
+def roi_for_view(cam: dict, img: np.ndarray, at: datetime | None = None) -> tuple[list[list[float]], str]:
     """منطقة الطريق في منظر الكاميرا الحالي. كاميرات الطرق السريعة PTZ يحرّكها المشغّلون خلال اليوم، فتُقارن
     اللقطة بمراجع المنظر: آخر لقطة ناجحة (مرجع متجدد بإضاءة الساعة نفسها أمس) وصور المناظر المرسومة يدويًا.
     أفضل تطابق يحدد المنطقة، وتُنقل إلى المنظر الحالي بالـHomography إذا تحرّكت الكاميرا قليلًا.
@@ -158,13 +180,8 @@ def roi_for_view(cam: dict, img: np.ndarray) -> tuple[list[list[float]], str]:
     views = camera_views(cam)
     if cam["source"].get("type") == "demo":
         return views[0], "same"  # المحاكاة منظرها ثابت
-    key, ref_img, ref_meta = _view_files(cam)
-    try:
-        meta = json.loads(ref_meta.read_text())
-    except (OSError, ValueError):
-        meta = {}
-    refs = [(ref_img, meta["roi"])] if meta.get("key") == key and ref_img.exists() else []
-    refs += [(drawn_ref(cam, v), v) for v in views if drawn_ref(cam, v).exists()]
+    key = _view_files(cam, at)[0]
+    refs = _rolling_refs(cam, key, at) + [(drawn_ref(cam, v), v) for v in views if drawn_ref(cam, v).exists()]
     if not refs:
         return views[0], "new"
     best = (None, 0, None)
@@ -191,11 +208,11 @@ def roi_for_view(cam: dict, img: np.ndarray) -> tuple[list[list[float]], str]:
     return [[round(min(1.0, max(0.0, float(x) / w)), 4), round(min(1.0, max(0.0, float(y) / h)), 4)] for x, y in moved], "moved"
 
 
-def remember_view(cam: dict, img: np.ndarray, roi: list[list[float]]) -> None:
-    """لقطة ناجحة تصير مرجع المنظر للمرة القادمة (مع المنطقة التي حُلّلت بها)."""
+def remember_view(cam: dict, img: np.ndarray, roi: list[list[float]], at: datetime | None = None) -> None:
+    """لقطة ناجحة تصير مرجع المنظر لهذه الفترة من اليوم (مع المنطقة التي حُلّلت بها)."""
     if cam["source"].get("type") == "demo":
         return
-    key, ref_img, ref_meta = _view_files(cam)
+    key, ref_img, ref_meta = _view_files(cam, at)
     ref_img.parent.mkdir(parents=True, exist_ok=True)
     cv2.imwrite(str(ref_img), _ref_size(img), [cv2.IMWRITE_JPEG_QUALITY, 85])
     ref_meta.write_text(json.dumps({"key": key, "roi": roi}))
@@ -249,7 +266,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
         return {"ok": False, "error": str(e)}
 
     bg, first = sources.background(frames), frames
-    roi, view = roi_for_view(cam, bg)
+    roi, view = roi_for_view(cam, bg, at)
     occ = sources.occlusion(frames, roi)
     if occ > config.CONGESTION_OCCLUSION and cam["source"].get("type") == "datagovsg":
         # ازدحام يحجب الطريق: المصادر ذات الأرشيف تسمح بتجربة لحظات قريبة واختيار أوضحها
@@ -347,7 +364,7 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
         "pothole_count": result["pothole_count"], "changed_pct": diff["changed_pct"], "quality": "ok",
         "metrics": metrics,
     })
-    remember_view(cam, img, roi)
+    remember_view(cam, img, roi, at)
 
     alerts = []
     if diff.get("view_changed"):

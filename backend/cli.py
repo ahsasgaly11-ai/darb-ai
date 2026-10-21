@@ -4,7 +4,7 @@
     python -m backend.cli confirm --site site/   # تأكيد الاشتباهات بعد ساعة
     python -m backend.cli due                    # ما المطلوب الآن؟ daily | confirm | none (بلا مكتبات ثقيلة)
 
-لكل كاميرا مرة يوميًا بين 9 و12 صباحًا بالتوقيت المحلي (ضوء جيد قبل تموّج الهواء من حرارة الأسفلت):
+لكل كاميرا مرة يوميًا نهارًا بين 8 و16 بالتوقيت المحلي، والأفضل 9–12 (ضوء جيد قبل تموّج الهواء من حرارة الأسفلت):
 دفعة من 5 إطارات ← وسيط زمني يزيل المركبات ← تحليل بالذكاء الاصطناعي ← المخاطر ودورة حياة المشكلات.
 الاتجاه يُبنى من وسيط أيام كل أسبوع. أي اشتباه بحدث مفاجئ يُعاد التقاطه بعد ساعة قبل إطلاق التنبيه.
 """
@@ -30,7 +30,10 @@ FRAMES = int(os.getenv("DARB_DAILY_FRAMES", "5"))         # إطارات كل ا
 VIDEO_FRAMES = int(os.getenv("DARB_VIDEO_FRAMES", "25"))
 VIDEO_TYPES = ("caltrans", "hls", "rtsp", "video", "mjpeg")
 TARGET_HOUR = int(os.getenv("DARB_CAPTURE_HOUR", "10"))   # الساعة المحلية المستهدفة
-WINDOW = (int(os.getenv("DARB_WINDOW_START", "9")), int(os.getenv("DARB_WINDOW_END", "12")))
+# نافذة القبول: نهار 8–16 محليًا. الأفضل 9–12 (ضوء ثابت قبل تموّج الهواء)، لكن مجدول GitHub يُسقط أغلب التشغيلات
+# (أُطلق 3 من 34 موعدًا في 21 أكتوبر وفي غير مواعيدها)، فنافذة ضيقة كانت تُفوّت مناطق كاملة. أول تشغيل في النهار يلتقط،
+# والمقارنات تراعي الساعة (خط أساس الرمال، ومراجع منظر الكاميرا لكل فترة من اليوم)
+WINDOW = (int(os.getenv("DARB_WINDOW_START", "8")), int(os.getenv("DARB_WINDOW_END", "16")))
 CONFIRM_AFTER = timedelta(minutes=int(os.getenv("DARB_CONFIRM_AFTER_MIN", "50")))
 PENDING_FILE = "pending_confirm.json"
 MAX_TRIES = int(os.getenv("DARB_MAX_TRIES", "3"))  # محاولات الكاميرا المتعطلة في اليوم قبل تركها لليوم التالي
@@ -128,7 +131,7 @@ def plan_captures(cams, now, pipeline, sources, db, attempts, force=False) -> tu
         live_force = force and not sources.supports_history(cam)  # الأرشيف لحظته ثابتة (10:00) فلا يُكرر
         at = capture_time(cam, now, pipeline, sources, config.DAYLIGHT_HOURS if live_force else None)
         if at is None:
-            skipped += 1  # خارج نافذة 9–12 صباحًا في منطقتها (أو خارج النهار في التحديث اليدوي)
+            skipped += 1  # خارج نافذة النهار (8–16) في منطقتها (أو خارج النهار في التحديث اليدوي)
             continue
         if live_force:
             plan.append((cam, at))
@@ -271,7 +274,7 @@ def main() -> int:
     logging.getLogger("httpx").setLevel(logging.WARNING)
     p = argparse.ArgumentParser(prog="python -m backend.cli")
     sub = p.add_subparsers(dest="cmd", required=True)
-    for name, help_ in (("daily", "التقاط يومي (5 إطارات) للمناطق التي في نافذة 9–12 صباحًا + تحليل + بناء الموقع"),
+    for name, help_ in (("daily", "التقاط يومي (5–25 إطارًا) للمناطق التي في نافذة النهار 8–16ًا + تحليل + بناء الموقع"),
                         ("confirm", "إعادة التقاط الكاميرات المشتبه بها بعد ساعة"),
                         ("due", "ما المطلوب الآن: daily | confirm | none")):
         d = sub.add_parser(name, help=help_)
