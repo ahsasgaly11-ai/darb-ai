@@ -8,17 +8,30 @@
  *    تفوتها أغلب العيوب (جُرّب ذلك على صور تحاكي النماذج) — فالكاشف البصري مع المعايرة أدق هنا.
  * 2. نموذج YOLO المدرّب على RDD2022 (تأكيد): يعمل كل ~1.5 ث عبر onnxruntime-web، وتظهر مربعاته متقطعة.
  *
- * المعايرة: وجّه الكاميرا للنموذج السليم واضغط «معايرة» فتُضبط العتبة على ملمس الفلين والإضاءة الحالية.
+ * بوابة الطريق: قبل أي تحليل يُبحث عن سطح طريق في الإطار (خلايا رمادية منخفضة التشبع ملساء، تُسد فجوات العلامات
+ * والتشققات، ثم أكبر جزء متصل). إن لم يوجد سطح يملأ جزءًا كافيًا من الإطار بشكل منتظم ولون متجانس فلا تحليل —
+ * فالكاميرا الموجهة إلى فصل أو طاولة أو جدار لا تُخرج «حفرًا» وهمية. ويُحلَّل داخل سطح الطريق فقط (لا الطاولة حوله).
+ *
+ * المعايرة: وجّه الكاميرا للنموذج السليم واضغط «معايرة» فتُضبط العتبة على ملمس الفلين والإضاءة الحالية،
+ * ويُحفظ لون سطح النموذج فيصبح التعرف على الطريق أدق.
  */
 (() => {
   const D = window.DARB; if (!D) return;
   const { $, fmtN, esc, svg, money } = D;
   const PW = +(new URLSearchParams(location.search).get("pw") || 640);  // عرض المعالجة: 640 يلتقط خطوط التشقق الرفيعة (قلم 2–4 مم على نموذج بعرض متر)
   const ZONE = { x: 0.06, y: 0.1, w: 0.88, h: 0.8 };  // منطقة التحليل: ضع النموذج داخل الإطار
-  const KIND = { healthy: ["سليم", "low"], cracked: ["تشققات", "medium"], damaged: ["متضرر وحفر", "critical"] };
+  const KIND = { healthy: ["سليم", "low"], cracked: ["تشققات", "medium"], damaged: ["متضرر وحفر", "critical"], none: ["لا يوجد طريق", "none"] };
+  const WHY = {
+    small: "لا يظهر نموذج طريق واضح داخل الإطار — قرّب الكاميرا حتى يملأ النموذج معظم الإطار المتقطع.",
+    shape: "السطح الظاهر ليس بشكل طريق — وجّه الكاميرا إلى نموذج الطريق نفسه.",
+    mixed: "المشهد ليس سطح طريق (ألوان وأجسام متنوعة) — وجّه الكاميرا إلى نموذج الطريق.",
+    busy: "المشهد مزدحم بالأجسام والحواف وليس سطح طريق — وجّه الكاميرا إلى نموذج الطريق.",
+  };
   const TYPES = { long: "تشقق طولي", trans: "تشقق عرضي", alli: "تشقق تمساحي", pot: "حفرة" };
   const lab = { stream: null, raf: 0, busy: false, last: 0, frames: [], T: +(D.safeGet("darb-lab-T") || 26), ai: null, aiDets: [], aiBusy: false,
-    aiAt: 0, aiOn: true, fps: 0, slots: [null, null, null], cur: null, img: null };
+    aiAt: 0, aiOn: true, fps: 0, slots: [null, null, null], cur: null, img: null, road: readRoad() };
+  function readRoad() { try { return JSON.parse(D.safeGet("darb-lab-road") || "null"); } catch { return null; } }
+  const CS = 8;  // خلية بوابة الطريق: 8×8 بكسل من صورة المعالجة
   const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
 
   // ---------- الكاشف البصري ----------
@@ -33,11 +46,16 @@
     }
     const zx0 = Math.round(W * ZONE.x), zy0 = Math.round(H * ZONE.y), zx1 = Math.round(W * (ZONE.x + ZONE.w)), zy1 = Math.round(H * (ZONE.y + ZONE.h));
     const zw = zx1 - zx0, zh = zy1 - zy0, zA = zw * zh;
-    // سطح الطريق = ما حول وسيط سطوع المنطقة؛ الأفتح بوضوح (الطاولة، العلامات البيضاء والصفراء) لا يدخل المتوسط ولا التحليل
-    const hist = new Uint32Array(256); for (let y = zy0; y < zy1; y += 2) for (let x = zx0; x < zx1; x += 2) hist[G[y * W + x]]++;
-    let acc = 0, med = 0; const half = (zw * zh) / 8; for (; med < 255 && acc + hist[med] < half; med++) acc += hist[med];
+    const gate = roadGate(px, G, S, W, H, [zx0, zy0, zx1, zy1]);
+    if (!gate.ok) return { W, H, zone: [zx0, zy0, zw, zh], comps: [], road: false, gate, n: { long: 0, trans: 0, alli: 0, pot: 0 },
+      lenRatio: 0, alliPct: 0, potPct: 0, potN: 0, ci: null, kind: "none", diffs: [] };
+    const { road, edge, gw } = gate, cellOf = (i) => ((((i / W) | 0) / CS) | 0) * gw + (((i % W) / CS) | 0);
+    // سطح الطريق = ما حول وسيط سطوع الطريق؛ الأفتح بوضوح (العلامات البيضاء والصفراء) لا يدخل المتوسط ولا التحليل
+    const hist = new Uint32Array(256); let cntH = 0;
+    for (let y = zy0; y < zy1; y += 2) for (let x = zx0; x < zx1; x += 2) { const i = y * W + x; if (road[cellOf(i)]) { hist[G[i]]++; cntH++; } }
+    let acc = 0, med = 0; const half = cntH / 2; for (; med < 255 && acc + hist[med] < half; med++) acc += hist[med];
     const M = new Uint8Array(N);
-    for (let i = 0; i < N; i++) M[i] = G[i] <= med + 32 && !(S[i] > 110 && G[i] > 80) ? 1 : 0;
+    for (let i = 0; i < N; i++) M[i] = road[cellOf(i)] && G[i] <= med + 32 && !(S[i] > 110 && G[i] > 80) ? 1 : 0;
     // متوسط محلي مقنَّع (صندوق نصف قطره 5% من العرض) بصورتين تكامليتين: مجموع السطوع وعدد بكسلات السطح
     const W1 = W + 1, I = new Float64Array(W1 * (H + 1)), C = new Float64Array(W1 * (H + 1));
     for (let y = 0; y < H; y++) { let row = 0, cnt = 0; for (let x = 0; x < W; x++) { const i = y * W + x; row += M[i] * G[i]; cnt += M[i]; I[(y + 1) * W1 + x + 1] = I[y * W1 + x + 1] + row; C[(y + 1) * W1 + x + 1] = C[y * W1 + x + 1] + cnt; } }
@@ -57,10 +75,10 @@
     const minA = Math.max(10, zA * 0.00008);
     for (let s = 0; s < N; s++) {
       if (!dark[s] || lbl[s]) continue;
-      let top = 0, area = 0, inner = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
+      let top = 0, area = 0, inner = 0, onEdge = 0, x0 = W, x1 = 0, y0 = H, y1 = 0;
       stack[top++] = s; lbl[s] = comps.length + 1;
       while (top) {
-        const p = stack[--top], x = p % W, y = (p / W) | 0; area++;
+        const p = stack[--top], x = p % W, y = (p / W) | 0; area++; if (edge[cellOf(p)]) onEdge++;
         if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
         let n = 0;
         for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -76,6 +94,7 @@
       // ما يلامس حافة الإطار ويمتد على أكثر من ثلثه غالبًا خلفية أو ظل (حافة النموذج، الطاولة) لا عيب
       const touches = x0 <= zx0 + 1 || y0 <= zy0 + 1 || x1 >= zx1 - 2 || y1 >= zy1 - 2;
       if (touches && (w > zw * 0.33 || h > zh * 0.33 || interior > 0.45)) { comps.push(null); continue; }
+      if (onEdge / area > 0.7) { comps.push(null); continue; }  // على حافة سطح الطريق: حافة النموذج أو ظله لا عيب
       let type = null;
       if (interior > 0.45 && area > zA * 0.0012 && Math.min(w, h) > 6) type = "pot";
       else if (Math.max(w, h) >= zw * 0.035) {
@@ -84,7 +103,71 @@
       comps.push(type ? { type, area, x0, y0, w, h, interior } : null);
     }
     const found = comps.filter(Boolean);
-    return { W, H, zone: [zx0, zy0, zw, zh], comps: found, ...metrics(found, zw, zh), diffs };
+    return { W, H, zone: [zx0, zy0, zw, zh], comps: found, road: true, gate, ...metrics(found, zw, zh), diffs };
+  }
+
+  // ---------- بوابة الطريق: هل في الإطار سطح طريق؟ وأين؟ ----------
+  function roadGate(px, G, S, W, H, [zx0, zy0, zx1, zy1]) {
+    const gw = Math.ceil(W / CS), gh = Math.ceil(H / CS), nC = gw * gh;
+    const sg = new Float32Array(nC), sg2 = new Float32Array(nC), ss = new Float32Array(nC), sa = new Float32Array(nC), sb = new Float32Array(nC), n = new Float32Array(nC);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const i = y * W + x, c = ((y / CS) | 0) * gw + ((x / CS) | 0), j = i * 4, g = G[i];
+      sg[c] += g; sg2[c] += g * g; ss[c] += S[i]; sa[c] += px[j] - px[j + 1]; sb[c] += (px[j] + px[j + 1]) / 2 - px[j + 2]; n[c]++;
+    }
+    const inZone = (c) => { const x = (c % gw) * CS + CS / 2, y = ((c / gw) | 0) * CS + CS / 2; return x >= zx0 && x < zx1 && y >= zy0 && y < zy1; };
+    const ref = lab.road, raw = new Uint8Array(nC), mg = new Float32Array(nC), sd = new Float32Array(nC);
+    let zoneCells = 0;
+    for (let c = 0; c < nC; c++) {
+      if (!inZone(c)) continue; zoneCells++;
+      const k = n[c], g = sg[c] / k, s = ss[c] / k, a = sa[c] / k, b = sb[c] / k;
+      mg[c] = g; sd[c] = Math.sqrt(Math.max(0, sg2[c] / k - g * g));
+      // لون السطح المعاير (إن وُجد): العيوب أغمق من السطح فيُسمح بالأغمق أكثر من الأفتح
+      raw[c] = ref ? (g > ref.g - 75 && g < ref.g + 30 && Math.abs(a - ref.a) < 16 && Math.abs(b - ref.b) < 16 ? 1 : 0)
+        : (s < 60 && g > 15 && g < 185 ? 1 : 0);
+    }
+    // إغلاق (تمدد ثم تآكل بخليتين) يسد العلامات والتشققات الرفيعة، ثم أكبر جزء متصل، ثم ملء الثقوب (الحفر الكبيرة)
+    const morph = (src, grow) => { const out = new Uint8Array(nC);
+      for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) { let v = grow ? 0 : 1;
+        for (let dy = -2; dy <= 2 && v !== (grow ? 1 : 0); dy++) for (let dx = -2; dx <= 2; dx++) {
+          const xx = x + dx, yy = y + dy, q = xx < 0 || yy < 0 || xx >= gw || yy >= gh ? 0 : src[yy * gw + xx];
+          if (grow ? q : !q) { v = grow ? 1 : 0; break; } }
+        out[y * gw + x] = v && inZone(y * gw + x) ? 1 : 0; }
+      return out; };
+    const closed = morph(morph(raw, true), false);
+    const lbl = new Int32Array(nC), st = []; let best = 0, bestN = 0, cur = 0;
+    for (let c = 0; c < nC; c++) {
+      if (!closed[c] || lbl[c]) continue; cur++; let cnt = 0; st.push(c); lbl[c] = cur;
+      while (st.length) { const p = st.pop(), x = p % gw, y = (p / gw) | 0; cnt++;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
+          const q = yy * gw + xx; if (closed[q] && !lbl[q]) { lbl[q] = cur; st.push(q); } } }
+      if (cnt > bestN) { bestN = cnt; best = cur; }
+    }
+    const road = new Uint8Array(nC); for (let c = 0; c < nC; c++) road[c] = lbl[c] === best && best ? 1 : 0;
+    const outside = new Uint8Array(nC), q2 = [];
+    for (let c = 0; c < nC; c++) { const x = c % gw, y = (c / gw) | 0; if ((x === 0 || y === 0 || x === gw - 1 || y === gh - 1 || !inZone(c)) && !road[c]) { outside[c] = 1; q2.push(c); } }
+    while (q2.length) { const p = q2.pop(), x = p % gw, y = (p / gw) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const xx = x + dx, yy = y + dy; if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
+        const q = yy * gw + xx; if (!road[q] && !outside[q]) { outside[q] = 1; q2.push(q); } } }
+    let area = 0, gx0 = gw, gx1 = 0, gy0 = gh, gy1 = 0, filled = 0; const gs = [], sds = [];
+    for (let c = 0; c < nC; c++) {
+      if (!road[c] && !outside[c] && inZone(c)) road[c] = 1;   // ثقب داخل السطح
+      if (!road[c]) continue;
+      const x = c % gw, y = (c / gw) | 0; area++; if (x < gx0) gx0 = x; if (x > gx1) gx1 = x; if (y < gy0) gy0 = y; if (y > gy1) gy1 = y;
+      if (raw[c]) { gs.push(mg[c]); sds.push(sd[c]); } else filled++;
+    }
+    const edge = new Uint8Array(nC);
+    for (let c = 0; c < nC; c++) if (road[c]) { const x = c % gw, y = (c / gw) | 0;
+      edge[c] = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => { const xx = x + dx, yy = y + dy; return xx < 0 || yy < 0 || xx >= gw || yy >= gh || !road[yy * gw + xx]; }) ? 1 : 0; }
+    const frac = area / Math.max(1, zoneCells), fill = area / Math.max(1, (gx1 - gx0 + 1) * (gy1 - gy0 + 1));
+    const mean = gs.reduce((a, b) => a + b, 0) / Math.max(1, gs.length);
+    const spread = Math.sqrt(gs.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, gs.length));
+    sds.sort((a, b) => a - b); const texture = sds[sds.length >> 1] || 0, holes = filled / Math.max(1, area);
+    // القرار: سطح يملأ ثلث الإطار على الأقل، شكله منتظم (مستطيل/شبه منحرف)، لونه متجانس، أملس غالبًا، وقليل الفجوات
+    const why = frac < 0.3 ? (texture > 14 || spread > 28 || frac < 0.15 ? "busy" : "small")   // مشهد ليس طريقًا، أو نموذج بعيد
+      : fill < 0.5 ? "shape" : spread > 28 ? "mixed" : texture > 14 ? "busy" : holes > 0.4 ? "busy" : null;
+    let sumA = 0, sumB = 0; for (let c = 0; c < nC; c++) if (road[c] && raw[c]) { sumA += sa[c] / n[c]; sumB += sb[c] / n[c]; }
+    return { ok: !why, why, road, edge, gw, gh, frac, fill, spread, texture, holes,
+      color: { g: mean, a: sumA / Math.max(1, gs.length), b: sumB / Math.max(1, gs.length) } };
   }
 
   function metrics(comps, zw, zh) {
@@ -151,12 +234,18 @@
   const iou = (a, b) => { const x = Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)), y = Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)); const i = x * y; return i / (a.w * a.h + b.w * b.h - i || 1); };
 
   // دمج: حفرة يؤكدها الذكاء الاصطناعي بثقة عالية ولم يلتقطها الكاشف البصري تُضاف
+  function inRoad(r, a) {  // مركز مربع الذكاء الاصطناعي داخل سطح الطريق؟
+    if (!r.road) return false;
+    const x = Math.floor((a.x + a.w / 2) * r.W / CS), y = Math.floor((a.y + a.h / 2) * r.H / CS);
+    return x >= 0 && y >= 0 && x < r.gate.gw && y < r.gate.gh && !!r.gate.road[y * r.gate.gw + x];
+  }
   function fuse(r) {
+    if (!r.road) return r;
     // صرامة: النماذج العالمية قد تعدّ تشققًا مرسومًا «حفرة» — فلا تُضاف حفرة فوق تشقق يراه الكاشف البصري،
     // ولا حفرة منفردة بلا ثقة عالية جدًا (حتى لا يقلب الذكاء الاصطناعي وحده تصنيف نموذج سليم أو متشقق)
     const box = (c) => ({ x: c.x0 / r.W, y: c.y0 / r.H, w: c.w / r.W, h: c.h / r.H });
     const need = r.potN ? 0.55 : 0.7;
-    const extra = lab.aiDets.filter((a) => a.type === "pot" && a.conf >= need &&
+    const extra = lab.aiDets.filter((a) => a.type === "pot" && a.conf >= need && inRoad(r, a) &&
       !r.comps.some((c) => c.type === "pot" && iou(a, box(c)) > 0.1) && !r.comps.some((c) => c.type !== "pot" && iou(a, box(c)) > 0.25));
     if (!extra.length) return r;
     const comps = r.comps.concat(extra.map((a) => ({ type: "pot", area: a.w * r.W * a.h * r.H * 0.6, x0: a.x * r.W, y0: a.y * r.H, w: a.w * r.W, h: a.h * r.H, ai: true })));
@@ -165,6 +254,7 @@
 
   // ثبات القراءة: وسيط آخر 7 إطارات، والتصنيف بالأغلبية
   function stable(r) {
+    if (!r.road) { lab.frames = []; return r; }   // لا طريق: تبدأ القراءة من جديد عند ظهوره
     lab.frames.push(r); if (lab.frames.length > 7) lab.frames.shift();
     const cis = lab.frames.map((f) => f.ci).sort((a, b) => a - b), votes = {};
     lab.frames.forEach((f) => (votes[f.kind] = (votes[f.kind] || 0) + 1));
@@ -181,6 +271,18 @@
     g.setTransform(1, 0, 0, 1, geo.ox, geo.oy);
     const k = geo.w / r.W, ow = geo.w, oh = geo.h;
     const [zx, zy, zw, zh] = r.zone;
+    if (!r.road) {
+      g.setLineDash([8, 6]); g.strokeStyle = "rgba(251,191,36,.95)"; g.lineWidth = 2; g.strokeRect(zx * k, zy * k, zw * k, zh * k); g.setLineDash([]);
+      const fs = Math.round(Math.max(14, ow / 32)); g.font = `700 ${fs}px "Readex Pro", sans-serif`; g.textAlign = "center"; g.textBaseline = "middle"; g.direction = "rtl";
+      const t = "لا يوجد طريق في الإطار", tw = g.measureText(t).width + 28;
+      g.fillStyle = "rgba(15,23,42,.78)"; g.fillRect(ow / 2 - tw / 2, oh / 2 - fs, tw, fs * 2); g.fillStyle = "#fde68a"; g.fillText(t, ow / 2, oh / 2);
+      g.setTransform(1, 0, 0, 1, 0, 0); return;
+    }
+    // ما خارج سطح الطريق يُعتَّم: يرى المستخدم ما يُحلَّل فعلًا
+    const { gw, gh, road } = r.gate, m = document.createElement("canvas"); m.width = gw; m.height = gh;
+    const mc = m.getContext("2d"), md = mc.createImageData(gw, gh);
+    for (let c = 0; c < gw * gh; c++) { md.data[c * 4 + 3] = road[c] ? 0 : 120; }
+    mc.putImageData(md, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(m, 0, 0, gw * CS * k, gh * CS * k);
     g.setLineDash([8, 6]); g.strokeStyle = "rgba(255,255,255,.85)"; g.lineWidth = 2; g.strokeRect(zx * k, zy * k, zw * k, zh * k); g.setLineDash([]);
     g.font = `600 ${Math.round(Math.max(12, ow / 48))}px "Readex Pro", sans-serif`; g.textBaseline = "bottom"; g.direction = "rtl"; g.textAlign = "right";
     for (const c of r.comps) {
@@ -194,15 +296,21 @@
       g.fillStyle = COLORS[c.type]; g.fillRect(lx, ly, tw, th); g.fillStyle = "#fff"; g.fillText(t, lx + tw - 5, ly + th - 4);
     }
     g.setLineDash([4, 4]); g.strokeStyle = "#22d3ee"; g.lineWidth = 2;
-    for (const a of lab.aiDets) g.strokeRect(a.x * ow, a.y * oh, a.w * ow, a.h * oh);
+    for (const a of lab.aiDets) if (inRoad(r, a)) g.strokeRect(a.x * ow, a.y * oh, a.w * ow, a.h * oh);
     g.setLineDash([]); g.setTransform(1, 0, 0, 1, 0, 0);
   }
   function panel(r) {
     const [name, lvl] = KIND[r.kind];
     $("#labKind").textContent = name; $("#labKind").className = `pill big ${lvl}`;
+    if (!r.road) {
+      $("#labCI").textContent = "—"; $("#labCIbar").style.width = "0%";
+      $("#labCounts").innerHTML = Object.entries(TYPES).map(([k, v]) => `<span><i style="background:${COLORS[k]}"></i>${v}: <b>—</b></span>`).join("");
+      $("#labStats").textContent = WHY[r.gate.why] || WHY.small;
+      return;
+    }
     $("#labCI").textContent = fmtN(r.ci); $("#labCIbar").style.width = `${r.ci}%`; $("#labCIbar").style.background = D.color(r.ci >= 70 ? "low" : r.ci >= 55 ? "medium" : r.ci >= 40 ? "high" : "critical");
     $("#labCounts").innerHTML = Object.entries(TYPES).map(([k, v]) => `<span><i style="background:${COLORS[k]}"></i>${v}: <b>${fmtN(r.n[k])}</b></span>`).join("");
-    $("#labStats").textContent = `طول التشققات ${fmtN(r.lenRatio * 100)}% من عرض النموذج · مساحة الحفر ${fmtN(r.potPct, 1)}%${r.agree != null ? ` · ثبات القراءة ${fmtN(r.agree * 100)}%` : ""}${lab.fps ? ` · ${fmtN(lab.fps, 0)} إطار/ث` : ""}`;
+    $("#labStats").textContent = `سطح الطريق ${fmtN(r.gate.frac * 100)}% من الإطار · طول التشققات ${fmtN(r.lenRatio * 100)}% من عرض النموذج · مساحة الحفر ${fmtN(r.potPct, 1)}%${r.agree != null ? ` · ثبات القراءة ${fmtN(r.agree * 100)}%` : ""}${lab.fps ? ` · ${fmtN(lab.fps, 0)} إطار/ث` : ""}`;
   }
 
   // ---------- الكاميرا ----------
@@ -244,10 +352,22 @@
   const msg = (t) => { $("#labMsg").textContent = t; };
 
   function calibrate() {
-    const r = lab.raw; if (!r) { msg("شغّل الكاميرا أو حلّل صورة للنموذج السليم أولًا."); return; }
+    let r = lab.raw; if (!r) { msg("شغّل الكاميرا أو حلّل صورة للنموذج السليم أولًا."); return; }
+    if (!r.road) {
+      // لون النموذج غير مألوف (ليس رماديًا): تُؤخذ عيّنة اللون من وسط الإطار حيث يُفترض أن يكون النموذج
+      const src = lab.stream ? $("#labVideo") : lab.img, sw = lab.sw, sh = lab.sh, c = document.createElement("canvas");
+      c.width = 64; c.height = 36; const g = c.getContext("2d", { willReadFrequently: true });
+      g.drawImage(src, sw * 0.3, sh * 0.3, sw * 0.4, sh * 0.4, 0, 0, 64, 36);
+      const p = g.getImageData(0, 0, 64, 36).data; let G0 = 0, A0 = 0, B0 = 0, k = 0;
+      for (let j = 0; j < p.length; j += 4) { G0 += (p[j] * 77 + p[j + 1] * 150 + p[j + 2] * 29) >> 8; A0 += p[j] - p[j + 1]; B0 += (p[j] + p[j + 1]) / 2 - p[j + 2]; k++; }
+      lab.road = { g: G0 / k, a: A0 / k, b: B0 / k };
+      r = analyze(src, sw, sh);
+      if (!r.road) { lab.road = readRoad(); msg("لم يُتعرَّف على سطح طريق حتى بعد أخذ لون وسط الإطار — ضع النموذج السليم بحيث يملأ الإطار المتقطع ثم أعد المعايرة."); return; }
+    }
+    lab.road = { g: r.gate.color.g, a: r.gate.color.a, b: r.gate.color.b }; D.safeSet("darb-lab-road", JSON.stringify(lab.road));
     const d = r.diffs.slice().sort((a, b) => a - b), p = d[Math.floor(d.length * 0.998)] || 20;
     lab.T = Math.round(Math.min(60, Math.max(18, p + 8))); D.safeSet("darb-lab-T", lab.T); lab.frames = [];
-    msg(`تمت المعايرة على النموذج السليم: حساسية العتمة ${fmtN(lab.T)} (تُحفظ في هذا المتصفح). الآن وجّه الكاميرا لنموذجَي التشققات والحفر.`);
+    msg(`تمت المعايرة على النموذج السليم: حُفظ لون سطح النموذج وحساسية العتمة ${fmtN(lab.T)} (في هذا المتصفح). الآن وجّه الكاميرا لنموذجَي التشققات والحفر.`);
     if (!lab.stream && lab.img) process(lab.img, lab.img.naturalWidth, lab.img.naturalHeight, false);
   }
 
@@ -264,6 +384,7 @@
   const treat = (ci) => { const t = TREAT.find(([m]) => ci >= m); return { name: t[1], usd: t[2] * 7300 }; };  // 1 كم من طريق بمسارين (7.3 م)
   function save(slot) {
     const r = lab.cur; if (!r) { msg("لا توجد قراءة بعد."); return; }
+    if (!r.road) { msg("لا يوجد طريق في الإطار — وجّه الكاميرا إلى النموذج أولًا."); return; }
     const c = document.createElement("canvas"), W = 640, H = Math.round(640 * lab.sh / lab.sw);
     const o = document.createElement("canvas"); o.width = W; o.height = H; draw(r, o, { w: W, h: H, ox: 0, oy: 0 });
     c.width = W; c.height = H; const g = c.getContext("2d"); g.drawImage(lab.src, 0, 0, W, H); g.drawImage(o, 0, 0);  // الصورة ثم العيوب فوقها
@@ -306,5 +427,5 @@
   $("#labSave").addEventListener("click", (e) => { const b = e.target.closest("[data-slot]"); if (b) save(+b.dataset.slot); });
   document.addEventListener("visibilitychange", () => { if (document.hidden && lab.stream) stop(); });
   renderSlots();
-  window.DARB_LAB = { analyze, metrics, lab };  // للاختبار
+  window.DARB_LAB = { analyze, metrics, lab, process };  // للاختبار
 })();
