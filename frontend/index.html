@@ -95,7 +95,7 @@
       <div class="card">
         <div class="card-h">
           <h2 class="t"><span class="ico-sm" data-icon="wrench"></span>قائمة الأولويات</h2>
-          <div class="actions"><a class="btn ghost" href="/api/export/priorities.csv"><span data-icon="download"></span>تصدير CSV</a></div>
+          <div class="actions"><button class="btn ghost" id="prioCsv" type="button"><span data-icon="download"></span>تصدير CSV</button></div>
         </div>
         <div class="table-wrap">
           <table class="prio">
@@ -103,6 +103,7 @@
             <tbody id="prioBody"></tbody>
           </table>
         </div>
+        <div class="prio-more"><button class="btn ghost" id="prioMore" type="button" hidden></button></div>
       </div>
       </section>
     </section>
@@ -282,10 +283,11 @@
       <div class="block-h"><span class="ico3d " data-icon="bell"></span><div><h2>التنبيهات</h2><p>الأحداث المرصودة مرتّبة من الأحدث</p></div></div>
       <div class="toolbar">
         <div class="seg" id="alertFilter">
-          <button data-f="all" class="active">الكل</button>
+          <button data-f="all">الكل</button>
           <button data-f="critical">حرجة</button>
           <button data-f="warning">تحذير</button>
-          <button data-f="open">غير مُعالجة</button>
+          <button data-f="open" class="active">تحتاج إجراء</button>
+          <button data-f="info">ملاحظات تشغيلية</button>
         </div>
       </div>
       <div class="card"><ul id="alertList" class="alert-list"></ul></div>

@@ -87,7 +87,7 @@ def _video(src: dict, n: int, interval: float) -> list[np.ndarray]:
         time.sleep(3)
         cap = cv2.VideoCapture(src["url"])
     if not cap.isOpened():
-        raise CaptureError("تعذّر فتح البث (تأكد من دعم FFmpeg في OpenCV)")
+        raise CaptureError("تعذّر فتح البث المرئي: الخادم لا يستجيب أو البث متوقف مؤقتًا")
     frames, next_at, t0 = [], 0.0, time.time()
     deadline = t0 + n * interval + 60
     try:

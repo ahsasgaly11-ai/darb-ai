@@ -111,7 +111,7 @@
   }
   applyTheme(safeGet("darb-ui") === "dark" ? "dark" : "light");
 
-  const state = { summary: null, cameras: [], alerts: [], issues: [], alertFilter: "all", charts: {}, map: null, markers: {},
+  const state = { summary: null, cameras: [], alerts: [], issues: [], alertFilter: "open", charts: {}, map: null, markers: {},
     current: null, region: safeGet("darb-region") || "", regions: [] };
   const rq = (path) => path + (state.region ? (path.includes("?") ? "&" : "?") + "region=" + encodeURIComponent(state.region) : "");
 
@@ -134,7 +134,19 @@
   });
 
   // ---------- لوحة التحكم ----------
+  // قائمة الأولويات: أعلى 15 افتراضيًا، والتصدير CSV يُبنى في المتصفح (يعمل على الموقع الثابت دون خادم)
+  $("#prioMore").addEventListener("click", () => { state.prioAll = !state.prioAll; if (state.summary) renderSummary(state.summary); });
+  $("#prioCsv").addEventListener("click", () => {
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [["الترتيب", "المقطع", "الطريق", "المنطقة", "مستوى الخطر", "درجة الخطر", "احتمال التدهور 90 يومًا %", "مؤشر الحالة", "الاتجاه نقطة/أسبوع", "أسابيع حتى عتبة الصيانة", "العامل الأبرز"]]
+      .concat((state.prio || []).map((c, i) => [i + 1, c.name, c.road, c.region, LEVEL_AR[c.risk.level], c.risk.score, Math.round(c.risk.prob_90d * 100),
+        c.risk.ci ?? c.last_snapshot?.condition_index, c.risk.trend_ready === false ? "" : c.risk.slope, c.risk.weeks_to_threshold ?? "", c.risk.top_factor]));
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["\ufeff" + rows.map((r) => r.map(q).join(",")).join("\n")], { type: "text/csv;charset=utf-8" }));
+    a.download = `darb-priorities-${new Date().toISOString().slice(0, 10)}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  });
   function renderSummary(s) {
+    state.summary = s;
     $("#seedingNote").hidden = !s.seeding;
     const crit = s.levels.critical + s.levels.high;
     $("#kpis").innerHTML = [
@@ -144,7 +156,7 @@
       kpi("دون عتبة الصيانة", fmtN(s.below_threshold), "تحتاج تدخلًا تصحيحيًا", s.below_threshold > 0, "wrench"),
       kpi("مشكلات متوقعة (قبل)", fmtN(s.lifecycle.stages.predicted), "فرص صيانة وقائية", false, "clock", "warn"),
       kpi("مشكلات نشطة (أثناء)", fmtN(s.lifecycle.stages.active), `${fmtN(s.lifecycle.stages.monitoring)} قيد المراقبة بعد المعالجة`, s.lifecycle.stages.active > 0, "activity"),
-      kpi("تنبيهات مفتوحة", fmtN(s.open_alerts), `${fmtN(s.alerts_7d)} خلال 7 أيام`, s.open_alerts > 0, "bell"),
+      kpi("تنبيهات تحتاج إجراء", fmtN(s.open_alerts), s.open_notices != null ? `${fmtN(s.open_notices)} ملاحظة تشغيلية · ${fmtN(s.alerts_7d)} خلال 7 أيام` : `${fmtN(s.alerts_7d)} خلال 7 أيام`, s.open_alerts > 0, "bell"),
       ...(s.gulf?.max_pavement ? [
         kpi("أعلى حرارة رصف", `${fmtN(s.gulf.max_pavement, 0)}°م`, esc(s.gulf.max_pavement_camera), s.gulf.max_pavement >= 64, "sun", "warn"),
         kpi("خطر تخدد مرتفع", fmtN(s.gulf.rutting_high), `${fmtN(s.gulf.rutting_medium)} متوسط · ${fmtN(s.gulf.pg_deficit)} برابط أقل من المطلوب`, s.gulf.rutting_high > 0, "road", "warn"),
@@ -158,17 +170,22 @@
     $("#levelBars").innerHTML = ["critical", "high", "medium", "low"].map((l) => `
       <div class="lvl"><span>${LEVEL_AR[l]}</span><div class="track"><div class="fill" style="width:${(100 * s.levels[l]) / max}%;background:${color(l)}"></div></div><b>${fmtN(s.levels[l])}</b></div>`).join("");
 
-    $("#prioBody").innerHTML = s.priorities.map((c, i) => {
+    state.prio = s.priorities;
+    const prioRows = state.prioAll ? s.priorities : s.priorities.slice(0, 15);
+    $("#prioMore").hidden = s.priorities.length <= 15;
+    $("#prioMore").textContent = state.prioAll ? "عرض أعلى 15 فقط" : `عرض كل المقاطع (${fmtN(s.priorities.length)})`;
+    $("#prioBody").innerHTML = prioRows.map((c, i) => {
       const r = c.risk, ci = r.ci ?? c.last_snapshot?.condition_index;
       const sl = r.slope ?? 0;
-      const tr = sl < -0.15 ? ["down", "▼"] : sl > 0.15 ? ["up", "▲"] : ["flat", "■"];
+      // الاتجاه يحتاج 3 أسابيع على الأقل من اللقطات؛ قبلها يُعرض «قيد التكوين» بدل 0.00 المضلِّل
+      const tr = r.trend_ready === false ? ["flat", "قيد التكوين"] : sl < -0.15 ? ["down", `▼ ${fmtN(sl, 2)}`] : sl > 0.15 ? ["up", `▲ ${fmtN(sl, 2)}`] : ["flat", "مستقر"];
       return `<tr data-cam="${esc(c.id)}">
         <td><span class="rank">${fmtN(i + 1)}</span></td>
         <td class="name"><b>${esc(c.name)}</b><span>${esc(c.road)}</span></td>
         <td><span class="pill ${r.level}">${LEVEL_AR[r.level]} · ${fmtN(r.score)}</span></td>
         <td><div class="meter"><div class="bar"><i style="width:${r.prob_90d * 100}%;background:${color(r.level)}"></i></div><span class="num">${fmtN(r.prob_90d * 100)}%</span></div></td>
         <td class="num"><b>${fmtN(ci, 0)}</b></td>
-        <td class="trend ${tr[0]} num">${tr[1]} ${fmtN(sl, 2)}</td>
+        <td class="trend ${tr[0]} num">${tr[1]}</td>
         <td>${weeksText(r.weeks_to_threshold)}</td>
         <td class="muted">${esc(r.top_factor || "—")}</td>
       </tr>`;
@@ -209,10 +226,16 @@
   }
   function renderAlerts() {
     const f = state.alertFilter;
-    const list = state.alerts.filter((a) => f === "all" || (f === "open" ? !a.ack : a.severity === f));
+    const pick = (k) => state.alerts.filter((a) => k === "all" || (k === "open" ? !a.ack && a.severity !== "info" : a.severity === k));
+    const SEV = { critical: 0, warning: 1, info: 2 };
+    const list = f === "open" ? pick(f).sort((a, b) => SEV[a.severity] - SEV[b.severity] || (a.ts < b.ts ? 1 : -1)) : pick(f);  // الحرج أولًا
+    $$("#alertFilter button").forEach((b) => { b.dataset.label ??= b.textContent; b.textContent = `${b.dataset.label} (${fmtN(pick(b.dataset.f).length)})`; });
     $("#alertList").innerHTML = list.map((a) => alertItem(a)).join("") || `<li class="empty">لا توجد تنبيهات</li>`;
-    $("#recentAlerts").innerHTML = state.alerts.filter((a) => a.type !== "scene_change").slice(0, 6).map((a) => alertItem(a, true)).join("") || `<li class="empty">لا توجد تنبيهات</li>`;
-    const open = state.alerts.filter((a) => !a.ack).length;
+    // اللوحة: ما يحتاج إجراء أولًا، ثم أحدث الأحداث المهمة (تُستبعد الملاحظات التشغيلية مثل تغيّر زاوية الكاميرا)
+    const important = state.alerts.filter((a) => a.severity !== "info" || ["resolved", "predicted"].includes(a.type));
+    const recent = [...important.filter((a) => !a.ack), ...important.filter((a) => a.ack)].slice(0, 6);
+    $("#recentAlerts").innerHTML = recent.map((a) => alertItem(a, true)).join("") || `<li class="empty">لا توجد تنبيهات تحتاج إجراء</li>`;
+    const open = state.alerts.filter((a) => !a.ack && a.severity !== "info").length;
     const b = $("#alertBadge"); b.hidden = !open; b.textContent = fmtN(open);
   }
   $("#alertFilter").addEventListener("click", (e) => {
@@ -942,11 +965,15 @@
     $("#budgetNeed").textContent = `الاحتياج الكامل للشبكة الآن: ${money(need)} · لو أُجّل كله سنة: ${money(e.items.filter((x) => x.treatment_now.key !== "routine" || x.must_do).reduce((n, x) => n + x.cost_later, 0))}`;
     $("#budgetPresets").innerHTML = [0.25, 0.5, 1].map((f) => `<button type="button" class="chip-btn" data-bud="${Math.round(need * f)}">${f === 1 ? "الاحتياج كاملًا" : `${f * 100}% من الاحتياج`}</button>`).join("");
     const p = econPlan(e.items, econ.budget);
+    // مقطع إلزامي للسلامة لم تكفه الميزانية: يُعرض تحذير صريح بدل أن يختفي في جدول «خارج الميزانية»
+    const mustLeft = p.skip.filter((x) => x.must_do);
+    $("#budgetNeed").innerHTML = esc($("#budgetNeed").textContent) + (mustLeft.length
+      ? `<span class="must-warn">${svg("alert")}${fmtN(mustLeft.length)} مقطع إلزامي للسلامة لم يُموَّل (${mustLeft.map((x) => esc(x.name)).join("، ")}) — يحتاج ${money(mustLeft.reduce((n, x) => n + x.cost_now, 0))} إضافية على الأقل.</span>` : "");
     $("#budgetKpis").innerHTML = [
       kpi("مقاطع ممولة", `${fmtN(p.sel.length)} / ${fmtN(p.sel.length + p.skip.length)}`, `${fmtN(p.sel.filter((x) => x.must_do).length)} إلزامية للسلامة`, false, "check", "ok"),
       kpi("المصروف", money(p.spent), `المتبقي ${money(p.left)}`, false, "coins"),
       kpi("الكلفة المتجنَّبة", money(p.benefit), "وفر التأجيل + كلفة المستخدمين السنوية", false, "trend", "ok"),
-      kpi("العائد لكل وحدة نقدية", `×${fmtN(p.roi, 1)}`, "كل وحدة نقدية تُصرف الآن توفّر هذا القدر", false, "gauge", "warn"),
+      kpi("العائد لكل وحدة نقدية", `×${fmtN(p.roi, p.roi < 1 ? 2 : 1)}`, "كل وحدة نقدية تُصرف الآن توفّر هذا القدر", false, "gauge", "warn"),
       kpi("كلفة الانتظار", money(p.penalty), "زيادة كلفة المقاطع غير الممولة بعد سنة", p.penalty > 0, "clock"),
     ].join("");
     const row = (x, i) => `<tr data-cam="${esc(x.camera_id)}"><td><span class="rank">${fmtN(i + 1)}</span></td>
@@ -954,7 +981,7 @@
       <td><b>${esc(x.treatment_now.name)}</b><span class="muted sub">${esc(x.treatment_now.desc)}</span></td>
       <td class="num"><b>${money(x.cost_now)}</b></td>
       <td><span class="muted">${esc(x.treatment_later.name)}</span><br><span class="num">${money(x.cost_later)}</span></td>
-      <td class="num good">${money(x.deferral_saving)}</td><td class="num"><b>×${fmtN(x.ratio, 1)}</b></td></tr>`;
+      <td class="num good">${money(x.deferral_saving)}</td><td class="num"><b>×${fmtN(x.ratio, x.ratio < 1 ? 2 : 1)}</b></td></tr>`;
     $("#planBody").innerHTML = p.sel.map(row).join("") || `<tr><td colspan="7" class="empty">الميزانية لا تكفي أي معالجة — ارفعها أو اختر إحدى النسب أعلاه</td></tr>`;
     $("#unfundedBody").innerHTML = p.skip.map((x) => `<tr data-cam="${esc(x.camera_id)}"><td class="name"><b>${esc(x.name)}</b><span>${esc(x.road)}</span></td>
       <td class="num">${fmtN(x.ci)} ← <b class="${x.ci_in_12m < x.ci - 5 ? "bad" : ""}">${fmtN(x.ci_in_12m)}</b></td>

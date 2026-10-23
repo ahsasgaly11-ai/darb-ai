@@ -64,7 +64,8 @@ static_css = '''
 @media (max-width: 720px) { .snapnote { padding-inline: 16px; } }
 '''
 
-head_links = '\n'.join(re.findall(r'<link rel="(?:preconnect|stylesheet)" href="https://fonts\.[^"]+"[^>]*>', html))
+head_links = '\n'.join(re.findall(r'<link rel="icon"[^>]*>', html)  # بدونها يطلب المتصفح favicon.ico فيظهر خطأ 404
+                       + re.findall(r'<link rel="(?:preconnect|stylesheet)" href="https://fonts\.[^"]+"[^>]*>', html))
 body = html[html.index("<body>") + 6: html.index("</body>")]
 body = re.sub(r'\s*<script src="(?:app|lab)\.js"></script>', "", body)
 body = body.replace('<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>',

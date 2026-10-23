@@ -73,11 +73,19 @@ def _live(src: dict) -> dict | None:
     return None
 
 
+def _weeks_span(cam_id: str) -> float:
+    r = db.one("SELECT MIN(ts) a, MAX(ts) b FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL", (cam_id,))
+    if not r or not r["a"]:
+        return 0.0
+    return (datetime.fromisoformat(r["b"]) - datetime.fromisoformat(r["a"])).days / 7
+
+
 def _camera_summary(cam: dict) -> dict:
     last = db.one("""SELECT id,ts,kind,condition_index,pothole_count,crack_density,changed_pct
                      FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL ORDER BY ts DESC LIMIT 1""", (cam["id"],))
     r = pipeline.latest_risk(cam["id"])
-    open_alerts = db.one("SELECT COUNT(*) n FROM alerts WHERE camera_id=? AND ack=0", (cam["id"],))["n"]
+    # «تنبيه مفتوح» = حدث يحتاج قرارًا (حرج/تحذير)؛ الملاحظات التشغيلية (زاوية الكاميرا، صورة متجمدة) لا تُحسب
+    open_alerts = db.one("SELECT COUNT(*) n FROM alerts WHERE camera_id=? AND ack=0 AND severity!='info'", (cam["id"],))["n"]
     return {
         "id": cam["id"], "name": cam["name"], "road": cam["road"], "lat": cam["lat"], "lng": cam["lng"],
         "region": cam.get("region", ""),
@@ -88,6 +96,8 @@ def _camera_summary(cam: dict) -> dict:
                        "prob_90d": r["prob_90d"], "weeks_to_threshold": r["weeks_to_threshold"],
                        "priority": r["forecast"].get("priority"), "top_factor": r["factors"][0]["label"] if r["factors"] else None,
                        "slope": r["forecast"].get("ci_slope"), "ci": r["forecast"].get("ci"),
+                       # الاتجاه موثوق بعد 3 أسابيع من اللقطات على الأقل (وسيط أسبوعي)
+                       "trend_ready": _weeks_span(cam["id"]) >= 3,
                        "rutting": (r["forecast"].get("gulf") or {}).get("rutting_risk"),
                        "pavement_t": (r["forecast"].get("gulf") or {}).get("pavement_t7max"),
                        "pg_deficit": (r["forecast"].get("gulf") or {}).get("pg_deficit_grades"),
@@ -139,7 +149,8 @@ def summary(region: str | None = None):
         "cameras": len(cams), "levels": levels,
         "awaiting": sum(1 for c in cams if not c["last_snapshot"]),
         "avg_condition": round(sum(cis) / len(cis), 1) if cis else None,
-        "open_alerts": db.one(f"SELECT COUNT(*) n FROM alerts WHERE ack=0 AND camera_id IN ({marks})", ids)["n"],
+        "open_alerts": db.one(f"SELECT COUNT(*) n FROM alerts WHERE ack=0 AND severity!='info' AND camera_id IN ({marks})", ids)["n"],
+        "open_notices": db.one(f"SELECT COUNT(*) n FROM alerts WHERE ack=0 AND severity='info' AND camera_id IN ({marks})", ids)["n"],
         "alerts_7d": db.one(f"SELECT COUNT(*) n FROM alerts WHERE ts>? AND camera_id IN ({marks})", [week_ago] + ids)["n"],
         "below_threshold": sum(1 for v in cis if v <= config.MAINTENANCE_THRESHOLD),
         "snapshots": db.one(f"SELECT COUNT(*) n FROM snapshots WHERE camera_id IN ({marks})", ids)["n"],
@@ -330,7 +341,10 @@ def list_alerts(limit: int = Query(100, le=500), unacked: bool = False):
     sql = "SELECT a.*, c.name camera_name, c.lat, c.lng FROM alerts a JOIN cameras c ON c.id=a.camera_id"
     if unacked:
         sql += " WHERE a.ack=0"
-    return db.query(sql + " ORDER BY a.ts DESC LIMIT ?", (limit,))
+    rows = db.query(sql + " ORDER BY a.ts DESC LIMIT ?", (limit,))
+    for r in rows:  # العنوان من القاموس الحالي (تنبيهات قديمة حُفظ عنوانها قبل ترجمة نوعها)
+        r["title"] = f"{pipeline.ALERT_TEXT.get(r['type'], r['type'])} — {r['camera_name']}"
+    return rows
 
 
 @app.post("/api/alerts/{aid}/ack", dependencies=[Depends(admin)])

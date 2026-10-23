@@ -210,7 +210,10 @@ h2.t { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; }
 .link { border: 0; background: none; color: var(--brand); font-size: .84rem; padding: 0; font-weight: 600; }
 
 /* ---- مؤشرات ---- */
-.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(138px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 8px; }
+.must-warn { display: flex; gap: 6px; align-items: flex-start; margin-top: 8px; color: var(--critical); font-weight: 600; }
+.must-warn svg { width: 18px; height: 18px; flex: none; margin-top: 2px; }
+.prio-more { display: flex; justify-content: center; padding: 12px 0 2px; }
 .kpi { position: relative; padding: 20px 22px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); box-shadow: var(--depth-1);
   transition: transform .2s ease, box-shadow .2s ease; overflow: hidden; }
 .kpi:hover { transform: translateY(-3px); box-shadow: var(--depth-2); }
@@ -561,6 +564,7 @@ form.maint input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(
 .econ-verdict { margin: 12px 0 0; }
 
 /* ---- فيزياء الطريق الخليجية ---- */
+[hidden] { display: none !important; }
 .events-note { background: color-mix(in srgb, var(--high) 9%, var(--surface)); border-color: color-mix(in srgb, var(--high) 35%, transparent); display: grid; gap: 6px; }
 .events-note div { display: flex; gap: 8px; align-items: flex-start; }
 .events-note svg { color: var(--high); width: 20px; height: 20px; flex: none; margin-top: 2px; }
