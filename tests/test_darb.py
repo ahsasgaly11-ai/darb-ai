@@ -216,8 +216,13 @@ def test_lifecycle_before_during_after():
     lifecycle.update(cam, ts(5), res(52), {"ci": 52, "weeks_to_threshold": 0, "ci_slope": -3}, noalerts, add)
     i = db.one("SELECT * FROM issues WHERE id=?", (i["id"],))
     assert i["stage"] == "active" and i["detected_ts"] == ts(5)
-    # بعد: إعادة رصف (قفزة كبيرة في المؤشر) → مراقبة
+    # بعد: إعادة رصف (قفزة كبيرة في المؤشر) — لقطة واحدة لا تكفي (قد تكون صورة متأخرة أو إضاءة منخفضة)
     lifecycle.update(cam, ts(8), res(95), {"ci": 95, "weeks_to_threshold": None, "ci_slope": 0}, noalerts, add)
+    i = db.one("SELECT * FROM issues WHERE id=?", (i["id"],))
+    assert i["stage"] == "active" and "resolved" not in calls
+    # تتأكد في لقطة اليوم التالي → مراقبة
+    t1 = (t0 + timedelta(weeks=8, days=1)).isoformat(timespec="seconds")
+    lifecycle.update(cam, t1, res(95), {"ci": 95, "weeks_to_threshold": None, "ci_slope": 0}, noalerts, add)
     i = db.one("SELECT * FROM issues WHERE id=?", (i["id"],))
     assert i["stage"] == "monitoring" and i["resolution"] == "repaired" and "resolved" in calls
     # انتهاء مراقبة ما بعد الإصلاح دون عودة → مغلقة
@@ -225,7 +230,7 @@ def test_lifecycle_before_during_after():
     i = db.one("SELECT * FROM issues WHERE id=?", (i["id"],))
     assert i["stage"] == "closed" and i["resolution"] == "repaired"
     k = lifecycle.kpis(["t-life"])
-    assert k["avg_lead_weeks"] == 5 and k["avg_days_to_resolve"] == 21 and k["prediction_precision"] == 1.0
+    assert k["avg_lead_weeks"] == 5 and abs(k["avg_days_to_resolve"] - 22) < 0.5 and k["prediction_precision"] == 1.0
 
 
 def test_defect_tracking_across_captures():
@@ -357,6 +362,22 @@ def test_roi_follows_ptz_camera():
     db.insert("snapshots", {"camera_id": "t-ptz", "ts": (today - timedelta(days=1)).isoformat(), "kind": "sentinel",
                             "image_path": "x.jpg", "quality": "view_lost", "metrics": {}})
     assert pipeline._view_lost_persists(cam, today.isoformat())
+
+
+def test_stale_overlay_clock(monkeypatch):
+    """صورة ADOT متجمدة: ساعتها المطبوعة متأخرة ساعات عن الوقت المحلي ⇐ تُرفض؛ وغياب Tesseract لا يرفض شيئًا."""
+    import shutil
+    from zoneinfo import ZoneInfo
+    img = np.full((720, 1280, 3), 120, np.uint8)
+    cv2.rectangle(img, (950, 15), (1270, 55), (20, 20, 20), -1)
+    cv2.putText(img, "10/23/2026 06:44:58", (960, 45), cv2.FONT_HERSHEY_SIMPLEX, 0.85, (255, 255, 255), 2)
+    now = datetime(2026, 10, 23, 13, 49, tzinfo=ZoneInfo("America/Phoenix"))
+    if shutil.which("tesseract"):
+        lag = sources.overlay_lag(img, "America/Phoenix", now)
+        assert lag is not None and 400 < lag < 430
+        assert abs(sources.overlay_lag(img, "America/Phoenix", now.replace(hour=6, minute=46))) < 5
+    monkeypatch.setattr(shutil, "which", lambda name: None)
+    assert sources.overlay_lag(img, "America/Phoenix", now) is None
 
 
 def test_gulf_pavement_physics():

@@ -179,6 +179,67 @@ def due(args) -> int:
     return 0
 
 
+def reanalyze(args) -> int:
+    """إعادة تحليل لقطات الأيام الأخيرة بقواعد الكشف الحالية (بعد تحسين النموذج أو قواعد الجودة) لتبقى السلسلة
+    الزمنية متسقة: الصور المتجمدة تُستبعد، والمؤشر يُعاد حسابه بالمنطقة نفسها التي حُللت بها كل لقطة،
+    ثم يُعاد تقييم المخاطر، ويُعاد فتح «إصلاح» بُني على لقطات ثبت أنها غير صالحة."""
+    from . import config, db, lifecycle, pipeline, sources, vision
+    config.ensure_dirs()
+    pipeline.sync_cameras()
+    since = (datetime.now(timezone.utc) - timedelta(days=args.days)).isoformat()
+    cams = {c["id"]: c for c in pipeline.cameras()}
+    touched, voided = {}, {}
+    for s in db.query("SELECT * FROM snapshots WHERE ts>=? AND condition_index IS NOT NULL ORDER BY ts", (since,)):
+        cam = cams.get(s["camera_id"])
+        img = pipeline.load_image(s["image_path"]) if cam else None
+        if img is None:
+            continue
+        m = json.loads(s["metrics"] or "{}")
+        if cam["source"].get("type") == "az511":
+            lag = sources.overlay_lag(img, pipeline.tz(cam).key, datetime.fromisoformat(s["ts"]))
+            if lag is not None and lag > pipeline.STALE_MINUTES:
+                with db.tx() as c:
+                    c.execute("UPDATE snapshots SET condition_index=NULL, crack_density=NULL, pothole_count=NULL, quality='stale', "
+                              "metrics=? WHERE id=?", (json.dumps({**m, "image_lag_min": lag}, ensure_ascii=False), s["id"]))
+                voided.setdefault(cam["id"], []).append(s["ts"])
+                touched.setdefault(cam["id"], s["ts"])
+                continue
+        roi = m.get("roi") or sources.default_roi(cam)
+        r = vision.analyze(img, roi, cam["source"].get("type") != "demo")
+        if abs(r["condition_index"] - (s["condition_index"] or 0)) < 0.5 and r["pothole_count"] == s["pothole_count"]:
+            continue
+        keep = {k: m[k] for k in ("change", "quality", "confirmed", "view", "roi", "sand_cover") if k in m}
+        with db.tx() as c:
+            c.execute("UPDATE snapshots SET condition_index=?, crack_density=?, pothole_count=?, metrics=? WHERE id=?",
+                      (r["condition_index"], r["crack_density"], r["pothole_count"], json.dumps({**r, **keep}, ensure_ascii=False), s["id"]))
+        log.info("%s %s: CI %.1f -> %.1f", cam["id"], s["ts"][:16], s["condition_index"], r["condition_index"])
+        touched.setdefault(cam["id"], s["ts"])
+    # المخاطر: يُعاد حسابها من أول لقطة تغيّرت
+    for cid, first in touched.items():
+        cam = cams[cid]
+        with db.tx() as c:
+            c.execute("DELETE FROM risk WHERE camera_id=? AND ts>=?", (cid, first))
+        for h in [h for h in pipeline.history(cid) if h["ts"] >= first]:
+            a = pipeline.assess_camera(cam, datetime.fromisoformat(h["ts"]))
+            if a:
+                pipeline.store_risk(cid, h["ts"], a)
+    # «أُصلحت» بناءً على لقطة متجمدة: تعود المشكلة نشطة إن بقي آخر مؤشر صالح دون العتبة
+    for cid, tss in voided.items():
+        last = db.one("SELECT condition_index FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL ORDER BY ts DESC LIMIT 1", (cid,))
+        for i in db.query("SELECT * FROM issues WHERE camera_id=? AND stage IN ('monitoring','closed') AND resolution='repaired'", (cid,)):
+            if i["resolved_ts"] in tss and last and last["condition_index"] <= config.MAINTENANCE_THRESHOLD:
+                ev = json.loads(i["events"]) + [{"ts": datetime.now(timezone.utc).isoformat(timespec="seconds"), "stage": "active",
+                                                 "note": "أُعيد فتحها: «الإصلاح» رُصد من صورة متجمدة لا تتجدد"}]
+                with db.tx() as c:
+                    c.execute("UPDATE issues SET stage='active', resolved_ts=NULL, closed_ts=NULL, resolution=NULL, events=? WHERE id=?",
+                              (json.dumps(ev, ensure_ascii=False), i["id"]))
+                log.info("reopened issue %s on %s", i["id"], cid)
+    log.info("reanalyzed: %d cameras changed, %d stale snapshots voided, alerts revalidated: %d",
+             len(touched), sum(map(len, voided.values())), pipeline.revalidate_alerts())
+    build_site(args)
+    return 0
+
+
 def build_site(args) -> None:
     if args.site:
         site = Path(args.site)
@@ -276,11 +337,14 @@ def main() -> int:
     sub = p.add_subparsers(dest="cmd", required=True)
     for name, help_ in (("daily", "التقاط يومي (5–25 إطارًا) للمناطق التي في نافذة النهار 8–16ًا + تحليل + بناء الموقع"),
                         ("confirm", "إعادة التقاط الكاميرات المشتبه بها بعد ساعة"),
-                        ("due", "ما المطلوب الآن: daily | confirm | none")):
+                        ("due", "ما المطلوب الآن: daily | confirm | none"),
+                        ("reanalyze", "إعادة تحليل لقطات الأيام الأخيرة بقواعد الكشف الحالية")):
         d = sub.add_parser(name, help=help_)
         d.add_argument("--regions", help="المناطق (يتجاوز DARB_REGIONS)")
         d.add_argument("--site", help="مجلد إخراج الموقع الثابت")
         d.add_argument("--leaflet-css", default=str(ROOT / "tools" / "leaflet.css"))
+        if name == "reanalyze":
+            d.add_argument("--days", type=int, default=4)
         if name == "daily":
             d.add_argument("--now", action="store_true", help="تحديث يدوي: كل كاميرا حية في ضوء النهار الآن، ولو التُقطت اليوم")
     args = p.parse_args()
@@ -288,7 +352,7 @@ def main() -> int:
         os.environ["DARB_REGIONS"] = args.regions  # قبل استيراد config
     os.environ.setdefault("DARB_CONFIRM_RECAPTURE", "0")
     os.environ.setdefault("DARB_SCHEDULER", "0")
-    return {"confirm": confirm, "due": due}.get(args.cmd, daily)(args)
+    return {"confirm": confirm, "due": due, "reanalyze": reanalyze}.get(args.cmd, daily)(args)
 
 
 if __name__ == "__main__":

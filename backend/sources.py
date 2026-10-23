@@ -19,9 +19,11 @@
 from __future__ import annotations
 
 import threading
+import re
+import shutil
 import time
 from collections import OrderedDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import cv2
@@ -218,6 +220,41 @@ def _az511(src: dict, n: int, interval: float) -> list[np.ndarray]:
     if not frames:
         raise CaptureError(f"لم تُستلم صور من {label}")
     return frames
+
+
+_CLOCK = re.compile(r"(\d{1,2})\s*:\s*(\d{2})\s*:\s*(\d{2})")
+
+
+def overlay_lag(img: np.ndarray, tzname: str, now: datetime | None = None) -> float | None:
+    """كم دقيقة تتأخر ساعة الصورة المطبوعة عليها عن الوقت المحلي الآن (كاميرات ADOT تطبع التاريخ والوقت أعلى يمين الصورة).
+    بعض الكاميرات «تتجمد»: يعيد الخادم صورة الصباح طوال اليوم (يوما فورتونا: 06:44 والساعة 13:49)، فتبدو قراءة جديدة وهي
+    قديمة. يعيد None إذا تعذّرت القراءة (Tesseract غير مثبّت أو النص غير واضح) فلا يُرفض شيء بلا دليل."""
+    if not shutil.which("tesseract"):
+        return None
+    try:
+        import pytesseract
+    except ImportError:
+        return None
+    h, w = img.shape[:2]
+    if w > 1280:
+        img = cv2.resize(img, (1280, int(h * 1280 / w)), interpolation=cv2.INTER_AREA)
+        h, w = img.shape[:2]
+    band = cv2.cvtColor(img[: int(h * 0.14), int(w * 0.45):], cv2.COLOR_BGR2GRAY)
+    reads = []
+    for thr in (150, 190):  # نص أبيض على مربع داكن: يُعكس ليصبح أسود على أبيض
+        b = cv2.resize(np.where(band > thr, 0, 255).astype(np.uint8), None, fx=3, fy=3, interpolation=cv2.INTER_NEAREST)
+        try:
+            txt = pytesseract.image_to_string(b, config="--psm 11 -c tessedit_char_whitelist=0123456789/:", timeout=10)
+        except Exception:
+            continue
+        m = _CLOCK.search(txt.replace("\n", " "))
+        if m and int(m.group(1)) < 24 and int(m.group(2)) < 60:
+            reads.append(int(m.group(1)) * 60 + int(m.group(2)))
+    if not reads or (len(reads) == 2 and abs(reads[0] - reads[1]) > 2):
+        return None  # قراءتان متعارضتان: لا ثقة
+    local = (now or datetime.now(timezone.utc)).astimezone(ZoneInfo(tzname))
+    # فرق بإشارة في (−12 س، 12 س]: ساعة الصورة تسبق لحظة بدء الدفعة ببضع دقائق عادةً (سالب صغير = طبيعي)
+    return float((local.hour * 60 + local.minute - reads[0] + 720) % 1440 - 720)
 
 
 def supports_history(camera: dict) -> bool:

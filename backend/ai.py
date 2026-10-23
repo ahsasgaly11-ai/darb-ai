@@ -139,20 +139,31 @@ def detect(img: np.ndarray, mask: np.ndarray) -> list[dict]:
         dup = next((o for o in out if o[4] == b[4] and _iou(o[:4], b[:4]) > 0.35), None)
         if dup is None:
             out.append(b + [{b[6]}])
-        else:
-            if b[6] not in dup[7]:
-                dup[7].add(b[6])
-                dup[5] = min(0.99, dup[5] + 0.1 * b[5])
-            dup[0], dup[1] = min(dup[0], b[0]), min(dup[1], b[1])
-            dup[2], dup[3] = max(dup[2], b[2]), max(dup[3], b[3])
+        elif b[6] not in dup[7]:
+            # يبقى مربع الاكتشاف الأوثق كما هو: توسيعه إلى اتحاد المربعات كان يضخّم تشققًا واحدًا عبر البلاطات
+            # إلى مربع يغطي التقاطع كله (فوتهيلز: المؤشر 89 ← 33 بلا تغيّر في الطريق)
+            dup[7].add(b[6])
+            dup[5] = min(0.99, dup[5] + 0.1 * b[5])
     # الحفرة تطلق تنبيهًا حرجًا: نشترط اتفاق نموذجين أو ثقة عالية (في الصور الحقيقية كانت بقايا
     # دراجة نارية داكنة تُقرأ حفرة من نموذج واحد بثقة منخفضة)
     if len(ms) > 1:
         out = [b for b in out if b[4] != "pothole" or len(b[7]) > 1 or b[5] >= 0.5]
-    fill = {"crack_long": 0.22, "crack_trans": 0.22, "alligator": 0.5, "pothole": 0.7, "repair": 0.8}
+        # مربع عيب يغطي ربع منطقة الطريق أو أكثر يغيّر المؤشر وحده عشرات النقاط: يُشترط اتفاق النموذجين أو ثقة عالية
+        # (فوتهيلز: «تمساحي» بثقة 0.32 من نموذج واحد غطّى 54% من تقاطع أملس؛ فورتونا المتشقق فعلًا: 0.83 من النموذجين)
+        roi_px = float((mask > 0).sum()) or 1.0
+        out = [b for b in out if (b[2] - b[0]) * (b[3] - b[1]) < 0.25 * roi_px or len(b[7]) > 1 or b[5] >= 0.5]
+    fill = {"alligator": 0.5, "pothole": 0.7, "repair": 0.8}
+    band = max(6.0, w * 0.012)  # عرض الشريط المتأثر حول التشقق الخطي (~15 بكسل في صورة بعرض 1280)
+
+    def area(b):
+        bw, bh = b[2] - b[0], b[3] - b[1]
+        if b[4] in ("crack_long", "crack_trans"):
+            # التشقق الخطي يُقاس بطوله (قطر مربعه) × شريط ثابت، لا بمساحة مربعه: المربع الكبير لتشقق مائل
+            # لا يعني سطحًا متضررًا أكبر بتربيع الحجم
+            return float(min(bw * bh, np.hypot(bw, bh) * band))
+        return float(bw * bh * fill[b[4]])
+
     return [{
         "type": b[4], "bbox": [int(b[0]), int(b[1]), int(b[2] - b[0]), int(b[3] - b[1])],
-        # التشقق يشغل جزءًا من مربعه فقط — المساحة الفعلية تقديرية حسب الفئة
-        "area": float((b[2] - b[0]) * (b[3] - b[1]) * fill[b[4]]),
-        "confidence": round(b[5], 2), "models": sorted(b[7]),
+        "area": area(b), "confidence": round(b[5], 2), "models": sorted(b[7]),
     } for b in out]

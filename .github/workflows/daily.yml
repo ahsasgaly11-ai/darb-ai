@@ -11,9 +11,9 @@ on:
   workflow_dispatch:
     inputs:
       cmd:
-        description: "daily = التقاط يومي، now = تحديث فوري لكل كاميرا في ضوء النهار الآن (بعد تعديل الإعدادات)، confirm = تأكيد الاشتباهات"
+        description: "daily = التقاط يومي، reanalyze = إعادة تحليل آخر 5 أيام بالقواعد الحالية، now = تحديث فوري لكل كاميرا في ضوء النهار الآن (بعد تعديل الإعدادات)، confirm = تأكيد الاشتباهات"
         type: choice
-        options: [daily, now, confirm]
+        options: [daily, now, confirm, reanalyze]
         default: daily
 
 permissions:
@@ -53,6 +53,7 @@ jobs:
           cmd="${{ inputs.cmd }}"
           [ -z "$cmd" ] && cmd=$(python3 -m backend.cli due || echo daily)  # إن تعذّر الفحص: التشغيل الكامل أسلم
           [ "$cmd" = now ] && cmd="daily --now"
+          [ "$cmd" = reanalyze ] && cmd="reanalyze --days 5"
           echo "cmd=$cmd" >> "$GITHUB_OUTPUT"
           if [ "$cmd" = none ]; then
             echo "run=false" >> "$GITHUB_OUTPUT"; echo "لا عمل الآن: كل كاميرات المناطق التي في نافذتها التُقطت اليوم، ولا اشتباه للتأكيد"
@@ -72,6 +73,8 @@ jobs:
         run: |
           pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
           pip install -r requirements-ai.txt
+          # قراءة الساعة المطبوعة على صور ADOT لكشف الصور المتجمدة (اختياري: بدونه لا يُرفض شيء)
+          sudo apt-get install -y -qq tesseract-ocr >/dev/null || echo "tesseract unavailable"
 
       - name: Cache AI models
         if: steps.work.outputs.run == 'true'

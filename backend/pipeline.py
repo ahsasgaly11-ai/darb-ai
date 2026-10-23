@@ -33,6 +33,7 @@ ALERT_TEXT = {
     "incident": "حادث مروري قرب الكاميرا",
     "view_changed": "تغيّر زاوية الكاميرا",
     "view_lost": "الكاميرا حُرّكت بعيدًا عن منطقة الطريق",
+    "stale_feed": "صورة الكاميرا لا تتجدد",
     "predicted": "تنبؤ بتدهور قادم",
     "resolved": "رُصدت معالجة المشكلة",
     "recurrence": "عودة المشكلة بعد الإصلاح",
@@ -128,6 +129,7 @@ def add_alert(cam: dict, ts: str, typ: str, severity: str, message: str, snapsho
 
 # ---------- الالتقاط والتحليل ----------
 
+STALE_MINUTES = 90  # تأخر ساعة الصورة المطبوعة عن الوقت المحلي قبل اعتبارها متجمدة
 REF_WIDTH = 960  # دقة صور مرجع المنظر (أعلى من 640 تزيد النقاط المتطابقة بين لقطتين بإضاءتين مختلفتين)
 
 
@@ -287,6 +289,17 @@ def _run_capture(cam_id, kind, at, n_frames, interval, frames=None) -> dict:
             add_alert(cam, ts, "capture_failed", "warning", f"الخطأ: {e}")
         return {"ok": False, "error": str(e)}
 
+    if cam["source"].get("type") == "az511" and not (at and datetime.now(timezone.utc) - at > timedelta(hours=2)):
+        lag = sources.overlay_lag(frames[-1], tz(cam).key, at)
+        if lag is not None and lag > STALE_MINUTES:
+            # صورة متجمدة: الخادم يعيد لقطة قديمة (ساعتها المطبوعة متأخرة). تحليلها يعطي حالة اللحظة الخاطئة —
+            # تُحفظ للسجل وتُعاد المحاولة في التشغيل التالي
+            image_path = _save(frames[-1], (config.SNAPSHOT_DIR / cam_id / f"{at.astimezone(tz(cam)).strftime('%Y%m%dT%H%M%S')}_{kind}").with_suffix(".jpg"))
+            sid = db.insert("snapshots", {"camera_id": cam_id, "ts": ts, "kind": kind, "image_path": image_path,
+                                          "quality": "stale", "metrics": {"image_lag_min": lag}})
+            if not db.one("SELECT id FROM alerts WHERE camera_id=? AND type='stale_feed' AND ts>?", (cam_id, (at - timedelta(hours=24)).isoformat())):
+                add_alert(cam, ts, "stale_feed", "info", f"صورة الكاميرا لا تتجدد: ساعتها المطبوعة متأخرة {lag / 60:.1f} ساعة — لم تُحلَّل، وتُعاد المحاولة.", sid)
+            return {"ok": False, "snapshot_id": sid, "quality": {"status": "stale", "lag_min": lag}}
     bg, first = sources.background(frames), frames
     roi, view = roi_for_view(cam, bg, at)
     occ = sources.occlusion(frames, roi)

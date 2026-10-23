@@ -254,9 +254,15 @@ def update(cam: dict, ts: str, result: dict, assessment: dict | None, alerts: li
     for i in [i for i in issues if i["stage"] == "active"]:
         resolved, resolution = False, None
         if i["kind"] == "deterioration":
-            # إعادة رصف: قفزة كبيرة في المؤشر فوق العتبة بوضوح
+            # إعادة رصف: قفزة كبيرة في المؤشر فوق العتبة بوضوح، تتكرر في لقطتين (يومين) قبل إعلان الإصلاح —
+            # لقطة واحدة قد تكون صورة متأخرة أو إضاءة منخفضة تُخفي التشققات
             if ci >= thr + 15 and ci - (i["worst_ci"] or ci) >= 15:
-                resolved, resolution = True, "repaired"
+                if any(e["note"] == "قفز المؤشر فوق العتبة" and e["ts"][:10] != ts[:10] for e in i["events"]):
+                    resolved, resolution = True, "repaired"
+                elif not any(e["note"] == "قفز المؤشر فوق العتبة" for e in i["events"]):
+                    _event(i, ts, "active", "قفز المؤشر فوق العتبة")
+            else:
+                i["events"] = [e for e in i["events"] if e["note"] != "قفز المؤشر فوق العتبة"]  # لم يتأكد
         else:
             raw_ci = result["condition_index"]
             back = i["baseline_ci"] is not None and raw_ci >= i["baseline_ci"] - 3
