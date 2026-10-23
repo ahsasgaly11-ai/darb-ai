@@ -487,11 +487,21 @@ def revalidate_alerts() -> int:
     """يعيد فحص التنبيهات المفتوحة بالقواعد الحالية ويُقرّ ما لم يعد صحيحًا: «الكاميرا حُرّكت» إذا عادت الكاميرا
     (لقطة سليمة أحدث) أو لم يتكرر في يومين، و«الرمال» إذا لم يعد يتجاوز خط أساس الساعة نفسها."""
     n = 0
-    for a in db.query("SELECT * FROM alerts WHERE ack=0 AND type IN ('view_lost','sand','sudden_change','new_pothole')"):
+    for a in db.query("SELECT * FROM alerts WHERE ack=0 AND type IN ('view_lost','sand','sudden_change','new_pothole','threshold','capture_failed')"):
         cam = get_camera(a["camera_id"])
         if cam is None:
             continue
-        if a["type"] in ("sudden_change", "new_pothole"):
+        if a["type"] == "threshold":
+            # «دون عتبة الصيانة» لم يعد صحيحًا إن صار المؤشر المُنعَّم الحالي فوق العتبة بوضوح (بعد إعادة تحليل مثلًا)
+            r = latest_risk(cam["id"])
+            ci = (r or {}).get("forecast", {}).get("ci")
+            stale = ci is not None and ci > config.MAINTENANCE_THRESHOLD + 5
+        elif a["type"] == "capture_failed":
+            # تعذّر الالتقاط: يبقى تنبيه واحد (الأحدث) لكل كاميرا، ويُقرّ إن نجح التقاط بعده
+            newer = db.one("SELECT id FROM alerts WHERE camera_id=? AND type='capture_failed' AND ts>? AND ack=0", (cam["id"], a["ts"]))
+            ok_after = db.one("SELECT id FROM snapshots WHERE camera_id=? AND ts>? AND condition_index IS NOT NULL", (cam["id"], a["ts"]))
+            stale = bool(newer or ok_after)
+        elif a["type"] in ("sudden_change", "new_pothole"):
             # التغيّر قيس بين لقطتين بمنطقتين مختلفتين (كاميرا حُرّكت)
             snap = db.one("SELECT ts, metrics FROM snapshots WHERE id=?", (a["snapshot_id"],)) if a["snapshot_id"] else None
             before = snap and db.one("""SELECT metrics FROM snapshots WHERE camera_id=? AND ts<? AND condition_index IS NOT NULL
@@ -499,7 +509,8 @@ def revalidate_alerts() -> int:
             stale = bool(snap and before and _area_of(cam, json.loads(snap["metrics"])) != _area_of(cam, json.loads(before["metrics"])))
         elif a["type"] == "view_lost":
             back = db.one("SELECT id FROM snapshots WHERE camera_id=? AND ts>? AND condition_index IS NOT NULL", (cam["id"], a["ts"]))
-            stale = back or not _view_lost_persists(cam, a["ts"])
+            newer = db.one("SELECT id FROM alerts WHERE camera_id=? AND type='view_lost' AND ts>? AND ack=0", (cam["id"], a["ts"]))
+            stale = back or newer or not _view_lost_persists(cam, a["ts"])
         else:
             snap = db.one("SELECT metrics FROM snapshots WHERE id=?", (a["snapshot_id"],)) if a["snapshot_id"] else None
             stale = snap is not None and _sand_excess(cam["id"], a["ts"], json.loads(snap["metrics"])) is None
@@ -519,18 +530,26 @@ def _sand_alert(cam_id: str, ts: str, result: dict) -> str | None:
 
 
 def _sand_excess(cam_id: str, ts: str, result: dict) -> str | None:
-    """الغطاء الرملي تجاوز خط الأساس (وسيط آخر 5 لقطات في الساعة نفسها تقريبًا) بوضوح.
-    الساعة مهمة: ضوء العصر الدافئ يجعل الخرسانة الفاتحة أقرب إلى لون الرمل."""
+    """الغطاء الرملي تجاوز خط الأساس (وسيط اللقطات الأقدم في الساعة نفسها تقريبًا) بوضوح، في هذه اللقطة واللقطة
+    السابقة (يوم آخر) معًا. الساعة مهمة: ضوء الصباح والعصر الدافئ يجعل الخرسانة الفاتحة أقرب إلى لون الرمل؛
+    والتكرار يومين يستبعد إضاءة يوم واحد (SR-55: «رمال 44%» صباح يوم مشمس على خرسانة نظيفة)."""
     now = result.get("sand_cover", 0.0)
-    cam = get_camera(cam_id)
-    hour = lambda t: datetime.fromisoformat(t).astimezone(tz(cam)).hour if cam else 0  # noqa: E731
-    prev = [json.loads(r["metrics"]).get("sand_cover") for r in db.query(
-        "SELECT ts, metrics FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL AND ts<? ORDER BY ts DESC LIMIT 20",
-        (cam_id, ts)) if abs(hour(r["ts"]) - hour(ts)) <= 2][:5]
-    prev = [p for p in prev if p is not None]
-    if len(prev) < 2 or now < 0.10 or now - float(np.median(prev)) < 0.08:
+    if now < 0.10:
         return None
-    return f"رمال على الطريق: تغطي ~{now * 100:.0f}% من السطح (كانت ~{float(np.median(prev)) * 100:.0f}%) — يوصى بإزالتها لسلامة السائقين."
+    cam = get_camera(cam_id)
+    local = lambda t: datetime.fromisoformat(t).astimezone(tz(cam)) if cam else datetime.fromisoformat(t)  # noqa: E731
+    rows = [(r["ts"], json.loads(r["metrics"]).get("sand_cover")) for r in db.query(
+        "SELECT ts, metrics FROM snapshots WHERE camera_id=? AND condition_index IS NOT NULL AND ts<? ORDER BY ts DESC LIMIT 30",
+        (cam_id, ts))]
+    rows = [(t, v) for t, v in rows if v is not None and local(t).date() != local(ts).date()]
+    if len(rows) < 3:
+        return None
+    last_t, last_v = rows[0]
+    base = [v for t, v in rows[1:] if abs(local(t).hour - local(ts).hour) <= 2][:5] or [v for _, v in rows[1:6]]
+    b = float(np.median(base))
+    if now - b < 0.08 or last_v - b < 0.08:
+        return None
+    return f"رمال على الطريق: تغطي ~{now * 100:.0f}% من السطح في لقطتين متتاليتين (كانت ~{b * 100:.0f}%) — يوصى بإزالتها لسلامة السائقين."
 
 
 def _analyze(img, roi, prev_img, use_ai=True):

@@ -126,10 +126,15 @@ def extreme_events(region: str, end: date, days: int = 3) -> list[dict]:
 
 def sand_cover(img: np.ndarray, roi: list[list[float]]) -> float:
     """نسبة سطح الطريق المغطّى بلون رملي: بيج (تدرّج 8–24 في OpenCV) بتشبّع متوسط وسطوع عالٍ.
-    الإسفلت رمادي (تشبّع منخفض)، والعلامات الصفراء مشبّعة جدًا، فيُستبعد كلاهما."""
+    الإسفلت رمادي (تشبّع منخفض)، والعلامات الصفراء مشبعة جدًا، فيُستبعد كلاهما.
+    والرمل بقع تختلف عن لون الطريق نفسه: إذا كان السطح كله مائلًا للبيج (خرسانة فاتحة في ضوء الصباح الدافئ)
+    فلا يُحتسب إلا ما يزيد تشبّعه بوضوح على لون الرصف النظيف (SR-55: «رمال 44%» كانت شمس الصباح على خرسانة نظيفة)."""
     mask = vision.roi_mask(img.shape, roi) > 0
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    h, s, v = hsv[..., 0], hsv[..., 1], hsv[..., 2]
-    sand = (h >= 8) & (h <= 24) & (s >= 45) & (s <= 150) & (v >= 120)
+    h, s, v = hsv[..., 0], hsv[..., 1].astype(np.int16), hsv[..., 2]
     n = int(mask.sum())
-    return round(float((sand & mask).sum()) / n, 4) if n else 0.0
+    if not n:
+        return 0.0
+    road_s = float(np.percentile(s[mask], 30))  # لون الرصف النظيف (الثلث الأقل تشبعًا) — يبقى صحيحًا ما دام الرمل دون 70%
+    sand = (h >= 8) & (h <= 24) & (s >= max(45, road_s + 18)) & (s <= 150) & (v >= 120)
+    return round(float((sand & mask).sum()) / n, 4)
